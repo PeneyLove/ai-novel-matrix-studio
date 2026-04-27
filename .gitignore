@@ -1,0 +1,62 @@
+# ── Python ──────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.Python
+pip-wheel-metadata/
+
+# ── 虚拟环境 ─────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── 环境变量 / 密钥（绝对不能提交）──────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── 数据库 ───────────────────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── 日志 ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── IDE / 编辑器 ─────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── pytest / 测试缓存 ────────────────────────────────────────
+.pytest_cache/
+.hypothesis/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── 分类器模型文件（体积大，不入库）────────────────────────────
+*.pkl
+*.pickle
+ai_novel_studio/models/*.pkl
+
+# ── Docker 数据卷 ────────────────────────────────────────────
+mysql_data/
+mongo_data/
+redis_data/
+
+# ── Playwright 浏览器缓存 ────────────────────────────────────
+playwright-browsers/
+
+# ── Kiro 内部文件（spec 文档保留，其余忽略）──────────────────
+.kiro/settings/

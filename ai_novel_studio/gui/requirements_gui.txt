@@ -1,0 +1,5 @@
+PyQt6>=6.6.0
+PyQt6-Qt6>=6.6.0
+SQLAlchemy>=2.0.29
+PyMySQL>=1.1.0
+cryptography>=42.0.0

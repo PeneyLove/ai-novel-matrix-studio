@@ -1,0 +1,24 @@
+spiders:
+  fanqie:
+    enabled: true
+    schedule: "0 2,14 * * *"   # 每日2次
+    delay_seconds: 2
+    max_pages: 50
+    use_playwright: true
+  qimao:
+    enabled: true
+    schedule: "0 3 * * *"      # 每日1次
+    delay_seconds: 3
+    max_pages: 50
+    use_playwright: false
+  zhihu:
+    enabled: true
+    schedule: "0 4 * * 1,4"    # 每周2次
+    delay_seconds: 5
+    max_pages: 20
+    use_playwright: false
+
+user_agents:
+  - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+  - "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"

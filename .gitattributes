@@ -1,0 +1,9 @@
+# 统一换行符：Windows 检出 CRLF，提交时转为 LF
+* text=auto eol=lf
+
+# 二进制文件不转换
+*.png binary
+*.jpg binary
+*.ico binary
+*.pkl binary
+*.db  binary
