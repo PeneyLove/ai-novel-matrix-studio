@@ -6,6 +6,9 @@ from enum import Enum
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
+# 加载 config.env（确保 API Key 可用）
+from ai_novel_studio.config.settings import settings  # noqa: F401
+
 
 class ModelProvider(str, Enum):
     """模型提供商枚举"""

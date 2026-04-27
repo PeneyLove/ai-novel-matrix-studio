@@ -1,6 +1,6 @@
 """
 GUI 专用数据库连接 — 同步 SQLAlchemy（PyQt6 不需要 async）
-直连 MySQL localhost:3306，账号密码 root/root
+直连 MySQL，连接参数从 config.env / 环境变量读取
 """
 import os
 from contextlib import contextmanager
@@ -15,16 +15,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
 
-# ---------------------------------------------------------------------------
-# 连接配置（优先读环境变量，默认 root/root@localhost）
-# ---------------------------------------------------------------------------
-MYSQL_SYNC_URL: str = os.getenv(
-    "MYSQL_SYNC_URL",
-    "mysql+pymysql://root:root@localhost:3306/ai_novel_studio?charset=utf8mb4",
-)
+from ai_novel_studio.config.settings import settings
 
+# ---------------------------------------------------------------------------
+# 连接配置（从 settings 读取，自动加载 config.env）
+# ---------------------------------------------------------------------------
 engine = create_engine(
-    MYSQL_SYNC_URL,
+    settings.mysql_sync_url,
     echo=False,
     pool_pre_ping=True,
     pool_recycle=3600,

@@ -7,11 +7,16 @@ from typing import Any, Dict, List, Optional
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection, AsyncIOMotorDatabase
 
+from ai_novel_studio.config.settings import settings
+
 # ---------------------------------------------------------------------------
-# 连接配置
+# 连接配置（从 settings 读取）
 # ---------------------------------------------------------------------------
-MONGODB_URL: str = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-MONGODB_DB: str = os.getenv("MONGODB_DB", "ai_novel_studio")
+def _get_url() -> str:
+    return settings.mongodb_url
+
+def _get_db_name() -> str:
+    return settings.mongodb_db
 
 # ---------------------------------------------------------------------------
 # 单例客户端
@@ -23,11 +28,12 @@ def get_mongo_client() -> AsyncIOMotorClient:
     """返回 Motor 客户端单例。"""
     global _client
     if _client is None:
-        _client = AsyncIOMotorClient(MONGODB_URL)
+        _client = AsyncIOMotorClient(_get_url())
     return _client
 
 
 def get_database() -> AsyncIOMotorDatabase:
+    return get_mongo_client()[_get_db_name()]
     return get_mongo_client()[MONGODB_DB]
 
 

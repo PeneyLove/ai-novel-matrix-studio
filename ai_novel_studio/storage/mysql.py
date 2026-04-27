@@ -15,19 +15,13 @@ from sqlalchemy import (
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, relationship
 
-# ---------------------------------------------------------------------------
-# 数据库 URL（从环境变量读取）
-# ---------------------------------------------------------------------------
-MYSQL_URL: str = os.getenv(
-    "MYSQL_URL",
-    "mysql+aiomysql://root:root@localhost:3306/ai_novel_studio",
-)
+from ai_novel_studio.config.settings import settings
 
 # ---------------------------------------------------------------------------
-# 异步引擎与 Session 工厂
+# 异步引擎与 Session 工厂（从 settings 读取连接 URL）
 # ---------------------------------------------------------------------------
 engine = create_async_engine(
-    MYSQL_URL,
+    settings.mysql_url,
     echo=False,
     pool_pre_ping=True,
     pool_recycle=3600,

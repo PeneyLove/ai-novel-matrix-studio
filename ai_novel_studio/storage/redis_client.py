@@ -6,10 +6,7 @@ from typing import Optional, Union
 
 import redis.asyncio as aioredis
 
-# ---------------------------------------------------------------------------
-# 连接配置
-# ---------------------------------------------------------------------------
-REDIS_URL: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+from ai_novel_studio.config.settings import settings
 
 # ---------------------------------------------------------------------------
 # 单例
@@ -22,7 +19,7 @@ def get_client() -> aioredis.Redis:
     global _client
     if _client is None:
         _client = aioredis.from_url(
-            REDIS_URL,
+            settings.redis_url,
             encoding="utf-8",
             decode_responses=True,
         )
