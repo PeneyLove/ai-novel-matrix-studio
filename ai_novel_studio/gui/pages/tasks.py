@@ -1,17 +1,207 @@
 """创作任务管理页面"""
+import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QTableWidget, QTableWidgetItem, QHeaderView, QDialog,
     QFormLayout, QLineEdit, QComboBox, QTextEdit, QMessageBox,
     QDialogButtonBox, QSplitter, QFrame,
+    QRadioButton, QButtonGroup, QFileDialog,
 )
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor
 
 from ai_novel_studio.gui.db import get_session, CreationTask
 from ai_novel_studio.gui.styles import STAGE_LABELS, STAGE_COLORS, AGENT_LABELS
+from ai_novel_studio.gui.export import ExportManager, sanitize_filename as _sanitize_filename
+
+
+class ExportDialog(QDialog):
+    """导出对话框：选择格式、文件名和保存路径，执行导出操作。"""
+
+    def __init__(self, parent: QWidget, task: CreationTask):
+        super().__init__(parent)
+        self.task = task
+        self.setWindowTitle("导出任务内容")
+        self.setMinimumWidth(480)
+        self._build()
+
+    def _build(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(20, 20, 20, 20)
+        layout.setSpacing(12)
+
+        # ---- 格式选择 ----
+        fmt_label = QLabel("导出格式：")
+        fmt_label.setStyleSheet("color: #6c7086;")
+        layout.addWidget(fmt_label)
+
+        fmt_row = QHBoxLayout()
+        self._btn_txt = QRadioButton("TXT 文本文件")
+        self._btn_docx = QRadioButton("Word 文档（.docx）")
+        self._btn_txt.setChecked(True)
+        self._fmt_group = QButtonGroup(self)
+        self._fmt_group.addButton(self._btn_txt, 0)
+        self._fmt_group.addButton(self._btn_docx, 1)
+        fmt_row.addWidget(self._btn_txt)
+        fmt_row.addWidget(self._btn_docx)
+        fmt_row.addStretch()
+        layout.addLayout(fmt_row)
+
+        # ---- 文件名输入 ----
+        fn_label = QLabel("文件名：")
+        fn_label.setStyleSheet("color: #6c7086;")
+        layout.addWidget(fn_label)
+
+        self._filename_edit = QLineEdit()
+        self._filename_edit.setText(self._default_filename())
+        layout.addWidget(self._filename_edit)
+
+        # ---- 保存路径选择 ----
+        path_label = QLabel("保存路径：")
+        path_label.setStyleSheet("color: #6c7086;")
+        layout.addWidget(path_label)
+
+        path_row = QHBoxLayout()
+        self._path_edit = QLineEdit()
+        self._path_edit.setText(os.path.expanduser("~"))
+        self._path_edit.setReadOnly(True)
+        btn_browse = QPushButton("浏览")
+        btn_browse.setObjectName("secondary")
+        btn_browse.setFixedWidth(60)
+        btn_browse.clicked.connect(self._browse_path)
+        path_row.addWidget(self._path_edit)
+        path_row.addWidget(btn_browse)
+        layout.addLayout(path_row)
+
+        # ---- 状态提示标签 ----
+        self._status_lbl = QLabel("")
+        self._status_lbl.setWordWrap(True)
+        layout.addWidget(self._status_lbl)
+
+        # ---- 打开文件夹按钮（初始隐藏） ----
+        self._btn_open_folder = QPushButton("打开文件夹")
+        self._btn_open_folder.setObjectName("secondary")
+        self._btn_open_folder.setVisible(False)
+        self._btn_open_folder.clicked.connect(self._open_folder)
+        layout.addWidget(self._btn_open_folder)
+
+        # ---- 导出 / 取消按钮 ----
+        btn_row = QHBoxLayout()
+        btn_row.addStretch()
+        btn_export = QPushButton("导出")
+        btn_export.clicked.connect(self._do_export)
+        btn_cancel = QPushButton("取消")
+        btn_cancel.setObjectName("secondary")
+        btn_cancel.clicked.connect(self.reject)
+        btn_row.addWidget(btn_export)
+        btn_row.addWidget(btn_cancel)
+        layout.addLayout(btn_row)
+
+        # 记录最后导出的文件路径（用于打开文件夹）
+        self._last_filepath = ""
+
+    def _default_filename(self) -> str:
+        """生成默认文件名：{任务ID前8位}_{题材标签}_{YYYYMMDD}"""
+        task_id_prefix = (self.task.id or "")[:8]
+        agent_label = AGENT_LABELS.get(self.task.agent_type, self.task.agent_type or "")
+        today = date.today().strftime("%Y%m%d")
+        raw = f"{task_id_prefix}_{agent_label}_{today}"
+        return self.sanitize_filename(raw)
+
+    @staticmethod
+    def sanitize_filename(filename: str) -> str:
+        """移除非法文件名字符：/ \\ * ? \" < > |，过滤后为空则返回 'export'。"""
+        return _sanitize_filename(filename)
+
+    def _browse_path(self):
+        """打开文件夹选择对话框。"""
+        folder = QFileDialog.getExistingDirectory(
+            self, "选择保存路径", self._path_edit.text()
+        )
+        if folder:
+            self._path_edit.setText(folder)
+
+    def _do_export(self):
+        """执行导出操作。"""
+        filename = self.sanitize_filename(self._filename_edit.text().strip())
+        if not filename:
+            filename = "export"
+
+        save_dir = self._path_edit.text().strip()
+        if not save_dir:
+            save_dir = os.path.expanduser("~")
+
+        content = self._get_content(self.task)
+
+        # 根据格式选择后缀和导出方法
+        if self._btn_docx.isChecked():
+            ext = ".docx"
+        else:
+            ext = ".txt"
+
+        filepath = os.path.join(save_dir, filename + ext)
+
+        self._status_lbl.setText("⏳ 正在导出...")
+        self._status_lbl.setStyleSheet("")
+        self._btn_open_folder.setVisible(False)
+
+        try:
+            if self._btn_docx.isChecked():
+                result = ExportManager.export_docx(
+                    content=content,
+                    filepath=filepath,
+                    title=self.task.topic or "",
+                )
+            else:
+                result = ExportManager.export_txt(
+                    content=content,
+                    filepath=filepath,
+                    title=self.task.topic or "",
+                )
+        except Exception as exc:
+            self._status_lbl.setText(f"❌ 导出失败：{exc}")
+            self._status_lbl.setStyleSheet("color: #f38ba8;")
+            return
+
+        if result.success:
+            size_kb = round(result.file_size / 1024, 1)
+            self._status_lbl.setText(
+                f"✅ 导出成功！文件路径：{result.filepath}，大小：{size_kb}KB"
+            )
+            self._status_lbl.setStyleSheet("color: #a6e3a1;")
+            self._last_filepath = result.filepath
+            self._btn_open_folder.setVisible(True)
+        else:
+            self._status_lbl.setText(f"❌ 导出失败：{result.error_message}")
+            self._status_lbl.setStyleSheet("color: #f38ba8;")
+
+    def _open_folder(self):
+        """用系统文件管理器打开文件所在目录（Windows）。"""
+        if self._last_filepath:
+            folder = os.path.dirname(self._last_filepath)
+            try:
+                os.startfile(folder)
+            except Exception as exc:
+                QMessageBox.warning(self, "提示", f"无法打开文件夹：{exc}")
+
+    def _get_content(self, task) -> str:
+        """将 task.topic 和 task.outline（JSON 格式化）拼接为导出内容。"""
+        import json
+        parts = []
+        if task.topic:
+            parts.append(task.topic)
+        if task.outline:
+            try:
+                if isinstance(task.outline, str):
+                    outline_obj = json.loads(task.outline)
+                else:
+                    outline_obj = task.outline
+                parts.append(json.dumps(outline_obj, ensure_ascii=False, indent=2))
+            except (json.JSONDecodeError, TypeError):
+                parts.append(str(task.outline))
+        return "\n\n".join(parts)
 
 
 class TaskDetailDialog(QDialog):
@@ -203,6 +393,13 @@ class TasksPage(QWidget):
                     btn_layout.addWidget(btn_approve)
                     btn_layout.addWidget(btn_reject)
 
+                if stage in ("done", "human_review"):
+                    btn_export = QPushButton("导出")
+                    btn_export.setObjectName("secondary")
+                    btn_export.setFixedWidth(56)
+                    btn_export.clicked.connect(lambda _, idx=i: self._export_task(idx))
+                    btn_layout.addWidget(btn_export)
+
                 self.table.setCellWidget(i, 6, btn_widget)
 
             self.status_lbl.setText(f"共 {len(tasks)} 条任务")
@@ -234,10 +431,10 @@ class TasksPage(QWidget):
 
     def _approve(self, idx: int):
         task = self._tasks[idx]
-        reply = QMessageBox.question(self, "确认", "确定通过审核并进入发布流程？",
+        reply = QMessageBox.question(self, "确认", "确定通过审核？任务将进入已完成状态。",
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
-            self._update_stage(task.id, "publishing")
+            self._update_stage(task.id, "done")
 
     def _reject(self, idx: int):
         task = self._tasks[idx]
@@ -257,3 +454,12 @@ class TasksPage(QWidget):
             self.load_data()
         except Exception as e:
             QMessageBox.critical(self, "错误", f"操作失败：{e}")
+
+    def _export_task(self, idx: int):
+        """查询任务内容，检查内容非空，打开 ExportDialog。"""
+        task = self._tasks[idx]
+        # 检查内容是否均为空
+        if not task.topic and not task.outline:
+            QMessageBox.warning(self, "提示", "任务内容为空，无法导出")
+            return
+        ExportDialog(self, task).exec()

@@ -12,9 +12,8 @@ from ai_novel_studio.gui.styles import MAIN_STYLE
 
 
 NAV_ITEMS = [
-    ("📊  数据看板",   "dashboard"),
+    ("📊  内容看板",   "dashboard"),
     ("📋  创作任务",   "tasks"),
-    ("👤  账号矩阵",   "accounts"),
     ("📚  语料库",     "corpus"),
     ("🔔  系统告警",   "alerts"),
     ("⚙️  系统设置",   "settings"),
@@ -24,7 +23,7 @@ NAV_ITEMS = [
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("AI 小说矩阵工作室")
+        self.setWindowTitle("AI 内容创作工作室")
         self.setMinimumSize(1200, 750)
         self.resize(1400, 860)
         self.setStyleSheet(MAIN_STYLE)
@@ -54,9 +53,9 @@ class MainWindow(QMainWindow):
         logo_widget.setStyleSheet("background-color: #181825; border-bottom: 1px solid #313244;")
         logo_layout = QVBoxLayout(logo_widget)
         logo_layout.setContentsMargins(20, 0, 20, 0)
-        logo_title = QLabel("✍ AI小说工作室")
+        logo_title = QLabel("✍ AI内容创作工作室")
         logo_title.setStyleSheet("color: #cba6f7; font-size: 15px; font-weight: bold;")
-        logo_sub = QLabel("矩阵创作管理系统")
+        logo_sub = QLabel("内容生成管理系统")
         logo_sub.setStyleSheet("color: #6c7086; font-size: 11px;")
         logo_layout.addWidget(logo_title)
         logo_layout.addWidget(logo_sub)
@@ -121,9 +120,6 @@ class MainWindow(QMainWindow):
         elif key == "tasks":
             from ai_novel_studio.gui.pages.tasks import TasksPage
             return TasksPage()
-        elif key == "accounts":
-            from ai_novel_studio.gui.pages.accounts import AccountsPage
-            return AccountsPage()
         elif key == "corpus":
             from ai_novel_studio.gui.pages.corpus import CorpusPage
             return CorpusPage()
