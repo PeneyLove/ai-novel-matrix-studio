@@ -419,3 +419,139 @@ SELECT
     ROUND(AVG(latency_ms), 0)                   AS avg_latency_ms
 FROM model_call_logs
 GROUP BY provider, stage, DATE(called_at);
+
+
+-- ============================================================
+-- 17. 大纲表 outlines
+--     存储 AI 生成的大纲及其审核状态（需求 9.1、9.5）
+-- ============================================================
+CREATE TABLE outlines (
+    id              CHAR(36)     NOT NULL COMMENT '大纲UUID',
+    agent_type      VARCHAR(32)  NOT NULL COMMENT '生成智能体类型',
+    batch_id        CHAR(36)     NOT NULL COMMENT '批次ID（同一批次生成的大纲共享）',
+    title           VARCHAR(256)          COMMENT '大纲标题',
+    content         MEDIUMTEXT   NOT NULL COMMENT '大纲正文（JSON或纯文本）',
+    topic_hint      TEXT                  COMMENT '生成时的主题提示',
+    trend_data      TEXT                  COMMENT '生成时的热榜数据快照',
+    status          VARCHAR(32)  NOT NULL DEFAULT 'pending_review'
+                                          COMMENT '状态: pending_review/approved/rejected/in_use/used',
+    reviewer        VARCHAR(64)           COMMENT '审核人',
+    review_comments TEXT                  COMMENT '审核意见',
+    reject_reason   TEXT                  COMMENT '拒绝原因',
+    reviewed_at     DATETIME              COMMENT '审核时间',
+    novel_id        CHAR(36)              COMMENT '关联的小说任务ID（in_use时填写）',
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_status      (status),
+    INDEX idx_agent_type  (agent_type),
+    INDEX idx_batch_id    (batch_id),
+    INDEX idx_created_at  (created_at),
+    CONSTRAINT chk_outline_status CHECK (status IN (
+        'pending_review', 'approved', 'rejected', 'in_use', 'used'
+    )),
+    CONSTRAINT chk_outline_agent CHECK (agent_type IN (
+        'female_rebirth', 'male_power', 'suspense', 'romance'
+    ))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='大纲表';
+
+
+-- ============================================================
+-- 18. 小说任务表 novels
+--     记录每个小说任务的全生命周期（需求 9.2、9.6）
+-- ============================================================
+CREATE TABLE novels (
+    id                  CHAR(36)     NOT NULL COMMENT '小说任务UUID',
+    outline_id          CHAR(36)     NOT NULL COMMENT '关联大纲ID',
+    agent_type          VARCHAR(32)  NOT NULL COMMENT '编写智能体类型',
+    title               VARCHAR(256)          COMMENT '小说标题',
+    status              VARCHAR(32)  NOT NULL DEFAULT 'writing'
+                                              COMMENT '状态: writing/novel_pending_review/novel_approved/novel_rejected/revising/publishing/done',
+    word_count          INT          NOT NULL DEFAULT 0 COMMENT '当前字数',
+    revision_round      TINYINT      NOT NULL DEFAULT 0 COMMENT '修改轮次',
+    reviewer            VARCHAR(64)           COMMENT '审核人',
+    review_comments     TEXT                  COMMENT '审核意见',
+    revision_instructions TEXT                COMMENT '最新修改指令',
+    reject_reason       TEXT                  COMMENT '拒绝原因',
+    reviewed_at         DATETIME              COMMENT '最近审核时间',
+    writing_started_at  DATETIME              COMMENT '开始编写时间',
+    writing_finished_at DATETIME              COMMENT '编写完成时间',
+    created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_outline_id  (outline_id),
+    INDEX idx_status      (status),
+    INDEX idx_agent_type  (agent_type),
+    INDEX idx_created_at  (created_at),
+    CONSTRAINT chk_novel_status CHECK (status IN (
+        'writing', 'novel_pending_review', 'novel_approved',
+        'novel_rejected', 'revising', 'publishing', 'done'
+    )),
+    CONSTRAINT chk_novel_agent CHECK (agent_type IN (
+        'female_rebirth', 'male_power', 'suspense', 'romance'
+    )),
+    CONSTRAINT fk_novel_outline FOREIGN KEY (outline_id)
+        REFERENCES outlines(id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小说任务表';
+
+
+-- ============================================================
+-- 19. 小说章节表 novel_chapters
+--     存储每部小说的章节内容，(novel_id, chapter_no) 唯一（需求 9.1）
+-- ============================================================
+CREATE TABLE novel_chapters (
+    id               CHAR(36)     NOT NULL COMMENT '章节UUID',
+    novel_id         CHAR(36)     NOT NULL COMMENT '所属小说ID',
+    chapter_no       SMALLINT     NOT NULL COMMENT '章节序号（从1开始）',
+    chapter_title    VARCHAR(256)          COMMENT '章节标题',
+    content          MEDIUMTEXT            COMMENT '当前章节内容（最新版本）',
+    word_count       INT          NOT NULL DEFAULT 0,
+    status           VARCHAR(16)  NOT NULL DEFAULT 'draft'
+                                           COMMENT '状态: draft/finalized',
+    created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_novel_chapter (novel_id, chapter_no),
+    INDEX idx_novel_id (novel_id),
+    CONSTRAINT fk_novel_chapter FOREIGN KEY (novel_id)
+        REFERENCES novels(id) ON DELETE CASCADE,
+    CONSTRAINT chk_novel_chapter_status CHECK (status IN ('draft', 'finalized'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小说章节表';
+
+
+-- ============================================================
+-- 20. 小说修改历史表 novel_revision_history
+--     记录每轮修改的指令和修改前内容快照（需求 9.1）
+-- ============================================================
+CREATE TABLE novel_revision_history (
+    id                    BIGINT       NOT NULL AUTO_INCREMENT,
+    novel_id              CHAR(36)     NOT NULL COMMENT '关联小说ID',
+    revision_round        TINYINT      NOT NULL COMMENT '修改轮次',
+    revision_instructions TEXT         NOT NULL COMMENT '修改指令',
+    reviewer              VARCHAR(64)           COMMENT '提出修改意见的审核人',
+    content_snapshot      LONGTEXT              COMMENT '修改前内容快照（JSON格式，按章节存储）',
+    created_at            DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_novel_id (novel_id),
+    CONSTRAINT fk_revision_novel FOREIGN KEY (novel_id)
+        REFERENCES novels(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='小说修改历史表';
+
+
+-- ============================================================
+-- 21. 大纲审核历史表 outline_review_history
+--     记录大纲每次状态变更（需求 9.1）
+-- ============================================================
+CREATE TABLE outline_review_history (
+    id          BIGINT       NOT NULL AUTO_INCREMENT,
+    outline_id  CHAR(36)     NOT NULL COMMENT '关联大纲ID',
+    from_status VARCHAR(32)           COMMENT '变更前状态',
+    to_status   VARCHAR(32)  NOT NULL COMMENT '变更后状态',
+    operator    VARCHAR(64)           COMMENT '操作人',
+    remark      TEXT                  COMMENT '备注/审核意见',
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    INDEX idx_outline_id (outline_id),
+    CONSTRAINT fk_outline_history FOREIGN KEY (outline_id)
+        REFERENCES outlines(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='大纲审核历史表';

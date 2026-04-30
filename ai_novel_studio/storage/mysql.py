@@ -348,3 +348,142 @@ class DashboardStats(Base):
         Index("idx_stats_stat_date",  "stat_date"),
         Index("idx_stats_agent_type", "agent_type"),
     )
+
+
+# ---------------------------------------------------------------------------
+# 12. outlines — 大纲表（需求 9.1、9.5）
+# ---------------------------------------------------------------------------
+class Outline(Base):
+    __tablename__ = "outlines"
+
+    id              = Column(CHAR(36),    primary_key=True,  comment="大纲UUID")
+    agent_type      = Column(String(32),  nullable=False,    comment="生成智能体类型")
+    batch_id        = Column(CHAR(36),    nullable=False,    comment="批次ID")
+    title           = Column(String(256), nullable=True,     comment="大纲标题")
+    content         = Column(Text,        nullable=False,    comment="大纲正文（JSON或纯文本）")
+    topic_hint      = Column(Text,        nullable=True,     comment="生成时的主题提示")
+    trend_data      = Column(Text,        nullable=True,     comment="生成时的热榜数据快照")
+    status          = Column(String(32),  nullable=False,    default="pending_review", comment="状态")
+    reviewer        = Column(String(64),  nullable=True,     comment="审核人")
+    review_comments = Column(Text,        nullable=True,     comment="审核意见")
+    reject_reason   = Column(Text,        nullable=True,     comment="拒绝原因")
+    reviewed_at     = Column(DateTime,    nullable=True,     comment="审核时间")
+    novel_id        = Column(CHAR(36),    nullable=True,     comment="关联的小说任务ID（in_use时填写）")
+    created_at      = Column(DateTime,    nullable=False,    default=datetime.utcnow)
+    updated_at      = Column(DateTime,    nullable=False,    default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_outline_status",     "status"),
+        Index("idx_outline_agent_type", "agent_type"),
+        Index("idx_outline_batch_id",   "batch_id"),
+        Index("idx_outline_created_at", "created_at"),
+        CheckConstraint(
+            "status IN ('pending_review', 'approved', 'rejected', 'in_use', 'used')",
+            name="chk_outline_status",
+        ),
+        CheckConstraint(
+            "agent_type IN ('female_rebirth', 'male_power', 'suspense', 'romance')",
+            name="chk_outline_agent",
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 13. novels — 小说任务表（需求 9.2、9.6）
+# ---------------------------------------------------------------------------
+class Novel(Base):
+    __tablename__ = "novels"
+
+    id                    = Column(CHAR(36),    primary_key=True,  comment="小说任务UUID")
+    outline_id            = Column(CHAR(36),    ForeignKey("outlines.id", ondelete="RESTRICT"), nullable=False, comment="关联大纲ID")
+    agent_type            = Column(String(32),  nullable=False,    comment="编写智能体类型")
+    title                 = Column(String(256), nullable=True,     comment="小说标题")
+    status                = Column(String(32),  nullable=False,    default="writing", comment="状态")
+    word_count            = Column(Integer,     nullable=False,    default=0,         comment="当前字数")
+    revision_round        = Column(SmallInteger, nullable=False,   default=0,         comment="修改轮次")
+    reviewer              = Column(String(64),  nullable=True,     comment="审核人")
+    review_comments       = Column(Text,        nullable=True,     comment="审核意见")
+    revision_instructions = Column(Text,        nullable=True,     comment="最新修改指令")
+    reject_reason         = Column(Text,        nullable=True,     comment="拒绝原因")
+    reviewed_at           = Column(DateTime,    nullable=True,     comment="最近审核时间")
+    writing_started_at    = Column(DateTime,    nullable=True,     comment="开始编写时间")
+    writing_finished_at   = Column(DateTime,    nullable=True,     comment="编写完成时间")
+    created_at            = Column(DateTime,    nullable=False,    default=datetime.utcnow)
+    updated_at            = Column(DateTime,    nullable=False,    default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_novel_outline_id", "outline_id"),
+        Index("idx_novel_status",     "status"),
+        Index("idx_novel_agent_type", "agent_type"),
+        Index("idx_novel_created_at", "created_at"),
+        CheckConstraint(
+            "status IN ('writing', 'novel_pending_review', 'novel_approved',"
+            " 'novel_rejected', 'revising', 'publishing', 'done')",
+            name="chk_novel_status",
+        ),
+        CheckConstraint(
+            "agent_type IN ('female_rebirth', 'male_power', 'suspense', 'romance')",
+            name="chk_novel_agent",
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 14. novel_chapters — 小说章节表（(novel_id, chapter_no) 唯一约束）
+# ---------------------------------------------------------------------------
+class NovelChapter(Base):
+    __tablename__ = "novel_chapters"
+
+    id            = Column(CHAR(36),    primary_key=True,  comment="章节UUID")
+    novel_id      = Column(CHAR(36),    ForeignKey("novels.id", ondelete="CASCADE"), nullable=False, comment="所属小说ID")
+    chapter_no    = Column(SmallInteger, nullable=False,   comment="章节序号（从1开始）")
+    chapter_title = Column(String(256), nullable=True,     comment="章节标题")
+    content       = Column(Text,        nullable=True,     comment="当前章节内容（最新版本）")
+    word_count    = Column(Integer,     nullable=False,    default=0)
+    status        = Column(String(16),  nullable=False,    default="draft", comment="状态: draft/finalized")
+    created_at    = Column(DateTime,    nullable=False,    default=datetime.utcnow)
+    updated_at    = Column(DateTime,    nullable=False,    default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("novel_id", "chapter_no", name="uk_novel_chapter"),
+        Index("idx_novel_chapter_novel_id", "novel_id"),
+        CheckConstraint("status IN ('draft', 'finalized')", name="chk_novel_chapter_status"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 15. novel_revision_history — 小说修改历史表
+# ---------------------------------------------------------------------------
+class NovelRevisionHistory(Base):
+    __tablename__ = "novel_revision_history"
+
+    id                    = Column(BigInteger,  primary_key=True, autoincrement=True)
+    novel_id              = Column(CHAR(36),    ForeignKey("novels.id", ondelete="CASCADE"), nullable=False, comment="关联小说ID")
+    revision_round        = Column(SmallInteger, nullable=False,  comment="修改轮次")
+    revision_instructions = Column(Text,        nullable=False,   comment="修改指令")
+    reviewer              = Column(String(64),  nullable=True,    comment="提出修改意见的审核人")
+    content_snapshot      = Column(Text,        nullable=True,    comment="修改前内容快照（JSON格式，按章节存储）")
+    created_at            = Column(DateTime,    nullable=False,   default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_revision_novel_id", "novel_id"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# 16. outline_review_history — 大纲审核历史表
+# ---------------------------------------------------------------------------
+class OutlineReviewHistory(Base):
+    __tablename__ = "outline_review_history"
+
+    id          = Column(BigInteger,  primary_key=True, autoincrement=True)
+    outline_id  = Column(CHAR(36),    ForeignKey("outlines.id", ondelete="CASCADE"), nullable=False, comment="关联大纲ID")
+    from_status = Column(String(32),  nullable=True,    comment="变更前状态")
+    to_status   = Column(String(32),  nullable=False,   comment="变更后状态")
+    operator    = Column(String(64),  nullable=True,    comment="操作人")
+    remark      = Column(Text,        nullable=True,    comment="备注/审核意见")
+    created_at  = Column(DateTime,    nullable=False,   default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_outline_history_outline_id", "outline_id"),
+    )
