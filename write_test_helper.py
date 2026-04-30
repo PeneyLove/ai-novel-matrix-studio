@@ -1,4 +1,4 @@
-
+content = r"""
 \"\"\"
 Small novel revision tests
 \"\"\"
@@ -812,3 +812,8 @@ def test_get_revision_history_returns_empty_for_no_history(monkeypatch):
         result = asyncio.run(service.get_revision_history(str(uuid.uuid4())))
 
     assert result == [], f"Should return empty list, got {result}"
+"""
+
+with open('ai_novel_studio/tests/test_novel_revision.py', 'w', encoding='utf-8') as f:
+    f.write(content)
+print('done')

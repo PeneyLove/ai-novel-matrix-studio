@@ -70,7 +70,7 @@ def test_pipeline_idempotency_p4(task_id):
                 return existing or {"task_id": task_id, "stage": "unknown"}
             return {"task_id": task_id, "stage": "pending"}
 
-        result = asyncio.get_event_loop().run_until_complete(_test())
+        result = asyncio.run(_test())
 
     assert result is not None
     assert result.get("task_id") == task_id

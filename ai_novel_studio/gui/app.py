@@ -22,7 +22,7 @@ def run():
     app.setFont(font)
 
     # 高 DPI 支持
-    app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
+    # app.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps)
 
     window = MainWindow()
     window.show()

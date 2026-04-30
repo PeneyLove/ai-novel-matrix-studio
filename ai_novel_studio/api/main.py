@@ -126,6 +126,12 @@ app.include_router(dashboard_router.router, prefix="/dashboard", tags=["dashboar
 from ai_novel_studio.api import corpus as corpus_router
 app.include_router(corpus_router.router, prefix="/corpus", tags=["corpus"])
 
+from ai_novel_studio.api import outlines as outlines_router
+app.include_router(outlines_router.router, prefix="/outlines", tags=["outlines"])
+
+from ai_novel_studio.api import novels as novels_router
+app.include_router(novels_router.router, prefix="/novels", tags=["novels"])
+
 
 # ---------------------------------------------------------------------------
 # 根路由

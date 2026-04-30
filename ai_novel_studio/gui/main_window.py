@@ -14,6 +14,7 @@ from ai_novel_studio.gui.styles import MAIN_STYLE
 NAV_ITEMS = [
     ("📊  内容看板",   "dashboard"),
     ("📋  创作任务",   "tasks"),
+    ("📝  大纲管理",   "outlines"),
     ("📚  语料库",     "corpus"),
     ("🔔  系统告警",   "alerts"),
     ("⚙️  系统设置",   "settings"),
@@ -120,6 +121,9 @@ class MainWindow(QMainWindow):
         elif key == "tasks":
             from ai_novel_studio.gui.pages.tasks import TasksPage
             return TasksPage()
+        elif key == "outlines":
+            from ai_novel_studio.gui.pages.outlines import OutlinesPage
+            return OutlinesPage()
         elif key == "corpus":
             from ai_novel_studio.gui.pages.corpus import CorpusPage
             return CorpusPage()

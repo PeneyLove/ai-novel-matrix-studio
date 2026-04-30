@@ -152,3 +152,77 @@ class SystemAlert(Base):
     resolved    = Column(Boolean,     nullable=False, default=False)
     resolved_at = Column(DateTime,    nullable=True)
     created_at  = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class Outline(Base):
+    __tablename__ = "outlines"
+    id              = Column(CHAR(36),    primary_key=True)
+    agent_type      = Column(String(32),  nullable=False)
+    batch_id        = Column(CHAR(36),    nullable=False)
+    title           = Column(String(256), nullable=True)
+    content         = Column(Text,        nullable=False, default="")
+    topic_hint      = Column(Text,        nullable=True)
+    trend_data      = Column(Text,        nullable=True)
+    status          = Column(String(32),  nullable=False, default="pending_review")
+    reviewer        = Column(String(64),  nullable=True)
+    review_comments = Column(Text,        nullable=True)
+    reject_reason   = Column(Text,        nullable=True)
+    reviewed_at     = Column(DateTime,    nullable=True)
+    novel_id        = Column(CHAR(36),    nullable=True)
+    created_at      = Column(DateTime,    nullable=False, default=datetime.utcnow)
+    updated_at      = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class OutlineReviewHistory(Base):
+    __tablename__ = "outline_review_history"
+    id          = Column(BigInteger,  primary_key=True, autoincrement=True)
+    outline_id  = Column(CHAR(36),    ForeignKey("outlines.id"), nullable=False)
+    from_status = Column(String(32),  nullable=True)
+    to_status   = Column(String(32),  nullable=False)
+    operator    = Column(String(64),  nullable=True)
+    remark      = Column(Text,        nullable=True)
+    created_at  = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class Novel(Base):
+    __tablename__ = "novels"
+    id                    = Column(CHAR(36),    primary_key=True)
+    outline_id            = Column(CHAR(36),    ForeignKey("outlines.id"), nullable=False)
+    agent_type            = Column(String(32),  nullable=False)
+    title                 = Column(String(256), nullable=True)
+    status                = Column(String(32),  nullable=False, default="writing")
+    word_count            = Column(Integer,     nullable=False, default=0)
+    revision_round        = Column(SmallInteger, nullable=False, default=0)
+    reviewer              = Column(String(64),  nullable=True)
+    review_comments       = Column(Text,        nullable=True)
+    revision_instructions = Column(Text,        nullable=True)
+    reject_reason         = Column(Text,        nullable=True)
+    reviewed_at           = Column(DateTime,    nullable=True)
+    writing_started_at    = Column(DateTime,    nullable=True)
+    writing_finished_at   = Column(DateTime,    nullable=True)
+    created_at            = Column(DateTime,    nullable=False, default=datetime.utcnow)
+    updated_at            = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class NovelChapter(Base):
+    __tablename__ = "novel_chapters"
+    id            = Column(CHAR(36),    primary_key=True)
+    novel_id      = Column(CHAR(36),    ForeignKey("novels.id"), nullable=False)
+    chapter_no    = Column(SmallInteger, nullable=False)
+    chapter_title = Column(String(256), nullable=True)
+    content       = Column(Text,        nullable=True)
+    word_count    = Column(Integer,     nullable=False, default=0)
+    status        = Column(String(16),  nullable=False, default="draft")
+    created_at    = Column(DateTime,    nullable=False, default=datetime.utcnow)
+    updated_at    = Column(DateTime,    nullable=False, default=datetime.utcnow)
+
+
+class NovelRevisionHistory(Base):
+    __tablename__ = "novel_revision_history"
+    id                    = Column(BigInteger,  primary_key=True, autoincrement=True)
+    novel_id              = Column(CHAR(36),    ForeignKey("novels.id"), nullable=False)
+    revision_round        = Column(SmallInteger, nullable=False)
+    revision_instructions = Column(Text,        nullable=False)
+    reviewer              = Column(String(64),  nullable=True)
+    content_snapshot      = Column(Text,        nullable=True)
+    created_at            = Column(DateTime,    nullable=False, default=datetime.utcnow)
