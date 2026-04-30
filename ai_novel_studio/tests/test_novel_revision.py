@@ -1,7 +1,6 @@
-
-\"\"\"
+"""
 Small novel revision tests
-\"\"\"
+"""
 from __future__ import annotations
 import json
 import uuid
@@ -179,10 +178,10 @@ def apply_revision_round(
     revision_instructions: str,
     chapters_snapshot: Optional[dict] = None,
 ) -> int:
-    \"\"\"
+    """
     Simulate one revision round: increment revision_round, save history, update status.
     Returns the new revision_round.
-    \"\"\"
+    """
     novel = session.get(Novel, novel_id)
     assert novel is not None
 
@@ -229,9 +228,9 @@ def apply_revision_round(
 
 
 def complete_revision(session: Session, novel_id: str, revised_chapters: list[str]) -> None:
-    \"\"\"
+    """
     Simulate task_revise_novel completion: update chapters and set status to novel_pending_review.
-    \"\"\"
+    """
     chapters = (
         session.query(NovelChapter)
         .filter(NovelChapter.novel_id == novel_id)
@@ -266,14 +265,14 @@ revision_count_st = st.integers(min_value=1, max_value=5)
 @given(agent_type=agent_type_st, num_revisions=revision_count_st)
 @settings(max_examples=30, deadline=None)
 def test_revision_round_monotonically_increasing(agent_type: str, num_revisions: int):
-    \"\"\"
+    """
     **Validates: Requirements 8.1**
 
     Property 10: revision_round monotonically increasing
 
     For any novel, each time a revision is submitted, novels.revision_round
     should increase by exactly 1. The round should never decrease or skip.
-    \"\"\"
+    """
     engine = create_test_engine()
     with Session(engine) as sess:
         outline = make_outline(status="in_use", agent_type=agent_type)
@@ -321,11 +320,11 @@ def test_revision_round_monotonically_increasing(agent_type: str, num_revisions:
 @given(agent_type=agent_type_st)
 @settings(max_examples=20, deadline=None)
 def test_revision_round_starts_at_zero(agent_type: str):
-    \"\"\"
+    """
     **Validates: Requirements 8.1**
 
     Property 10: revision_round starts at 0 for new novels.
-    \"\"\"
+    """
     engine = create_test_engine()
     with Session(engine) as sess:
         outline = make_outline(status="in_use", agent_type=agent_type)
@@ -356,11 +355,11 @@ def test_revision_round_starts_at_zero(agent_type: str):
 def test_revision_round_increments_from_any_starting_point(
     agent_type: str, initial_round: int
 ):
-    \"\"\"
+    """
     **Validates: Requirements 8.1**
 
     Property 10: revision_round increments by exactly 1 regardless of starting value.
-    \"\"\"
+    """
     engine = create_test_engine()
     with Session(engine) as sess:
         outline = make_outline(status="in_use", agent_type=agent_type)
@@ -403,7 +402,7 @@ chapter_list_st = st.lists(chapter_content_st, min_size=1, max_size=5)
 def test_revision_snapshot_roundtrip_consistency(
     agent_type: str, chapter_contents: list[str]
 ):
-    \"\"\"
+    """
     **Validates: Requirements 8.3**
 
     Property 11: revision history snapshot round-trip consistency
@@ -411,7 +410,7 @@ def test_revision_snapshot_roundtrip_consistency(
     For any revision history record, deserializing content_snapshot (JSON)
     should restore a data structure equivalent to the pre-revision chapter contents.
     Serializing then deserializing should produce an equivalent object (round-trip property).
-    \"\"\"
+    """
     engine = create_test_engine()
     with Session(engine) as sess:
         outline = make_outline(status="in_use", agent_type=agent_type)
@@ -508,11 +507,11 @@ def test_revision_snapshot_roundtrip_consistency(
 def test_revision_snapshot_preserves_all_chapters(
     agent_type: str, chapter_contents: list[str]
 ):
-    \"\"\"
+    """
     **Validates: Requirements 8.3**
 
     Property 11: snapshot should contain all chapters, none missing.
-    \"\"\"
+    """
     engine = create_test_engine()
     with Session(engine) as sess:
         outline = make_outline(status="in_use", agent_type=agent_type)
@@ -594,10 +593,10 @@ def unit_session(unit_test_engine):
 
 
 def test_revision_completion_updates_status_to_pending_review(unit_session):
-    \"\"\"
+    """
     Requirements 7.3: After all chapters are revised, novel status should be
     updated to novel_pending_review.
-    \"\"\"
+    """
     outline = make_outline(status="in_use")
     unit_session.add(outline)
     unit_session.flush()
@@ -621,9 +620,9 @@ def test_revision_completion_updates_status_to_pending_review(unit_session):
 
 
 def test_revision_completion_updates_word_count(unit_session):
-    \"\"\"
+    """
     Requirements 7.3: After revision, word_count should equal sum of revised chapter lengths.
-    \"\"\"
+    """
     outline = make_outline(status="in_use")
     unit_session.add(outline)
     unit_session.flush()
@@ -648,9 +647,9 @@ def test_revision_completion_updates_word_count(unit_session):
 
 
 def test_revision_updates_chapter_content(unit_session):
-    \"\"\"
+    """
     Requirements 7.2: Each chapter's content should be updated after revision.
-    \"\"\"
+    """
     outline = make_outline(status="in_use")
     unit_session.add(outline)
     unit_session.flush()
@@ -677,9 +676,9 @@ def test_revision_updates_chapter_content(unit_session):
 
 
 def test_revision_history_ordered_by_round(unit_session):
-    \"\"\"
+    """
     Requirements 8.2: get_revision_history should return records ordered by revision_round ascending.
-    \"\"\"
+    """
     outline = make_outline(status="in_use")
     unit_session.add(outline)
     unit_session.flush()
@@ -704,7 +703,6 @@ def test_revision_history_ordered_by_round(unit_session):
         apply_revision_round(unit_session, novel.id, f"revision {i+1}")
 
     # Query history ordered by revision_round
-    from sqlalchemy import select as sa_select
     histories = (
         unit_session.query(NovelRevisionHistory)
         .filter(NovelRevisionHistory.novel_id == novel.id)
@@ -718,9 +716,9 @@ def test_revision_history_ordered_by_round(unit_session):
 
 
 def test_revision_history_snapshot_contains_correct_instructions(unit_session):
-    \"\"\"
+    """
     Requirements 8.1: Revision history should record the correct revision_instructions.
-    \"\"\"
+    """
     outline = make_outline(status="in_use")
     unit_session.add(outline)
     unit_session.flush()
@@ -750,11 +748,12 @@ def test_revision_history_snapshot_contains_correct_instructions(unit_session):
 
 
 def test_apply_revision_triggers_celery_task(monkeypatch):
-    \"\"\"
+    """
     Requirements 7.1: apply_revision should trigger the Celery task_revise_novel task.
-    \"\"\"
+    """
     import asyncio
-    from unittest.mock import MagicMock, patch
+    import sys
+    from unittest.mock import MagicMock
 
     sent_tasks = []
 
@@ -763,10 +762,26 @@ def test_apply_revision_triggers_celery_task(monkeypatch):
         {"name": name, "args": args}
     )
 
-    with patch(
-        "ai_novel_studio.pipeline.outline_tasks.app",
-        mock_celery_app,
-    ):
+    # Mock all dependencies before importing the service
+    mock_mysql = MagicMock()
+    mock_mysql.AsyncSessionLocal = MagicMock()
+    mock_mysql.NovelRevisionHistory = MagicMock()
+
+    mock_tasks = MagicMock()
+    mock_tasks.app = mock_celery_app
+
+    # Temporarily inject mocks into sys.modules
+    original_mysql = sys.modules.get("ai_novel_studio.storage.mysql")
+    original_tasks = sys.modules.get("ai_novel_studio.pipeline.outline_tasks")
+    original_revision = sys.modules.get("ai_novel_studio.services.novel_revision")
+
+    sys.modules["ai_novel_studio.storage.mysql"] = mock_mysql
+    sys.modules["ai_novel_studio.pipeline.outline_tasks"] = mock_tasks
+    # Remove cached revision module so it re-imports with mocks
+    if "ai_novel_studio.services.novel_revision" in sys.modules:
+        del sys.modules["ai_novel_studio.services.novel_revision"]
+
+    try:
         from ai_novel_studio.services.novel_revision import NovelRevisionService
 
         service = NovelRevisionService()
@@ -775,6 +790,22 @@ def test_apply_revision_triggers_celery_task(monkeypatch):
         revision_round = 1
 
         asyncio.run(service.apply_revision(novel_id, instructions, revision_round))
+    finally:
+        # Restore original modules
+        if original_mysql is not None:
+            sys.modules["ai_novel_studio.storage.mysql"] = original_mysql
+        elif "ai_novel_studio.storage.mysql" in sys.modules:
+            del sys.modules["ai_novel_studio.storage.mysql"]
+
+        if original_tasks is not None:
+            sys.modules["ai_novel_studio.pipeline.outline_tasks"] = original_tasks
+        elif "ai_novel_studio.pipeline.outline_tasks" in sys.modules:
+            del sys.modules["ai_novel_studio.pipeline.outline_tasks"]
+
+        if original_revision is not None:
+            sys.modules["ai_novel_studio.services.novel_revision"] = original_revision
+        elif "ai_novel_studio.services.novel_revision" in sys.modules:
+            del sys.modules["ai_novel_studio.services.novel_revision"]
 
     assert len(sent_tasks) == 1, f"Should have sent 1 task, got {len(sent_tasks)}"
     task = sent_tasks[0]
@@ -787,10 +818,11 @@ def test_apply_revision_triggers_celery_task(monkeypatch):
 
 
 def test_get_revision_history_returns_empty_for_no_history(monkeypatch):
-    \"\"\"
+    """
     Requirements 8.2: get_revision_history should return empty list when no history exists.
-    \"\"\"
+    """
     import asyncio
+    import sys
     from unittest.mock import AsyncMock, MagicMock, patch
 
     mock_session = MagicMock()
@@ -800,15 +832,45 @@ def test_get_revision_history_returns_empty_for_no_history(monkeypatch):
     mock_session.__aenter__ = AsyncMock(return_value=mock_session)
     mock_session.__aexit__ = AsyncMock(return_value=None)
 
-    mock_session_local = MagicMock(return_value=mock_session)
+    mock_session_factory = MagicMock(return_value=mock_session)
 
-    with patch(
-        "ai_novel_studio.services.novel_revision.AsyncSessionLocal",
-        mock_session_local,
-    ):
-        from ai_novel_studio.services.novel_revision import NovelRevisionService
+    mock_mysql = MagicMock()
+    mock_mysql.AsyncSessionLocal = mock_session_factory
+    mock_mysql.NovelRevisionHistory = MagicMock()
 
-        service = NovelRevisionService()
-        result = asyncio.run(service.get_revision_history(str(uuid.uuid4())))
+    mock_tasks = MagicMock()
+
+    original_mysql = sys.modules.get("ai_novel_studio.storage.mysql")
+    original_tasks = sys.modules.get("ai_novel_studio.pipeline.outline_tasks")
+    original_revision = sys.modules.get("ai_novel_studio.services.novel_revision")
+
+    sys.modules["ai_novel_studio.storage.mysql"] = mock_mysql
+    sys.modules["ai_novel_studio.pipeline.outline_tasks"] = mock_tasks
+    if "ai_novel_studio.services.novel_revision" in sys.modules:
+        del sys.modules["ai_novel_studio.services.novel_revision"]
+
+    try:
+        # Also mock sqlalchemy.select to avoid the MagicMock entity issue
+        mock_select = MagicMock(return_value=MagicMock())
+        with patch("sqlalchemy.select", mock_select):
+            from ai_novel_studio.services.novel_revision import NovelRevisionService
+
+            service = NovelRevisionService()
+            result = asyncio.run(service.get_revision_history(str(uuid.uuid4())))
+    finally:
+        if original_mysql is not None:
+            sys.modules["ai_novel_studio.storage.mysql"] = original_mysql
+        elif "ai_novel_studio.storage.mysql" in sys.modules:
+            del sys.modules["ai_novel_studio.storage.mysql"]
+
+        if original_tasks is not None:
+            sys.modules["ai_novel_studio.pipeline.outline_tasks"] = original_tasks
+        elif "ai_novel_studio.pipeline.outline_tasks" in sys.modules:
+            del sys.modules["ai_novel_studio.pipeline.outline_tasks"]
+
+        if original_revision is not None:
+            sys.modules["ai_novel_studio.services.novel_revision"] = original_revision
+        elif "ai_novel_studio.services.novel_revision" in sys.modules:
+            del sys.modules["ai_novel_studio.services.novel_revision"]
 
     assert result == [], f"Should return empty list, got {result}"

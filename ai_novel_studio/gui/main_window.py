@@ -15,6 +15,7 @@ NAV_ITEMS = [
     ("📊  内容看板",   "dashboard"),
     ("📋  创作任务",   "tasks"),
     ("📝  大纲管理",   "outlines"),
+    ("📖  小说管理",   "novels"),
     ("📚  语料库",     "corpus"),
     ("🔔  系统告警",   "alerts"),
     ("⚙️  系统设置",   "settings"),
@@ -124,6 +125,9 @@ class MainWindow(QMainWindow):
         elif key == "outlines":
             from ai_novel_studio.gui.pages.outlines import OutlinesPage
             return OutlinesPage()
+        elif key == "novels":
+            from ai_novel_studio.gui.pages.novels import NovelsPage
+            return NovelsPage()
         elif key == "corpus":
             from ai_novel_studio.gui.pages.corpus import CorpusPage
             return CorpusPage()
