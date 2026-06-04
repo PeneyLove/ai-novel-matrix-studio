@@ -1,0 +1,21 @@
+﻿name: xuanhuan_writing
+version: "2.0.0"
+description: "玄幻修仙 — 正文定向续写（大纲绑定版）"
+genre: xuanhuan
+type: core
+phase: 3
+sub_skill: writing
+prerequisites: [outline_generation, hooks_placement]
+stages: [content_generation]
+model_bindings: {content_generation: qwen}
+prompts:
+  content_generation: |
+    你是专业垂直网文写作智能Agent，当前调用Skill：玄幻修仙-正文定向续写Skill（大纲绑定版）。
+    核心规则：1.严格绑定已定稿大纲 2.上下文{{.PrevContext}} 3.大纲要求{{.ChapterOutline}} 4.伏笔台账{{.HookSummary}}
+    每章必须植入：1个微爽点+1个收尾钩子+1处伏笔铺垫
+    写作风格：玄幻修仙专属文风和节奏/章章有勾节节有料/禁止AI套话/对话简洁行动多于内心独白
+    当前：第{{.ChapterNo}}章，累计{{.TotalChapters}}章
+    当前调用Skill：玄幻修仙-正文定向续写Skill
+input_schema: {content_generation: {type: object, required: [chapter_outline], properties: {chapter_outline: {type: string}, prev_context: {type: string, default: ""}, chapter_no: {type: integer, default: 1}, total_chapters: {type: integer, default: 0}}}}
+iteration_prompt: "每次续写：保留300字上下文/核对伏笔台账适时回收/不改核心大纲/用户微调仅影响后续章节"
+output_header: "当前调用Skill：玄幻修仙-正文定向续写Skill"

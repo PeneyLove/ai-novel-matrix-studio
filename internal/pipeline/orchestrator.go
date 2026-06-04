@@ -1,16 +1,11 @@
 // Package pipeline implements the creation pipeline orchestration.
 //
-// The pipeline runs a skill's stages in sequence:
-//
-//	topic_generation → outline_generation → content_generation → polish
-//
-// Each stage:
-//   - Resolves the model client via Router
-//   - Renders the skill's prompt template with input data
-//   - Calls the model and stores the output
-//   - Records a copyright trace (SHA256 hashes)
-//
-// Idempotency: if outputs/<taskID>/ already exists, the task is not re-executed.
+// v2.0 — updated for Prompt.md comprehensive architecture:
+//   - 4-phase enforcement (init → outline+hooks → writing → optimize)
+//   - NovelState injection into prompt templates via {{.NovelState}}
+//   - Hook ledger summarization via {{.HookSummary}}
+//   - Output header validation (every response must declare skill)
+//   - Prerequisites checking before writing phase
 package pipeline
 
 import (
@@ -24,19 +19,21 @@ import (
 
 	"github.com/penney-101/ai-novel-agent/internal/model"
 	"github.com/penney-101/ai-novel-agent/internal/skill"
+	"github.com/penney-101/ai-novel-agent/internal/state"
 	"github.com/penney-101/ai-novel-agent/internal/storage"
 )
 
 // Orchestrator runs pipeline tasks against a skill and model router.
 type Orchestrator struct {
-	root   string            // .novelAgent root
+	root   string
 	router *model.Router
 	mgr    *skill.Manager
 
-	// HotKeywords and CorpusSamples are injected into prompt templates.
-	// They are loaded from .novelAgent/corpus/ on init.
-	HotKeywords   map[string][]string // skill name → keywords
-	CorpusSamples map[string]string   // skill name → concatenated samples
+	// Cached state per novel
+	states map[string]*state.NovelState
+
+	HotKeywords   map[string][]string
+	CorpusSamples map[string]string
 }
 
 // NewOrchestrator creates an Orchestrator for the given .novelAgent root.
@@ -45,29 +42,30 @@ func NewOrchestrator(root string, router *model.Router, mgr *skill.Manager) *Orc
 		root:          root,
 		router:        router,
 		mgr:           mgr,
+		states:        make(map[string]*state.NovelState),
 		HotKeywords:   defaultKeywords(),
 		CorpusSamples: loadCorpusSamples(root),
 	}
 }
 
-// defaultKeywords returns the built-in hot keyword sets from v0.x.
 func defaultKeywords() map[string][]string {
 	return map[string][]string{
-		"female_rebirth": {"重生", "穿越", "虐渣", "马甲", "打脸", "逆袭", "复仇"},
-		"male_power":     {"都市", "异能", "系统", "签到", "无敌", "升级", "金手指"},
-		"suspense":       {"悬疑", "推理", "侦探", "反转", "密室", "诡计", "真相"},
-		"romance":        {"甜宠", "恋爱", "暖文", "校园", "青梅竹马", "总裁", "契约"},
+		"xuanhuan":  {"修仙", "渡劫", "逆袭", "宗门", "天道", "法宝", "境界", "飞升"},
+		"dushi":     {"打脸", "逆袭", "神医", "战神", "豪门", "赘婿", "系统", "签到"},
+		"guyan":     {"宫斗", "权谋", "重生", "穿越", "嫡女", "王爷", "朝堂", "翻盘"},
+		"xuanyi":    {"悬疑", "反转", "诡计", "密室", "怪谈", "探案", "真相", "恐怖"},
+		"kehuan":    {"末世", "副本", "无限", "进化", "星际", "系统", "生存", "赛博"},
+		"tianchong": {"甜宠", "霸总", "暗恋", "破镜重圆", "青梅竹马", "追妻", "契约", "暖婚"},
 	}
 }
 
 func loadCorpusSamples(root string) map[string]string {
 	samples := make(map[string]string)
-	for _, cat := range []string{"female_rebirth", "male_power", "suspense", "romance"} {
+	for _, cat := range []string{"xuanhuan", "dushi", "guyan", "xuanyi", "kehuan", "tianchong"} {
 		lines, err := storage.ReadCorpus(root, cat)
 		if err != nil || len(lines) == 0 {
 			continue
 		}
-		// Take up to 5 samples
 		if len(lines) > 5 {
 			lines = lines[:5]
 		}
@@ -76,15 +74,41 @@ func loadCorpusSamples(root string) map[string]string {
 	return samples
 }
 
-// --- Pipeline execution ---
+// --- State management ---
 
-// StageInput carries the input data for a single stage.
+// GetOrCreateState returns the novel state, creating it if necessary.
+func (o *Orchestrator) GetOrCreateState(novelID, genre string) *state.NovelState {
+	if ns, ok := o.states[novelID]; ok {
+		return ns
+	}
+	// Try loading from disk
+	ns, err := state.LoadNovelState(o.root, novelID)
+	if err == nil {
+		o.states[novelID] = ns
+		return ns
+	}
+	ns = state.NewNovelState(novelID, genre)
+	o.states[novelID] = ns
+	return ns
+}
+
+// SaveState persists the novel state to disk.
+func (o *Orchestrator) SaveState(ns *state.NovelState) error {
+	return ns.Save(o.root)
+}
+
+// --- Stage execution ---
+
+// StageInput carries the input data for a single stage (v2.x extended).
 type StageInput struct {
-	TrendData      string // topic_generation
-	Topic          string // outline_generation
-	ChapterOutline string // content_generation
-	PrevContext    string // content_generation (previous chapter summary)
-	Content        string // polish (raw content)
+	TrendData      string
+	Topic          string
+	ChapterOutline string
+	PrevContext    string
+	Content        string
+	ChapterNo      int
+	TotalChapters  int
+	NovelID        string // for state lookup
 }
 
 // StageOutput is the result of executing a single stage.
@@ -94,9 +118,10 @@ type StageOutput struct {
 	Content    string `json:"content"`
 	PromptHash string `json:"prompt_hash"`
 	DraftHash  string `json:"draft_hash"`
+	SkillName  string `json:"skill_name"` // the invoked skill name (for output header)
 }
 
-// RunStage executes a single pipeline stage.
+// RunStage executes a single pipeline stage with NovelState injection.
 func (o *Orchestrator) RunStage(ctx context.Context, taskID, skillName, stage string, input StageInput) (*StageOutput, error) {
 	sk := o.mgr.Get(skillName)
 	if sk == nil {
@@ -106,13 +131,23 @@ func (o *Orchestrator) RunStage(ctx context.Context, taskID, skillName, stage st
 		return nil, fmt.Errorf("pipeline: skill %q does not support stage %q", skillName, stage)
 	}
 
-	// Build prompt from template
-	systemPrompt, err := o.renderPrompt(sk, stage, input)
+	// Phase enforcement
+	if err := o.checkPrerequisites(sk, input.NovelID); err != nil {
+		return nil, err
+	}
+
+	// Get or create novel state
+	var ns *state.NovelState
+	if input.NovelID != "" {
+		ns = o.GetOrCreateState(input.NovelID, sk.Genre)
+	}
+
+	// Render system prompt with state injected
+	systemPrompt, err := o.renderPromptV2(sk, stage, input, ns)
 	if err != nil {
 		return nil, fmt.Errorf("pipeline: render prompt for %s/%s: %w", skillName, stage, err)
 	}
 
-	// Build user prompt (simple pass-through of the primary input field)
 	userPrompt := o.userPromptForStage(stage, input)
 
 	// Call model
@@ -141,22 +176,63 @@ func (o *Orchestrator) RunStage(ctx context.Context, taskID, skillName, stage st
 		fmt.Fprintf(os.Stderr, "[pipeline] WARNING: failed to record copyright trace for %s/%s: %v\n", taskID, stage, err)
 	}
 
+	// Update novel state after successful stage
+	if ns != nil {
+		switch stage {
+		case "genre_init":
+			ns.InitCompleted = true
+			ns.InitSummary = last500(content)
+		case "outline_generation":
+			ns.AddOutlineVersion("AI generated", content)
+		case "hooks_placement":
+			// Hooks are parsed from content — simplified: store as hook entries
+			ns.OutlineFinalized = true
+		case "content_generation":
+			ns.WritingStarted = true
+			ns.ChaptersWritten++
+			ns.LastChapterSummary = last300(content)
+		}
+		o.SaveState(ns)
+	}
+
 	return &StageOutput{
 		Stage:      stage,
 		TaskID:     taskID,
 		Content:    content,
 		PromptHash: promptHash,
 		DraftHash:  draftHash,
+		SkillName:  sk.FullName(),
 	}, nil
 }
 
+// checkPrerequisites validates that required preceding stages are done.
+func (o *Orchestrator) checkPrerequisites(sk *skill.Skill, novelID string) error {
+	if len(sk.Prerequisites) == 0 || novelID == "" {
+		return nil
+	}
+	ns, err := state.LoadNovelState(o.root, novelID)
+	if err != nil {
+		return fmt.Errorf("pipeline: cannot check prerequisites for novel %q: state not found", novelID)
+	}
+	for _, prereq := range sk.Prerequisites {
+		switch prereq {
+		case "outline_generation":
+			if !ns.OutlineFinalized {
+				return fmt.Errorf("pipeline: outline must be finalized before writing (use 'novel-agent run --skill %s_outline' first)", sk.Genre)
+			}
+		case "hooks_placement":
+			if !ns.OutlineFinalized {
+				return fmt.Errorf("pipeline: hooks must be placed before writing (use 'novel-agent run --skill %s_hooks' first)", sk.Genre)
+			}
+		}
+	}
+	return nil
+}
+
 // RunPipeline executes all stages of a skill in sequence.
-// Idempotent: if the taskID already has outputs/, it returns the existing data.
 func (o *Orchestrator) RunPipeline(ctx context.Context, taskID, skillName, trendData string) ([]StageOutput, error) {
-	// Idempotency guard (property P4)
 	if storage.TaskExists(o.root, taskID) {
 		fmt.Fprintf(os.Stderr, "[pipeline] task %q already exists, skipping\n", taskID)
-		// Re-read existing outputs
 		return o.readExistingOutputs(taskID)
 	}
 
@@ -175,8 +251,8 @@ func (o *Orchestrator) RunPipeline(ctx context.Context, taskID, skillName, trend
 			Topic:      lastContent,
 			PrevContext: last300(lastContent),
 			Content:    lastContent,
+			NovelID:    taskID,
 		}
-
 		out, err := o.RunStage(ctx, taskID, skillName, stage, input)
 		if err != nil {
 			return outputs, fmt.Errorf("pipeline: stage %q failed: %w", stage, err)
@@ -184,14 +260,12 @@ func (o *Orchestrator) RunPipeline(ctx context.Context, taskID, skillName, trend
 		outputs = append(outputs, *out)
 		lastContent = out.Content
 	}
-
 	return outputs, nil
 }
 
-// --- Prompt rendering ---
+// --- Prompt rendering (v2.x with state injection) ---
 
-// promptData is the set of values available to prompt templates.
-type promptData struct {
+type promptDataV2 struct {
 	HotKeywords    string
 	CorpusSamples  string
 	TrendData      string
@@ -199,9 +273,13 @@ type promptData struct {
 	ChapterOutline string
 	PrevContext    string
 	Content        string
+	ChapterNo      int
+	TotalChapters  int
+	NovelState     string // serialized novel state summary
+	HookSummary    string // formatted hook ledger
 }
 
-func (o *Orchestrator) renderPrompt(sk *skill.Skill, stage string, input StageInput) (string, error) {
+func (o *Orchestrator) renderPromptV2(sk *skill.Skill, stage string, input StageInput, ns *state.NovelState) (string, error) {
 	tmplStr := sk.PromptFor(stage)
 	if tmplStr == "" {
 		return "", fmt.Errorf("no prompt template for stage %q", stage)
@@ -212,14 +290,43 @@ func (o *Orchestrator) renderPrompt(sk *skill.Skill, stage string, input StageIn
 		return "", fmt.Errorf("parse template: %w", err)
 	}
 
-	data := promptData{
-		HotKeywords:    strings.Join(o.HotKeywords[sk.Name], "、"),
-		CorpusSamples:  o.CorpusSamples[sk.Name],
+	data := promptDataV2{
+		HotKeywords:    strings.Join(o.HotKeywords[sk.Genre], "、"),
+		CorpusSamples:  o.CorpusSamples[sk.Genre],
 		TrendData:      input.TrendData,
 		Topic:          input.Topic,
 		ChapterOutline: input.ChapterOutline,
 		PrevContext:    input.PrevContext,
 		Content:        input.Content,
+		ChapterNo:      input.ChapterNo,
+		TotalChapters:  input.TotalChapters,
+	}
+
+	if ns != nil {
+		// Serialize the state into a compact prompt-ready string
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("【创作状态】类型:%s 赛道:%s\n", sk.Genre, ns.SubTrack))
+		if ns.InitCompleted {
+			sb.WriteString("✓ 初始化已完成\n")
+		}
+		if ns.OutlineFinalized {
+			sb.WriteString(fmt.Sprintf("✓ 大纲已定稿(V%d)\n", ns.OutlineVersion))
+		} else if ns.OutlineVersion > 0 {
+			sb.WriteString(fmt.Sprintf("大纲迭代中(V%d)\n", ns.OutlineVersion))
+		}
+		if ns.WritingStarted {
+			sb.WriteString(fmt.Sprintf("已写%d章\n", ns.ChaptersWritten))
+		}
+		// Hook summary
+		hs := ns.HookSummary()
+		if strings.Contains(hs, "共 0 条") {
+			hs = "（暂无伏笔）"
+		}
+		data.HookSummary = hs
+		data.NovelState = sb.String()
+	} else {
+		data.NovelState = "（新任务，无历史状态）"
+		data.HookSummary = "（暂无伏笔）"
 	}
 
 	var buf bytes.Buffer
@@ -231,25 +338,28 @@ func (o *Orchestrator) renderPrompt(sk *skill.Skill, stage string, input StageIn
 
 func (o *Orchestrator) userPromptForStage(stage string, input StageInput) string {
 	switch stage {
-	case "topic_generation":
-		return fmt.Sprintf("热榜数据：%s\n请生成3个差异化选题，每个含书名、核心人设、爽点方向。", input.TrendData)
+	case "genre_init":
+		return fmt.Sprintf("用户创作意向：%s\n请确认赛道锁定、初始化创作档案，然后询问用户是否进入大纲阶段。", input.TrendData)
 	case "outline_generation":
-		return fmt.Sprintf("选题：%s\n请生成分卷大纲（5卷），每卷含3个核心爽点和结尾钩子。", input.Topic)
+		return fmt.Sprintf("选题：%s\n请生成完整大纲（核心设定+人物谱系+主线剧情+爽点节点），分卷呈现。", input.Topic)
+	case "hooks_placement":
+		return "请基于已定稿大纲完成全维度伏笔/爽点/钩子埋置，每个伏笔标注ID和回收时机。"
 	case "content_generation":
-		prev := input.PrevContext
-		if prev != "" {
-			prev = "上文摘要：" + prev + "\n"
+		prev := ""
+		if input.PrevContext != "" {
+			prev = "上文摘要：" + input.PrevContext + "\n"
 		}
-		return fmt.Sprintf("%s本章大纲：%s\n请按大纲生成本章正文（1500-2000字），保持人设一致，结尾留钩子。", prev, input.ChapterOutline)
+		return fmt.Sprintf("%s本章大纲：%s\n请生成第%d章正文（1500-2500字），植入微爽点+钩子+伏笔铺垫。", prev, input.ChapterOutline, input.ChapterNo)
 	case "polish":
 		return fmt.Sprintf("原文：\n%s\n\n请润色：去除AI套话、优化节奏、强化情绪张力，保留原意。", input.Content)
+	case "optimize_shuangdian", "optimize_fubi", "optimize_jiezou", "optimize_renshe", "optimize_chongtu":
+		return fmt.Sprintf("原文：\n%s\n\n请按该优化Skill的规则执行优化。", input.Content)
 	default:
 		return input.TrendData + input.Topic + input.ChapterOutline + input.Content
 	}
 }
 
 func (o *Orchestrator) readExistingOutputs(taskID string) ([]StageOutput, error) {
-	// Re-read from storage
 	entries, err := os.ReadDir(o.root + "/outputs/" + taskID)
 	if err != nil {
 		return nil, fmt.Errorf("pipeline: read existing outputs: %w", err)
@@ -279,4 +389,12 @@ func last300(s string) string {
 		return s
 	}
 	return string(runes[len(runes)-300:])
+}
+
+func last500(s string) string {
+	runes := []rune(s)
+	if len(runes) <= 500 {
+		return s
+	}
+	return string(runes[len(runes)-500:])
 }

@@ -1,0 +1,19 @@
+﻿name: kehuan_optimize_shuangdian
+version: "2.0.0"
+description: "科幻无限 — 爽点强化（无限流、末世生存、星际科幻、系统副本、赛博朋克、末日重生）"
+genre: kehuan
+type: optimization
+phase: 4
+sub_skill: optimize_shuangdian
+stages: [optimize_shuangdian]
+model_bindings: {optimize_shuangdian: deepseek}
+prompts:
+  optimize_shuangdian: |
+    你是专业垂直网文写作智能Agent，当前调用Skill：科幻无限-爽点强化Skill。
+    你已锁定【科幻无限】赛道，执行专项优化：爽点强化（强化打脸/升级/逆袭/收获核心亮点）。
+    基于当前创作状态（{{.NovelState}}）和内容（{{.Content}}），请执行：1.分析爽点密度 2.压缩水字数段落 3.薄弱处增加微爽点(每章≥3处情绪峰值) 4.调整爽点类型配比 5.提升关键爽点渲染力度
+    输出格式：1.优化诊断 2.优化后内容 3.优化说明
+    当前调用Skill：科幻无限-爽点强化Skill
+input_schema: {optimize_shuangdian: {type: object, required: [content], properties: {content: {type: string}, target_area: {type: string, default: "全篇"}}}}
+iteration_prompt: ""
+output_header: "当前调用Skill：科幻无限-爽点强化Skill"

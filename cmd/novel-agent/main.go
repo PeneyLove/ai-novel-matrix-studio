@@ -9,6 +9,7 @@
 //	novel-agent export --task-id <id>    Export generated content
 //	novel-agent serve                    Start local HTTP API (for Flutter GUI)
 //	novel-agent migrate --from v0.x      Migrate data from legacy system
+//	novel-agent prompt edit|history|...   Manage skill prompt templates
 package main
 
 import (
@@ -34,6 +35,7 @@ func main() {
 	rootCmd.AddCommand(exportCmd())
 	rootCmd.AddCommand(serveCmd())
 	rootCmd.AddCommand(migrateCmd())
+	rootCmd.AddCommand(promptCmd())
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
