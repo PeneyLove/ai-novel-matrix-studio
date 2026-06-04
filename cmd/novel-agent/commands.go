@@ -190,6 +190,23 @@ func runInit(cmd *cobra.Command, args []string) error {
 				"polish":             "deepseek",
 				"fallback":           "qwen",
 			},
+			"global_rules": map[string]any{
+				"language": "zh-CN",
+				"rules": []string{
+					"全程使用简体中文输出，包括所有说明、描述、对话、叙述",
+					"专有名词、技术术语可保留原文（如 API、SDK、GDP、CEO 等）",
+					"人名、地名、品牌名等专有名称可保留英文或拼音原文",
+					"网络热梗、流行语、meme 可以使用，但涉及实时信息时需申请联网权限",
+					"代码块、命令行示例保持英文原样",
+					"禁止输出繁体中文",
+					"数字使用阿拉伯数字",
+					"标点符号使用全角中文标点",
+				},
+				"network": map[string]any{
+					"enabled":        false,
+					"ask_permission": true,
+				},
+			},
 		}
 		if err := storage.WriteConfig(root, defaultConfig); err != nil {
 			return fmt.Errorf("write config: %w", err)
@@ -199,17 +216,32 @@ func runInit(cmd *cobra.Command, args []string) error {
 		cmd.Println("ⓘ config.yaml already exists (use --force to overwrite)")
 	}
 
-	// Copy built-in skills
-	builtinSkills := []string{"female_rebirth", "male_power", "suspense", "romance"}
-	// Built-in skills are embedded from the skills/ directory shipped with the binary.
-	// For now, copy from the embedded filesystem.
-	for _, name := range builtinSkills {
-		srcPath := filepath.Join("skills", name, "skill.yaml")
-		if data, err := os.ReadFile(srcPath); err == nil {
-			var skillMap map[string]any
-			if err := yaml.Unmarshal(data, &skillMap); err == nil {
-				if err := storage.WriteSkill(root, name, skillMap); err != nil {
-					cmd.Printf("⚠ Failed to install skill %q: %v\n", name, err)
+	// Copy built-in skills (v2.0 genre system)
+	builtinGenres := []string{"xuanhuan", "dushi", "guyan", "xuanyi", "kehuan", "tianchong"}
+	builtinSubSkills := []string{"genre_init", "outline", "hooks", "writing"}
+	builtinOptimizes := []string{"shuangdian", "fubi", "jiezou", "renshe", "chongtu"}
+	for _, genre := range builtinGenres {
+		for _, sub := range builtinSubSkills {
+			srcPath := filepath.Join("skills", genre, sub+".yaml")
+			if data, err := os.ReadFile(srcPath); err == nil {
+				var skillMap map[string]any
+				if err := yaml.Unmarshal(data, &skillMap); err == nil {
+					name := genre + "_" + sub
+					if err := storage.WriteSkill(root, name, skillMap); err != nil {
+						cmd.Printf("⚠ Failed to install skill %q: %v\n", name, err)
+					}
+				}
+			}
+		}
+		for _, opt := range builtinOptimizes {
+			srcPath := filepath.Join("skills", genre, "optimize", opt+".yaml")
+			if data, err := os.ReadFile(srcPath); err == nil {
+				var skillMap map[string]any
+				if err := yaml.Unmarshal(data, &skillMap); err == nil {
+					name := genre + "_optimize_" + opt
+					if err := storage.WriteSkill(root, name, skillMap); err != nil {
+						cmd.Printf("⚠ Failed to install skill %q: %v\n", name, err)
+					}
 				}
 			}
 		}

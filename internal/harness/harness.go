@@ -13,17 +13,20 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/penney-101/ai-novel-agent/internal/global"
 	"github.com/penney-101/ai-novel-agent/internal/model"
 	"github.com/penney-101/ai-novel-agent/internal/pipeline"
 	"github.com/penney-101/ai-novel-agent/internal/skill"
+	"github.com/penney-101/ai-novel-agent/internal/storage"
 )
 
 // Harness is the top-level application runtime.
 type Harness struct {
-	Root    string
-	Skills  *skill.Manager
-	Router  *model.Router
-	Pipe    *pipeline.Orchestrator
+	Root        string
+	Skills      *skill.Manager
+	Router      *model.Router
+	Pipe        *pipeline.Orchestrator
+	GlobalRules global.Rules
 }
 
 // New creates a Harness from the given .novelAgent root directory.
@@ -31,6 +34,38 @@ func New(root string, modelConfigs map[string]model.Config, fallbackModel string
 	// Validate root exists
 	if info, err := os.Stat(root); err != nil || !info.IsDir() {
 		return nil, fmt.Errorf("harness: .novelAgent directory not found at %q — run 'novel-agent init' first", root)
+	}
+
+	// Load config for global rules
+	rules := global.DefaultRules()
+	if cfg, err := storage.ReadConfig(root); err == nil {
+		if gr, ok := cfg["global_rules"]; ok {
+			if grMap, ok := gr.(map[string]any); ok {
+				if lang, ok := grMap["language"].(string); ok {
+					rules.Language = lang
+				}
+				if ruleList, ok := grMap["rules"]; ok {
+					if rl, ok := ruleList.([]any); ok {
+						rules.Rules = make([]string, 0, len(rl))
+						for _, r := range rl {
+							if s, ok := r.(string); ok {
+								rules.Rules = append(rules.Rules, s)
+							}
+						}
+					}
+				}
+				if netCfg, ok := grMap["network"]; ok {
+					if nm, ok := netCfg.(map[string]any); ok {
+						if enabled, ok := nm["enabled"].(bool); ok {
+							rules.Network.Enabled = enabled
+						}
+						if ask, ok := nm["ask_permission"].(bool); ok {
+							rules.Network.AskPermission = ask
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Load skills
@@ -48,14 +83,16 @@ func New(root string, modelConfigs map[string]model.Config, fallbackModel string
 		return nil, fmt.Errorf("harness: create router: %w", err)
 	}
 
-	// Create pipeline orchestrator
+	// Create pipeline orchestrator with global rules injected
 	pipe := pipeline.NewOrchestrator(root, router, mgr)
+	pipe.GlobalRules = rules
 
 	return &Harness{
-		Root:   root,
-		Skills: mgr,
-		Router: router,
-		Pipe:   pipe,
+		Root:        root,
+		Skills:      mgr,
+		Router:      router,
+		Pipe:        pipe,
+		GlobalRules: rules,
 	}, nil
 }
 

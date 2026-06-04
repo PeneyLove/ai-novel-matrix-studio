@@ -97,8 +97,17 @@ type Skill struct {
 	// E.g. "当前调用Skill：玄幻修仙-大纲迭代优化Skill"
 	OutputHeader string `yaml:"output_header" json:"output_header"`
 
+	// RequiresNetwork indicates this skill needs internet access (e.g. hot meme lookup).
+	// When true and network is not enabled, the pipeline will request permission.
+	RequiresNetwork bool `yaml:"requires_network" json:"requires_network"`
+
 	// InputSchema maps stage → JSON Schema for input validation.
 	InputSchema map[string]json.RawMessage `yaml:"input_schema" json:"input_schema"`
+}
+
+// NeedsNetworkPermission returns true if this skill requires network access.
+func (s *Skill) NeedsNetworkPermission() bool {
+	return s.RequiresNetwork
 }
 
 // FullName returns the genre-qualified skill name: "xuanhuan/outline".

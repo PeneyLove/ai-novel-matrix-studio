@@ -7,6 +7,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,8 +46,9 @@ func NewServer(h *harness.Harness, port int) *Server {
 	// Stage — run single stage
 	mux.HandleFunc("/api/stage", s.handleStage)
 
-	// Export
-	mux.HandleFunc("/api/export", s.handleExport)
+	// Global rules query
+	mux.HandleFunc("/api/global_rules", s.handleGlobalRules)
+	mux.HandleFunc("/api/global_rules/network", s.handleNetworkPermission)
 
 	// Tasks — list outputs
 	mux.HandleFunc("/api/tasks", s.handleTasks)
@@ -200,6 +202,17 @@ func (s *Server) handleStage(w http.ResponseWriter, r *http.Request) {
 			Content:        req.Input["content"],
 		})
 	if err != nil {
+		// Check for network permission request
+		var permErr *pipeline.NetworkPermissionRequired
+		if errors.As(err, &permErr) {
+			jsonResp(w, http.StatusForbidden, map[string]any{
+				"needs_network_permission": true,
+				"skill_name":               permErr.Permission.SkillName,
+				"reason":                   permErr.Permission.Reason,
+				"action":                   "Call POST /api/global_rules/network with {'enable': true} to grant access",
+			})
+			return
+		}
 		jsonErr(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -293,5 +306,41 @@ func (s *Server) handleTaskDetail(w http.ResponseWriter, r *http.Request) {
 	jsonResp(w, http.StatusOK, map[string]any{
 		"task_id": taskID,
 		"stages":  stages,
+	})
+}
+
+// ---- Global Rules ----
+
+func (s *Server) handleGlobalRules(w http.ResponseWriter, r *http.Request) {
+	jsonResp(w, http.StatusOK, map[string]any{
+		"language": s.h.GlobalRules.Language,
+		"rules":    s.h.GlobalRules.Rules,
+		"network": map[string]any{
+			"enabled":         s.h.GlobalRules.Network.Enabled,
+			"ask_permission":  s.h.GlobalRules.Network.AskPermission,
+		},
+	})
+}
+
+func (s *Server) handleNetworkPermission(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		// Toggle network access
+		var req struct {
+			Enable bool `json:"enable"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err == nil {
+			s.h.GlobalRules.Network.Enabled = req.Enable
+			s.h.Pipe.GlobalRules.Network.Enabled = req.Enable
+			jsonResp(w, http.StatusOK, map[string]any{
+				"network_enabled": s.h.GlobalRules.Network.Enabled,
+			})
+			return
+		}
+	}
+	// GET: read current network status
+	jsonResp(w, http.StatusOK, map[string]any{
+		"network_enabled":  s.h.GlobalRules.Network.Enabled,
+		"ask_permission":   s.h.GlobalRules.Network.AskPermission,
+		"allowed_domains":  s.h.GlobalRules.Network.AllowedDomains,
 	})
 }

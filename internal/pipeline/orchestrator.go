@@ -17,6 +17,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/penney-101/ai-novel-agent/internal/global"
 	"github.com/penney-101/ai-novel-agent/internal/model"
 	"github.com/penney-101/ai-novel-agent/internal/skill"
 	"github.com/penney-101/ai-novel-agent/internal/state"
@@ -28,6 +29,9 @@ type Orchestrator struct {
 	root   string
 	router *model.Router
 	mgr    *skill.Manager
+
+	// Global rules injected into every system prompt
+	GlobalRules global.Rules
 
 	// Cached state per novel
 	states map[string]*state.NovelState
@@ -42,6 +46,7 @@ func NewOrchestrator(root string, router *model.Router, mgr *skill.Manager) *Orc
 		root:          root,
 		router:        router,
 		mgr:           mgr,
+		GlobalRules:   global.DefaultRules(),
 		states:        make(map[string]*state.NovelState),
 		HotKeywords:   defaultKeywords(),
 		CorpusSamples: loadCorpusSamples(root),
@@ -121,7 +126,7 @@ type StageOutput struct {
 	SkillName  string `json:"skill_name"` // the invoked skill name (for output header)
 }
 
-// RunStage executes a single pipeline stage with NovelState injection.
+// RunStage executes a single pipeline stage with NovelState injection and global rules.
 func (o *Orchestrator) RunStage(ctx context.Context, taskID, skillName, stage string, input StageInput) (*StageOutput, error) {
 	sk := o.mgr.Get(skillName)
 	if sk == nil {
@@ -129,6 +134,15 @@ func (o *Orchestrator) RunStage(ctx context.Context, taskID, skillName, stage st
 	}
 	if !sk.SupportsStage(stage) {
 		return nil, fmt.Errorf("pipeline: skill %q does not support stage %q", skillName, stage)
+	}
+
+	// Network permission check
+	if sk.NeedsNetworkPermission() && !o.GlobalRules.Network.Enabled {
+		permReq := global.CheckPermission(o.GlobalRules, false, sk.FullName(),
+			"此Skill需要联网获取实时信息（如网络热梗、热搜数据）")
+		if permReq != nil {
+			return nil, &NetworkPermissionRequired{Permission: *permReq}
+		}
 	}
 
 	// Phase enforcement
@@ -266,6 +280,7 @@ func (o *Orchestrator) RunPipeline(ctx context.Context, taskID, skillName, trend
 // --- Prompt rendering (v2.x with state injection) ---
 
 type promptDataV2 struct {
+	GlobalRules    string // formatted global rules (language, formatting)
 	HotKeywords    string
 	CorpusSamples  string
 	TrendData      string
@@ -291,6 +306,7 @@ func (o *Orchestrator) renderPromptV2(sk *skill.Skill, stage string, input Stage
 	}
 
 	data := promptDataV2{
+		GlobalRules:   o.GlobalRules.AsPromptPrefix(),
 		HotKeywords:    strings.Join(o.HotKeywords[sk.Genre], "、"),
 		CorpusSamples:  o.CorpusSamples[sk.Genre],
 		TrendData:      input.TrendData,
@@ -333,7 +349,14 @@ func (o *Orchestrator) renderPromptV2(sk *skill.Skill, stage string, input Stage
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return "", fmt.Errorf("execute template: %w", err)
 	}
-	return buf.String(), nil
+
+	// Prepend global rules to every system prompt
+	rendered := buf.String()
+	prefix := o.GlobalRules.AsPromptPrefix()
+	if !strings.Contains(rendered, prefix) {
+		rendered = prefix + "\n" + rendered
+	}
+	return rendered, nil
 }
 
 func (o *Orchestrator) userPromptForStage(stage string, input StageInput) string {
@@ -397,4 +420,15 @@ func last500(s string) string {
 		return s
 	}
 	return string(runes[len(runes)-500:])
+}
+
+// NetworkPermissionRequired is returned when a skill needs network access
+// and the user hasn't granted it yet. Callers should check for this type
+// and prompt the user.
+type NetworkPermissionRequired struct {
+	Permission global.NetworkPermissionRequest
+}
+
+func (e *NetworkPermissionRequired) Error() string {
+	return e.Permission.String()
 }
