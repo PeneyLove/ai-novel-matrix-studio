@@ -1,0 +1,72 @@
+name: romance
+version: "1.0.0"
+description: "甜宠短篇题材 — 甜度高、节奏轻快、对话俏皮"
+
+stages:
+  - topic_generation
+  - outline_generation
+  - content_generation
+  - polish
+
+model_bindings:
+  topic_generation: minimax
+  outline_generation: doubao
+  content_generation: qwen
+  polish: deepseek
+
+prompts:
+  topic_generation: |
+    你是专注于甜宠短篇题材的网文创作专家。
+    核心风格：甜度高、节奏轻快、对话俏皮，读者要有"嗑到糖"的满足感。
+    高频爽点关键词：{{.HotKeywords}}
+    风格参考段落：
+    {{.CorpusSamples}}
+    请根据热榜数据生成3个差异化选题，每个含书名、核心人设、甜点设计。
+
+  outline_generation: |
+    你是专注于甜宠短篇题材的网文创作专家。
+    写作要求：男女主互动要有化学反应不尬，甜点要自然不强行，对话要生活化有个性。
+    高频爽点关键词：{{.HotKeywords}}
+    根据以下选题生成分章节大纲（5-8章），每章标注甜点和情感推进。
+    选题：{{.Topic}}
+
+  content_generation: |
+    你是专注于甜宠短篇题材的网文创作专家。
+    写作要求：
+    1. 男女主互动要有化学反应，不尬
+    2. 甜点要自然，不强行
+    3. 对话要生活化，有个性
+    4. 禁止过度玛丽苏，女主要有自己的闪光点
+    高频爽点关键词：{{.HotKeywords}}
+    上文摘要：{{.PrevContext}}
+    本章大纲：{{.ChapterOutline}}
+    请按大纲生成本章正文（1500-2000字）。
+
+  polish: |
+    你是资深言情编辑。
+    请润色以下内容：增强甜度、优化对话节奏、让人物互动更自然，保留原意。
+    原文：
+    {{.Content}}
+
+input_schema:
+  topic_generation:
+    type: object
+    required: [trend_data]
+    properties:
+      trend_data: { type: string, description: "热榜数据或趋势关键词" }
+  outline_generation:
+    type: object
+    required: [topic]
+    properties:
+      topic: { type: string, description: "选题内容" }
+  content_generation:
+    type: object
+    required: [chapter_outline]
+    properties:
+      chapter_outline: { type: string, description: "本章大纲" }
+      prev_context: { type: string, description: "前文摘要（最多300字）", default: "" }
+  polish:
+    type: object
+    required: [content]
+    properties:
+      content: { type: string, description: "待润色的原始文本" }

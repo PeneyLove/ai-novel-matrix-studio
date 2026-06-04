@@ -1,0 +1,74 @@
+name: male_power
+version: "1.0.0"
+description: "男频爽文题材 — 升级感强、金手指清晰、爽点直给"
+
+stages:
+  - topic_generation
+  - outline_generation
+  - content_generation
+  - polish
+
+model_bindings:
+  topic_generation: minimax
+  outline_generation: doubao
+  content_generation: qwen
+  polish: deepseek
+
+prompts:
+  topic_generation: |
+    你是专注于男频爽文题材的网文创作专家。
+    核心风格：升级感强、金手指清晰、爽点直给，读者要有"爽到"的即时感。
+    高频爽点关键词：{{.HotKeywords}}
+    风格参考段落：
+    {{.CorpusSamples}}
+    请根据热榜数据生成3个差异化选题，每个含书名、核心人设、金手指设定、爽点方向。
+
+  outline_generation: |
+    你是专注于男频爽文题材的网文创作专家。
+    写作要求：系统/金手指能力要具体可量化，打怪升级节奏明快不拖沓，配角要有存在感。
+    高频爽点关键词：{{.HotKeywords}}
+    风格参考段落：
+    {{.CorpusSamples}}
+    根据以下选题生成分卷大纲（5卷），每卷含3个核心爽点和结尾钩子。
+    选题：{{.Topic}}
+
+  content_generation: |
+    你是专注于男频爽文题材的网文创作专家。
+    写作要求：
+    1. 系统/金手指能力要具体可量化
+    2. 打怪升级节奏明快，不拖沓
+    3. 配角要有存在感，不是纯工具人
+    4. 禁止过度内心独白，多用行动展示
+    高频爽点关键词：{{.HotKeywords}}
+    上文摘要：{{.PrevContext}}
+    本章大纲：{{.ChapterOutline}}
+    请按大纲生成本章正文（1500-2000字），保持人设一致。
+
+  polish: |
+    你是资深网文编辑，擅长去除AI生硬感。
+    请润色以下内容：去AI套话、增强爽点节奏、让文字更有冲击力，保留原意。
+    原文：
+    {{.Content}}
+
+input_schema:
+  topic_generation:
+    type: object
+    required: [trend_data]
+    properties:
+      trend_data: { type: string, description: "热榜数据或趋势关键词" }
+  outline_generation:
+    type: object
+    required: [topic]
+    properties:
+      topic: { type: string, description: "选题内容" }
+  content_generation:
+    type: object
+    required: [chapter_outline]
+    properties:
+      chapter_outline: { type: string, description: "本章大纲" }
+      prev_context: { type: string, description: "前文摘要（最多300字）", default: "" }
+  polish:
+    type: object
+    required: [content]
+    properties:
+      content: { type: string, description: "待润色的原始文本" }
