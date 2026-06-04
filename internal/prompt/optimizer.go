@@ -1,7 +1,6 @@
 package prompt
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -216,5 +215,4 @@ func WritePromptToSkill(root, skillName, stage, newPrompt string) error {
 	return nil
 }
 
-// filepath helper
-var _ = bytes.Buffer{}
+

@@ -563,15 +563,14 @@ func serveCmd() *cobra.Command {
 
 func migrateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "migrate --from v0.x --mysql-url <url> --mongodb-url <url>",
-		Short: "Migrate data from legacy v0.x Python system",
+		Use:   "migrate",
+		Short: "Migrate data (not needed — v1.x starts fresh)",
+		Long:  "v1.x stores all data locally in .novelAgent/. No migration from v0.x is required. Start fresh with 'novel-agent init'.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Println("migrate: not yet implemented (Phase 8)")
+			cmd.Println("v1.x uses local .novelAgent/ storage — no external database migration needed.")
+			cmd.Println("Run 'novel-agent init' to start fresh.")
 			return nil
 		},
 	}
-	cmd.Flags().String("from", "", "Source version: v0.x")
-	cmd.Flags().String("mysql-url", "", "Legacy MySQL connection URL")
-	cmd.Flags().String("mongodb-url", "", "Legacy MongoDB connection URL")
 	return cmd
 }
