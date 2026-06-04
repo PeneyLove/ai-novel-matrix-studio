@@ -1,7 +1,7 @@
 {
   "name": "ai-novel-agent",
-  "version": "1.0.0-alpha",
-  "description": "AI Novel Agent — Go single-binary harness with pluggable YAML-defined skills for AI-powered novel creation",
+  "version": "2.0.0-alpha",
+  "description": "AI Novel Agent — Go single-binary harness with 54 pluggable YAML-defined skills for AI-powered novel creation",
   "main": "install.js",
   "bin": {
     "novel-agent": "install.js"
@@ -19,7 +19,12 @@
     "writing",
     "fiction",
     "content-generation",
-    "llm"
+    "chinese-web-novel",
+    "网文",
+    "AI写作",
+    "llm",
+    "deepseek",
+    "qwen"
   ],
   "author": "penney-101",
   "license": "MIT",
@@ -27,6 +32,7 @@
     "type": "git",
     "url": "https://gitee.com/penney-101/ai-novel-matrix-studio"
   },
+  "homepage": "https://gitee.com/penney-101/ai-novel-matrix-studio#readme",
   "os": ["darwin", "linux", "win32"],
   "cpu": ["x64", "arm64"]
 }

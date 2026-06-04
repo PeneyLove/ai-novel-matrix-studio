@@ -1,0 +1,11 @@
+# npm pack/publish ignores these
+*.go
+!dist/*
+internal/
+cmd/
+skills/
+gui/
+.novelAgent*
+Makefile
+go.mod
+go.sum
