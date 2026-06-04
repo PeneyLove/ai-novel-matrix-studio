@@ -19,6 +19,7 @@ go.work.sum
 .idea/
 *.swp
 *.swo
+.codewhale/
 
 # OS
 .DS_Store
@@ -31,3 +32,12 @@ Thumbs.db
 # npm
 node_modules/
 npm/*.tgz
+
+# Reasonix IDE
+reasonix.toml
+
+# Debug
+log.txt
+
+# Go sum (auto-generated)
+go.sum
