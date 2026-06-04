@@ -17,6 +17,7 @@ import (
 	"github.com/penney-101/ai-novel-agent/internal/pipeline"
 	"github.com/penney-101/ai-novel-agent/internal/skill"
 	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/penney-101/ai-novel-agent/internal/api"
 )
 
 // --- Helpers ---
@@ -494,6 +495,12 @@ func min(a, b int) int {
 	return b
 }
 
+// startAPIServer boots the HTTP API for the Flutter GUI.
+func startAPIServer(h *harness.Harness, port int) error {
+	server := api.NewServer(h, port)
+	return server.Run()
+}
+
 // --- serve ---
 
 func serveCmd() *cobra.Command {
@@ -503,9 +510,17 @@ func serveCmd() *cobra.Command {
 		Long:  "Starts a lightweight HTTP server on 127.0.0.1:9876 for the Flutter GUI.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			port, _ := cmd.Flags().GetInt("port")
-			cmd.Printf("serve: starting HTTP API on 127.0.0.1:%d (not yet implemented)\n", port)
-			// TODO: implement HTTP server in Phase 7
-			return nil
+
+			h, err := newHarness()
+			if err != nil {
+				return err
+			}
+			defer h.Close()
+
+			// Import api package dynamically
+			// We use a simple inline pattern to avoid circular imports
+			server := startAPIServer(h, port)
+			return server
 		},
 	}
 	cmd.Flags().Int("port", 9876, "HTTP listen port")
