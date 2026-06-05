@@ -2,7 +2,7 @@
 //
 // Two modes:
 //
-//	novel-agent             → interactive REPL (no arguments)
+//	novel-agent             → Bubble Tea TUI (no arguments)
 //	novel-agent init|...    → subcommand (cobra)
 package main
 
@@ -10,7 +10,10 @@ import (
 	"fmt"
 	"os"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
+
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tui"
 )
 
 var rootCmd = &cobra.Command{
@@ -20,7 +23,7 @@ var rootCmd = &cobra.Command{
 Run without arguments to enter the interactive writing terminal.
 All data is stored locally under .novelAgent/ — no external database required.`,
 	Version: "2.0.0-alpha",
-	RunE:    runREPL,
+	RunE:    runTUI,
 }
 
 func main() {
@@ -39,7 +42,7 @@ func main() {
 	}
 }
 
-func runREPL(cmd *cobra.Command, args []string) error {
+func runTUI(cmd *cobra.Command, args []string) error {
 	h, err := newHarness()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "❌ 无法启动: %v\n", err)
@@ -49,6 +52,11 @@ func runREPL(cmd *cobra.Command, args []string) error {
 	defer h.Close()
 
 	root := agentRoot()
-	startREPL(h, root)
+	m := tui.New(h, root)
+	p := tea.NewProgram(m, tea.WithAltScreen())
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "TUI 错误: %v\n", err)
+		return err
+	}
 	return nil
 }

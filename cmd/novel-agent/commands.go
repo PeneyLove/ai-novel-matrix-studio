@@ -20,7 +20,6 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/api"
 	"github.com/PeneyLove/ai-novel-matrix-studio"
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/repl"
 )
 
 // --- Helpers ---
@@ -526,10 +525,7 @@ func min(a, b int) int {
 	return b
 }
 
-// startREPL launches the interactive terminal loop.
-func startREPL(h *harness.Harness, root string) {
-	repl.Run(h, root)
-}
+// startTUI placeholder — actual TUI entry is in main.go runTUI()
 
 // startAPIServer boots the HTTP API for the Flutter GUI.
 func startAPIServer(h *harness.Harness, port int) error {
