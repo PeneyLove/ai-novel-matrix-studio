@@ -38,6 +38,19 @@ var ProviderLabels = map[string]string{
 type Client interface {
 	Generate(ctx context.Context, systemPrompt, userPrompt string) (string, error)
 	Provider() string
+	// StreamGenerate sends a prompt and returns a channel of streaming chunks.
+	// Reasoning-only content (DeepSeek R1's thinking process) is delivered
+	// via ChunkReasoning; the final text via ChunkContent.
+	// The channel is closed when generation completes or on error (Err set).
+	StreamGenerate(ctx context.Context, systemPrompt, userPrompt string) <-chan StreamChunk
+}
+
+// StreamChunk is a single token-level delta from a streaming model response.
+type StreamChunk struct {
+	Reasoning string // thinking process (DeepSeek R1: reasoning_content)
+	Content   string // content delta (empty when Done/may be empty during reasoning)
+	Error     error  // non-nil if stream errored
+	Done      bool   // last chunk; channel is closed after this
 }
 
 // Config holds the parameters needed to create a model client.

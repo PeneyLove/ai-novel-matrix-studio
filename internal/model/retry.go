@@ -48,6 +48,11 @@ func (r *RetryableClient) Generate(ctx context.Context, systemPrompt, userPrompt
 
 func (r *RetryableClient) Provider() string { return r.inner.Provider() }
 
+// StreamGenerate passes through streams directly — retries happen at the HTTP level.
+func (r *RetryableClient) StreamGenerate(ctx context.Context, systemPrompt, userPrompt string) <-chan StreamChunk {
+	return r.inner.StreamGenerate(ctx, systemPrompt, userPrompt)
+}
+
 // isRateLimitErr detects HTTP 429 / rate-limit errors across providers.
 func isRateLimitErr(err error) bool {
 	if err == nil {

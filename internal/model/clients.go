@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -157,6 +158,7 @@ type deepSeekReq struct {
 	TopP             float64   `json:"top_p,omitempty"`
 	FrequencyPenalty float64   `json:"frequency_penalty,omitempty"`
 	Stop             []string  `json:"stop,omitempty"`
+	Stream           bool      `json:"stream,omitempty"`
 }
 
 type roleMsg struct {
@@ -207,6 +209,102 @@ func (c *deepSeekClient) Generate(ctx context.Context, systemPrompt, userPrompt 
 		return "", fmt.Errorf("deepseek: empty response choices")
 	}
 	return r.Choices[0].Message.Content, nil
+}
+
+// StreamGenerate implements SSE streaming for DeepSeek (OpenAI-compatible).
+func (c *deepSeekClient) StreamGenerate(ctx context.Context, systemPrompt, userPrompt string) <-chan StreamChunk {
+	ch := make(chan StreamChunk, 64)
+
+	go func() {
+		defer close(ch)
+
+		req := deepSeekReq{
+			Model:            c.cfg.ModelName,
+			Temperature:      c.cfg.Temperature,
+			MaxTokens:        c.cfg.MaxTokens,
+			TopP:             c.cfg.TopP,
+			FrequencyPenalty: 0.1,
+			Stream:           true,
+		}
+		if systemPrompt != "" {
+			req.Messages = append(req.Messages, roleMsg{Role: "system", Content: systemPrompt})
+		}
+		req.Messages = append(req.Messages, roleMsg{Role: "user", Content: userPrompt})
+
+		body, _ := json.Marshal(req)
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.Endpoint, bytes.NewReader(body))
+		if err != nil {
+			ch <- StreamChunk{Error: err, Done: true}; return
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer "+c.cfg.APIKey)
+		httpReq.Header.Set("Accept", "text/event-stream")
+
+		resp, err := c.httpClient.Do(httpReq)
+		if err != nil {
+			ch <- StreamChunk{Error: err, Done: true}; return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			respBody, _ := io.ReadAll(resp.Body)
+			ch <- StreamChunk{Error: parseAPIError(ProviderDeepSeek, resp.StatusCode, respBody), Done: true}
+			return
+		}
+
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			line := scanner.Text()
+			if line == "" || line == "data: [DONE]" || line == "data:[DONE]" {
+				continue
+			}
+			if !strings.HasPrefix(line, "data: ") {
+				continue
+			}
+
+			jsonStr := strings.TrimPrefix(line, "data: ")
+			var chunk dsStreamChunk
+			if err := json.Unmarshal([]byte(jsonStr), &chunk); err != nil {
+				continue
+			}
+
+			sc := StreamChunk{}
+			if len(chunk.Choices) > 0 {
+				delta := chunk.Choices[0].Delta
+				sc.Content = delta.Content
+				sc.Reasoning = delta.ReasoningContent
+				if delta.Role != "" {
+					continue
+				}
+				if chunk.Choices[0].FinishReason != "" {
+					sc.Done = true
+				}
+			}
+			ch <- sc
+		}
+		ch <- StreamChunk{Done: true}
+	}()
+
+	return ch
+}
+
+type dsStreamChunk struct {
+	Choices []struct {
+		Delta        dsDelta `json:"delta"`
+		FinishReason string   `json:"finish_reason"`
+	} `json:"choices"`
+}
+
+type dsDelta struct {
+	Role             string `json:"role"`
+	Content          string `json:"content"`
+	ReasoningContent string `json:"reasoning_content"`
 }
 
 // ---- Qwen Native (DashScope) ----
@@ -420,6 +518,77 @@ func (c *mimoClient) Generate(ctx context.Context, systemPrompt, userPrompt stri
 		return "", fmt.Errorf("mimo: empty response choices")
 	}
 	return r.Choices[0].Message.Content, nil
+}
+
+// StreamGenerate for MiMo (OpenAI-compatible SSE).
+func (c *mimoClient) StreamGenerate(ctx context.Context, systemPrompt, userPrompt string) <-chan StreamChunk {
+	ch := make(chan StreamChunk, 64)
+	go func() {
+		defer close(ch)
+		req := deepSeekReq{
+			Model: c.cfg.ModelName, Temperature: c.cfg.Temperature,
+			MaxTokens: c.cfg.MaxTokens, TopP: c.cfg.TopP, Stream: true,
+		}
+		if systemPrompt != "" {
+			req.Messages = append(req.Messages, roleMsg{Role: "system", Content: systemPrompt})
+		}
+		req.Messages = append(req.Messages, roleMsg{Role: "user", Content: userPrompt})
+		body, _ := json.Marshal(req)
+		httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.Endpoint, bytes.NewReader(body))
+		if err != nil { ch <- StreamChunk{Error: err, Done: true}; return }
+		httpReq.Header.Set("Content-Type", "application/json")
+		httpReq.Header.Set("Authorization", "Bearer "+c.cfg.APIKey)
+		httpReq.Header.Set("Accept", "text/event-stream")
+		resp, err := c.httpClient.Do(httpReq)
+		if err != nil { ch <- StreamChunk{Error: err, Done: true}; return }
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			respBody, _ := io.ReadAll(resp.Body)
+			ch <- StreamChunk{Error: parseAPIError(ProviderMiMo, resp.StatusCode, respBody), Done: true}; return
+		}
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line == "" || strings.HasPrefix(line, "data: [DONE]") || strings.HasPrefix(line, "data:[DONE]") { continue }
+			if !strings.HasPrefix(line, "data: ") { continue }
+			var chunk dsStreamChunk
+			if err := json.Unmarshal([]byte(strings.TrimPrefix(line, "data: ")), &chunk); err != nil { continue }
+			sc := StreamChunk{}
+			if len(chunk.Choices) > 0 {
+				sc.Content = chunk.Choices[0].Delta.Content
+				if chunk.Choices[0].FinishReason != "" { sc.Done = true }
+			}
+			ch <- sc
+		}
+		ch <- StreamChunk{Done: true}
+	}()
+	return ch
+}
+
+// streamFallback wraps Generate() in a channel for providers that don't support
+// native streaming (MiniMax, Qwen, Doubao).
+func streamFallback(prov string, generate func() (string, error)) <-chan StreamChunk {
+	ch := make(chan StreamChunk, 1)
+	go func() {
+		defer close(ch)
+		result, err := generate()
+		if err != nil { ch <- StreamChunk{Error: err, Done: true}; return }
+		ch <- StreamChunk{Content: result, Done: true}
+	}()
+	return ch
+}
+
+func (c *miniMaxClient) StreamGenerate(ctx context.Context, sp, up string) <-chan StreamChunk {
+	return streamFallback(ProviderMiniMax, func() (string, error) { return c.Generate(ctx, sp, up) })
+}
+func (c *doubaoClient) StreamGenerate(ctx context.Context, sp, up string) <-chan StreamChunk {
+	return streamFallback(ProviderDoubao, func() (string, error) { return c.Generate(ctx, sp, up) })
+}
+func (c *qwenNativeClient) StreamGenerate(ctx context.Context, sp, up string) <-chan StreamChunk {
+	return streamFallback(ProviderQwen, func() (string, error) { return c.Generate(ctx, sp, up) })
+}
+func (c *qwenCompatClient) StreamGenerate(ctx context.Context, sp, up string) <-chan StreamChunk {
+	return streamFallback(ProviderQwen, func() (string, error) { return c.Generate(ctx, sp, up) })
 }
 
 // ---- shared error parser ----

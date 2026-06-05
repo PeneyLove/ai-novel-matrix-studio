@@ -29,6 +29,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
@@ -680,14 +681,72 @@ func (m *Model) cmdExport() {
 func (m *Model) cmdFreeForm(text string) {
 	m.thinking = true; m.thinkingMsg = "思考中..."
 	m.fullRender()
+
+	// Build dynamic system prompt from project context
+	sysPrompt := "你是专业网文作家，擅长有节奏感的叙事、生动的对话、紧凑的冲突。"
+	if m.project != "" {
+		world, _ := project.ReadWorld(m.root, m.project)
+		g := ""
+		if genre, ok := world["genre"].(string); ok && genre != "" { g = genre }
+		ps := ""
+		if p, ok := world["power_system"].(string); ok && p != "" { ps = p }
+		if g != "" {
+			sysPrompt = fmt.Sprintf("你是%s领域的专业网文作家。当前小说力量体系：%s。", skill.GenreLabels[g], ps)
+		}
+		// Inject character list
+		chars, err := project.ListCharacters(m.root, m.project)
+		if err == nil && len(chars) > 0 {
+			names := make([]string, 0, len(chars))
+			for _, ch := range chars {
+				if ch.Status == "active" {
+					names = append(names, fmt.Sprintf("%s(%s)", ch.Name, ch.Role))
+				}
+			}
+			sysPrompt += fmt.Sprintf(" 活跃角色：%s。", strings.Join(names, "、"))
+		}
+	}
+	sysPrompt += " 回答要有网文节奏感，多写对话和冲突，少写总结。如果用户要求续写，请用 /write <章节号>。"
+
 	go func() {
 		client, _ := m.harness.Router.GetClient("deepseek")
 		if client == nil { client, _ = m.harness.Router.GetClient("mimo") }
 		if client == nil { m.eventCh <- ChatEvent{StopSpinner:true,Err:fmt.Errorf("没有可用的 AI 模型")}; return }
+
 		ctx := context.Background()
-		reply, err := client.Generate(ctx, "你是小说创作助手。回答简洁，有网文创作经验。", text)
-		if err != nil { m.eventCh <- ChatEvent{StopSpinner:true,Err:err}; return }
-		m.eventCh <- ChatEvent{StopSpinner:true, Line: reply}
+		stream := client.StreamGenerate(ctx, sysPrompt, text)
+
+		var reasoning, content strings.Builder
+		for chunk := range stream {
+			if chunk.Error != nil {
+				m.eventCh <- ChatEvent{StopSpinner: true, Err: chunk.Error}
+				return
+			}
+			if chunk.Reasoning != "" {
+				reasoning.WriteString(chunk.Reasoning)
+				m.mu.Lock()
+				m.thinkingMsg = "思考: " + trunc(reasoning.String(), 80)
+				m.mu.Unlock()
+				m.fullRender()
+			}
+			if chunk.Content != "" {
+				content.WriteString(chunk.Content)
+				m.mu.Lock()
+				m.thinkingMsg = "输出中 (" + strconv.Itoa(len([]rune(content.String()))) + "字)..."
+				m.mu.Unlock()
+				m.fullRender()
+			}
+			if chunk.Done && chunk.Reasoning == "" && chunk.Content == "" && chunk.Error == nil {
+				break
+			}
+		}
+
+		result := ""
+		if reasoning.Len() > 0 {
+			result += "【思考过程】\n" + reasoning.String() + "\n\n"
+		}
+		result += content.String()
+		if result == "" { result = "（模型返回空内容）" }
+		m.eventCh <- ChatEvent{StopSpinner: true, Line: strings.TrimSpace(result)}
 	}()
 }
 
