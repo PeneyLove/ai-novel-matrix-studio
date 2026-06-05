@@ -1,6 +1,6 @@
 deepseek:
     api_endpoint: https://api.deepseek.com/v1/chat/completions
-    api_key: ${DEEPSEEK_API_KEY}
+    api_key: sk-0d7de0ce46e14be39b64726f3006ffe7
     max_tokens: 4096
     model_name: deepseek-chat
     retry_times: 3

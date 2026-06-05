@@ -308,32 +308,6 @@ func (m *Model) refreshStatus() {
 	fmt.Fprintf(os.Stdout, "\033[1;1H%s%s", clearLine, status)
 }
 
-func (m *Model) readInput(ch chan<- string) {
-	rd := bufio.NewReader(os.Stdin)
-	for m.running {
-		m.refreshInputPrompt()
-		buf := make([]byte, 0, 4096)
-		for {
-			b, err := rd.ReadByte()
-			if err != nil { ch <- "/quit"; return }
-			if b == '\r' || b == '\n' { fmt.Fprint(os.Stdout, "\r\n"); break }
-			if b == 3 { ch <- "/quit"; return }
-			if b == 12 { m.mu.Lock(); m.chatLines = nil; m.mu.Unlock(); ch <- "\x01"; return }
-			if b == 127 || b == '\b' {
-				if len(buf) > 0 { buf = buf[:len(buf)-1]; fmt.Fprint(os.Stdout, "\b \b") }
-				continue
-			}
-			// Mouse/wheel ESC sequences — swallow silently
-			if b == '\x1b' {
-				if consumeEscSequence(rd, m, ch) { return }
-				continue
-			}
-			buf = append(buf, b)
-			fmt.Fprint(os.Stdout, string(b))
-		}
-		ch <- string(buf)
-	}
-}
 
 // consumeEscSequence reads an ESC-prefixed byte sequence and handles
 // Shift+Tab (mode toggle) and mouse events. Returns true if the caller
@@ -365,6 +339,38 @@ func consumeEscSequence(rd *bufio.Reader, m *Model, ch chan<- string) bool {
 		if (b2 >= 'a' && b2 <= 'z') || (b2 >= 'A' && b2 <= 'Z') || b2 == '~' { break }
 	}
 	return false
+}
+
+func (m *Model) readInput(ch chan<- string) {
+	rd := bufio.NewReader(os.Stdin)
+	for m.running {
+		m.refreshInputPrompt()
+		buf := make([]byte, 0, 4096)
+		for {
+			b, err := rd.ReadByte()
+			if err != nil { ch <- "/quit"; return }
+			if b == '\r' || b == '\n' { fmt.Fprint(os.Stdout, "\r\n"); break }
+			if b == 3 { ch <- "/quit"; return }
+			if b == 12 { m.mu.Lock(); m.chatLines = nil; m.mu.Unlock(); ch <- "\x01"; return }
+			if b == 127 || b == '\b' {
+				if len(buf) > 0 { buf = buf[:len(buf)-1] }
+				// Redraw input line — cleanly handles multi-byte UTF-8 after backspace
+				fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > %s%s",
+					m.termH-1, clearLine, fgPurple+"["+m.mode+"]"+reset, string(buf), clearToEOL)
+				continue
+			}
+			// Mouse/wheel ESC sequences — swallow silently
+			if b == '\x1b' {
+				if consumeEscSequence(rd, m, ch) { return }
+				continue
+			}
+			buf = append(buf, b)
+			// Redraw full input line — required for multi-byte UTF-8 (Chinese)
+			fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > %s%s",
+				m.termH-1, clearLine, fgPurple+"["+m.mode+"]"+reset, string(buf), clearToEOL)
+		}
+		ch <- string(buf)
+	}
 }
 
 func (m *Model) refreshInputPrompt() {
