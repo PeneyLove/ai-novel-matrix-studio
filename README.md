@@ -2,7 +2,7 @@
 
 > 单二进制 Harness + 可插拔 YAML Skill — 聚焦商业网文全流程 AI 辅助创作。
 >
-> `npm install -g @PeneyLove/ai-novel-agent` → `novel-agent init` → `novel-agent pipeline --skill xuanhuan_genre_init`
+> `npm install -g novelAgent` → `novel-agent` → 终端对话开始创作
 
 ---
 
@@ -42,7 +42,7 @@
 | 状态 | 无记忆 | **伏笔台账 + 大纲版本 + 人物谱系** 持久化 |
 | 模型 | 绑定单一模型 | **4 个国产大模型按阶段分工** |
 | 提示词 | 写死不可变 | **3 种迭代方式**（手动编辑 / AI 自动优化 / 版本快照回滚） |
-| 分发 | 网页访问 | `npm install -g @PeneyLove/ai-novel-agent` |
+| 分发 | 网页访问 | `npm install -g novelAgent` |
 
 ---
 
@@ -51,17 +51,13 @@
 ### 方式一：npm 全局安装（推荐）
 
 ```bash
-# 先从 GitHub 获取个人访问令牌（只需 read:packages 权限）
-# Settings → Developer settings → Personal access tokens → Generate new token
-
-# 登录 GitHub Packages
-npm login --registry=https://npm.pkg.github.com --scope=@PeneyLove
-# Username: 你的 GitHub 用户名
-# Password: 上一步生成的 token
-
-# 安装
-npm install -g @PeneyLove/ai-novel-agent
+npm install -g novelAgent
 ```
+
+安装完成后验证：
+
+```bash
+novel-agent version   # 2.0.0-alpha
 
 安装脚本自动检测你的操作系统和 CPU 架构（macOS Intel/Apple Silicon、Linux x64、Windows x64），下载对应的 Go 预编译二进制到全局 `PATH`。
 

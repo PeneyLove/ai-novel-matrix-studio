@@ -1,18 +1,14 @@
-name: Publish to GitHub Packages
+name: Publish to npm
 
 on:
   push:
     tags:
-      - 'v*'           # triggers on v1.0.0, v2.0.0-alpha, etc.
-  workflow_dispatch:    # manual trigger from Actions tab
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write    # needed for npm publish to GitHub Packages
 
     steps:
       - name: Checkout
@@ -36,10 +32,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Publish
         working-directory: npm
-        run: npm publish
+        run: npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

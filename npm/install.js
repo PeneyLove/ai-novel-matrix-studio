@@ -64,7 +64,7 @@ function npmBinDir() {
 function findBinary() {
   const binName = BINARY_MAP[platformKey()];
   if (!binName) {
-    console.error("ai-novel-agent: unsupported platform:", platformKey());
+    console.error("novelAgent: unsupported platform:", platformKey());
     process.exit(1);
   }
   const exeExt = process.platform === "win32" ? ".exe" : "";

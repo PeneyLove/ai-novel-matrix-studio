@@ -1,5 +1,5 @@
 {
-  "name": "@PeneyLove/ai-novel-agent",
+  "name": "novelAgent",
   "version": "2.0.0-alpha",
   "description": "AI Novel Agent — Go single-binary harness with 54 pluggable YAML-defined skills for AI-powered novel creation",
   "main": "install.js",
@@ -12,9 +12,6 @@
   ],
   "scripts": {
     "postinstall": "node install.js"
-  },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "ai",
