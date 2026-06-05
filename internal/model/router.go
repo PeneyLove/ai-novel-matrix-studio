@@ -40,7 +40,7 @@ func NewRouter(configs map[string]Config, fallback string) (*Router, error) {
 	}
 
 	if len(r.clients) == 0 {
-		return nil, fmt.Errorf("model: no clients could be initialized from the provided configs")
+		fmt.Fprintf(os.Stderr, "[model] warning: no clients initialized — starting in setup mode\n")
 	}
 
 	// Ensure fallback exists, or pick the first available

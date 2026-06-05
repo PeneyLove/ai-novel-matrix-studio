@@ -14,7 +14,6 @@
 package skill
 
 import (
-	"encoding/json"
 	"fmt"
 	"regexp"
 )
@@ -101,8 +100,10 @@ type Skill struct {
 	// When true and network is not enabled, the pipeline will request permission.
 	RequiresNetwork bool `yaml:"requires_network" json:"requires_network"`
 
-	// InputSchema maps stage → JSON Schema for input validation.
-	InputSchema map[string]json.RawMessage `yaml:"input_schema" json:"input_schema"`
+	// InputSchema maps stage → schema definition for input validation.
+	// Using map[string]any because embedded YAML skill files define this as a
+	// nested YAML map, not a JSON string blob.
+	InputSchema map[string]any `yaml:"input_schema" json:"input_schema"`
 }
 
 // NeedsNetworkPermission returns true if this skill requires network access.
