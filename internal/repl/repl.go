@@ -239,7 +239,7 @@ func (s *Session) cmdChar(name string) {
 		NovelID:   s.project + "-char-" + id,
 	}
 	// Use a simple direct prompt approach since we don't have a character-specific skill in the current pipeline
-	ch := project.CharacterProfile{
+	newCh := project.CharacterProfile{
 		ID:          id,
 		Name:        name,
 		Role:        "配角",
@@ -248,7 +248,7 @@ func (s *Session) cmdChar(name string) {
 		Background:   "待AI生成",
 		Motivation:   "待AI生成",
 	}
-	if err := project.WriteCharacter(s.root, s.project, ch); err != nil {
+	if err := project.WriteCharacter(s.root, s.project, newCh); err != nil {
 		fmt.Printf("  ✗ 创建角色失败: %v\n", err)
 		return
 	}
