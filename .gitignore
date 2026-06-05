@@ -41,3 +41,6 @@ log.txt
 
 # Go sum (auto-generated)
 go.sum
+
+# User data (never commit novel projects)
+.novelAgent/

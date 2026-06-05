@@ -25,6 +25,7 @@ package repl
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -36,17 +37,24 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Session holds the active REPL state.
 type Session struct {
-	h        *harness.Harness
-	audit    audit.Policy
-	project  string // active project name
-	root     string // .novelAgent root
-	router   *model.Router
-	modeMgr  *modeState
+	h          *harness.Harness
+	audit      audit.Policy
+	project    string // active project name
+	root       string // .novelAgent root
+	router     *model.Router
+	modeMgr    *modeState
+	onboarding *onboardingState // non-nil when user is picking a project name
+}
+
+type onboardingState struct {
+	genre, subGenre, powerSystem, description string
+	title1, title2, title3                    string
 }
 
 // Run starts the interactive REPL loop.
@@ -69,10 +77,28 @@ func Run(h *harness.Harness, root string) error {
 	// Check if any API key is configured. If not, guide user.
 	s.checkAPIKeyOnStartup()
 
-	// Auto-detect or prompt for project
+	// Show opening greeting
 	projects, _ := project.ListProjects(root)
 	if len(projects) == 0 {
-		fmt.Println("  💡 还没有项目。输入 /project <名称> 创建一个")
+		fmt.Println()
+		fmt.Println("  ╔══════════════════════════════════════════════════╗")
+		fmt.Println("  ║                                                  ║")
+		fmt.Println("  ║  你想写一本怎样的小说？                            ║")
+		fmt.Println("  ║                                                  ║")
+		fmt.Println("  ║  直接告诉我书名、类型、核心灵感，                  ║")
+		fmt.Println("  ║  我会帮你一步步完善：                              ║")
+		fmt.Println("  ║    🌍 世界观  ─  力量体系、势力、规则               ║")
+		fmt.Println("  ║    📋 大纲    ─  分卷、分章、伏笔台账               ║")
+		fmt.Println("  ║    👤 角色    ─  主角/配角/反派、成长轨迹           ║")
+		fmt.Println("  ║    ✍ 续写    ─  每章植入爽点+钩子                  ║")
+		fmt.Println("  ║                                                  ║")
+		fmt.Println("  ║  举个例子：                                        ║")
+		fmt.Println("  ║  「我想写一本凡人流修仙小说，男主是个             ║")
+		fmt.Println("  ║   被废灵根的药童，意外觉醒了上古丹帝记忆」         ║")
+		fmt.Println("  ║                                                  ║")
+		fmt.Println("  ║  也可以输入 /help 查看完整命令列表                  ║")
+		fmt.Println("  ╚══════════════════════════════════════════════════╝")
+		fmt.Println()
 	} else {
 		s.project = projects[0]
 	}
@@ -109,6 +135,9 @@ func Run(h *harness.Harness, root string) error {
 
 func (s *Session) handle(input string) {
 	switch {
+	case s.onboarding != nil:
+		// User is in project name selection flow
+		s.handleOnboardingPick(input)
 	case input == "/help":
 		s.cmdHelp()
 	case input == "/mode" || strings.HasPrefix(input, "/mode "):
@@ -877,24 +906,299 @@ func (s *Session) cmdDeactivate(name string) {
 }
 
 func (s *Session) handleFreeForm(input string) {
-	// Treat free-form input as a general writing intent
-	fmt.Println("  💬 你说:", truncate(input, 100))
-
-	// For now, echo and suggest a /command
-	if strings.Contains(input, "写") || strings.Contains(input, "续写") || strings.Contains(input, "章节") {
-		fmt.Println("  💡 试试: /write <章节号>")
-	} else if strings.Contains(input, "角色") || strings.Contains(input, "人物") {
-		fmt.Println("  💡 试试: /char <角色名> 或 /chars")
-	} else if strings.Contains(input, "大纲") || strings.Contains(input, "剧情") {
-		fmt.Println("  💡 试试: /outline")
-	} else if strings.Contains(input, "世界观") {
-		fmt.Println("  💡 试试: /world")
-	} else {
-		fmt.Println("  💡 输入 /help 查看所有命令")
+	// If no project yet, the user is describing their novel idea.
+	// Extract title + genre, generate 3 name options.
+	if s.project == "" {
+		s.handleNewProjectOnboarding(input)
+		return
 	}
+
+	// With a project active, classify the intent and auto-route.
+	s.handleIntentRouting(input)
+}
+
+// handleNewProjectOnboarding takes the user's novel description, calls AI to
+// extract the genre and brainstorm 3 project titles, then presents a menu.
+func (s *Session) handleNewProjectOnboarding(description string) {
+	stop := StartSpinner("⏳ 分析你的小说构思...")
+
+	client, err := s.router.GetClient("deepseek")
+	if err != nil {
+		client, err = s.router.GetClient("mimo")
+		if err != nil {
+			client, _ = s.router.GetClient("minimax")
+		}
+	}
+	if client == nil {
+		stop()
+		fmt.Println("  ✗ 没有可用的 AI 模型")
+		return
+	}
+
+	prompt := fmt.Sprintf(
+		`分析以下小说构思，返回 JSON（只返回 JSON，不要其他文字）：
+{
+  "genre": "玄幻修仙/都市网文/古言权谋/悬疑灵异/科幻无限/现言甜宠（六选一）",
+  "sub_genre": "细分流派如凡人流、重生流",
+  "power_system": "核心能力体系（如灵气修仙、基因突变、系统任务）",
+  "title1": "书名方案一（有吸引力，10字以内）",
+  "title2": "书名方案二",
+  "title3": "书名方案三"
+}
+
+用户构思：
+%s`, description)
+
+	systemPrompt := "你是小说策划助手。只返回 JSON，不返回解释。书名要有网文风格、记忆点强。"
+	ctx := context.Background()
+	result, err := client.Generate(ctx, systemPrompt, prompt)
+	stop()
+	if err != nil {
+		fmt.Printf("\n  ✗ AI 调用失败: %v\n", err)
+		return
+	}
+
+	// Extract JSON from the response (model may wrap in ```)
+	result = extractJSON(result)
+
+	type novelIdea struct {
+		Genre       string `json:"genre"`
+		SubGenre    string `json:"sub_genre"`
+		PowerSystem string `json:"power_system"`
+		Title1      string `json:"title1"`
+		Title2      string `json:"title2"`
+		Title3      string `json:"title3"`
+	}
+	var idea novelIdea
+	if err := json.Unmarshal([]byte(result), &idea); err != nil {
+		// Fallback: use the description directly
+		fmt.Printf("\n  ⚠ AI 返回格式异常，使用默认设定。\n")
+		idea = novelIdea{
+			Genre: "玄幻修仙", SubGenre: "", PowerSystem: "",
+			Title1: "", Title2: "", Title3: "",
+		}
+	}
+
+	genreLabel := skill.GenreLabels[mapGenreToCode(idea.Genre)]
+	if genreLabel == "" {
+		genreLabel = idea.Genre
+	}
+
+	fmt.Println()
+	fmt.Printf("  🎯 识别类型: %s / %s\n", genreLabel, idea.SubGenre)
+	if idea.PowerSystem != "" {
+		fmt.Printf("  ⚡ 核心能力: %s\n", idea.PowerSystem)
+	}
+	fmt.Println()
+	fmt.Println("  请为你的小说选一个名字：")
+	fmt.Printf("    1. %s\n", idea.Title1)
+	fmt.Printf("    2. %s\n", idea.Title2)
+	fmt.Printf("    3. %s\n", idea.Title3)
+	fmt.Println("    4. 自己起名")
+	fmt.Println()
+
+	// Save the idea for later use after user picks a title
+	s.onboarding = &onboardingState{
+		genre:       mapGenreToCode(idea.Genre),
+		subGenre:    idea.SubGenre,
+		powerSystem: idea.PowerSystem,
+		description: description,
+		title1:      idea.Title1,
+		title2:      idea.Title2,
+		title3:      idea.Title3,
+	}
+
+	// Add Session field for onboarding — we'll add the struct to Session
+	fmt.Print("  输入数字 (1-4): ")
+}
+
+// handleIntentRouting classifies the user's input and dispatches to the
+// appropriate command or free-form AI interaction.
+func (s *Session) handleIntentRouting(input string) {
+	// Quick keyword match first (cheap, no API call)
+	lower := strings.ToLower(input)
+	if strings.Contains(lower, "/write") || strings.Contains(input, "续写") || strings.Contains(input, "章节") {
+		fmt.Println("  💡 输入 /write <章节号> 开始续写。例如: /write 1")
+		s.printStatusBar()
+		return
+	}
+	if strings.Contains(lower, "/char") || strings.Contains(input, "角色") || strings.Contains(input, "人物") {
+		fmt.Println("  💡 输入 /char <角色名> 创建角色，或 /chars 查看已有角色。")
+		s.printStatusBar()
+		return
+	}
+	if strings.Contains(input, "大纲") || strings.Contains(input, "剧情") || strings.Contains(input, "伏笔") {
+		s.cmdShowOutline()
+		s.printStatusBar()
+		return
+	}
+	if strings.Contains(input, "世界") || strings.Contains(input, "设定") || strings.Contains(input, "境界") {
+		s.cmdShowWorld()
+		s.printStatusBar()
+		return
+	}
+	if strings.Contains(input, "导出") {
+		s.cmdExport()
+		s.printStatusBar()
+		return
+	}
+
+	// Fallback: general writing intent — AI-assisted free discussion
+	stop := StartSpinner("⏳ 思考中")
+	client, _ := s.router.GetClient("deepseek")
+	if client == nil {
+		client, _ = s.router.GetClient("mimo")
+	}
+	if client == nil {
+		stop()
+		fmt.Println("\n  ✗ 没有可用的 AI 模型")
+		return
+	}
+
+	ctx := context.Background()
+	reply, err := client.Generate(ctx, "你是小说创作助手，帮助用户完善世界观、大纲、角色设定和正文续写。回答简洁、实用、有网文创作经验。", input)
+	stop()
+	if err != nil {
+		fmt.Printf("\n  ✗ AI 调用失败: %v\n", err)
+		s.printStatusBar()
+		return
+	}
+	fmt.Println()
+	fmt.Println("  ──────────────────────────────────────────────")
+	fmt.Println(formatAIResponse(reply))
+	fmt.Println("  ──────────────────────────────────────────────")
+	s.printStatusBar()
 }
 
 // ---- helpers ----
+
+func (s *Session) handleOnboardingPick(input string) {
+	o := s.onboarding
+	if o == nil {
+		return
+	}
+
+	switch input {
+	case "1":
+		s.createProjectFromOnboarding(o.title1)
+	case "2":
+		s.createProjectFromOnboarding(o.title2)
+	case "3":
+		s.createProjectFromOnboarding(o.title3)
+	case "4":
+		// Custom name — re-prompt inline (the input *is* the name now, but user typed "4")
+		// We need to ask for the custom name. Show prompt and read next line.
+		// For simplicity, just prompt now and return.
+		s.onboarding = nil // clear onboarding for the read
+		fmt.Print("\n  📝 请输入小说名: ")
+		// We'll handle the next input as the custom name — set a flag
+		s.onboarding = &onboardingState{
+			genre: o.genre, subGenre: o.subGenre, powerSystem: o.powerSystem,
+			description: o.description,
+			title1: "__custom__", title2: "", title3: "",
+		}
+		return
+	case "":
+		// Default to option 1
+		s.createProjectFromOnboarding(o.title1)
+	default:
+		if o.title1 == "__custom__" {
+			// User typed the custom name
+			s.createProjectFromOnboarding(input)
+			return
+		}
+		fmt.Println("  请输入 1-4")
+		s.printStatusBar()
+	}
+}
+
+func (s *Session) createProjectFromOnboarding(title string) {
+	o := s.onboarding
+	s.onboarding = nil // clear onboarding state
+
+	if title == "" {
+		title = "未命名小说"
+	}
+
+	// Create project
+	dir := project.Dir(s.root, title)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := project.Init(s.root, title); err != nil {
+			fmt.Printf("\n  ✗ 创建项目失败: %v\n", err)
+			return
+		}
+	}
+	s.project = title
+
+	fmt.Printf("\n  ✓ 项目「%s」已创建\n", title)
+	fmt.Printf("    类型: %s / %s\n", skill.GenreLabels[o.genre], o.subGenre)
+
+	// Auto-fill world.yaml
+	world, _ := project.ReadWorld(s.root, title)
+	world["name"] = title
+	world["genre"] = o.genre
+	world["sub_genre"] = o.subGenre
+	world["power_system"] = o.powerSystem
+	project.WriteWorld(s.root, s.project, world)
+
+	fmt.Println()
+	fmt.Println("  🌍 世界观已初始化:")
+	fmt.Printf("    力量体系: %s\n", o.powerSystem)
+	fmt.Println()
+	fmt.Println("  💡 接下来你可以：")
+	fmt.Println("    输入「完善世界观」→ 展开力量体系和势力设定")
+	fmt.Println("    输入「创建主角」→ 为小说添加核心角色")
+	fmt.Println("    输入 /outline → 查看大纲")
+	fmt.Println("    输入 /write 1 → 开始续写第一章")
+	fmt.Println()
+	s.printStatusBar()
+}
+
+// extractJSON extracts the first { } block from a string that might be wrapped in ```json fences.
+func extractJSON(s string) string {
+	// Try to find content between ```json and ```
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start >= 0 && end > start {
+		return s[start : end+1]
+	}
+	return s
+}
+
+// mapGenreToCode converts a Chinese genre name to its skill code.
+func mapGenreToCode(genre string) string {
+	switch {
+	case strings.Contains(genre, "玄幻"):
+		return "xuanhuan"
+	case strings.Contains(genre, "都市"):
+		return "dushi"
+	case strings.Contains(genre, "古言") || strings.Contains(genre, "权谋") || strings.Contains(genre, "宫斗") || strings.Contains(genre, "宅斗"):
+		return "guyan"
+	case strings.Contains(genre, "悬疑") || strings.Contains(genre, "灵异") || strings.Contains(genre, "推理"):
+		return "xuanyi"
+	case strings.Contains(genre, "科幻") || strings.Contains(genre, "无限") || strings.Contains(genre, "末世") || strings.Contains(genre, "赛博"):
+		return "kehuan"
+	case strings.Contains(genre, "甜宠") || strings.Contains(genre, "言情") || strings.Contains(genre, "校园"):
+		return "tianchong"
+	default:
+		return "xuanhuan"
+	}
+}
+
+// formatAIResponse wraps long AI output for terminal display.
+func formatAIResponse(s string) string {
+	lines := strings.Split(strings.TrimSpace(s), "\n")
+	var out []string
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			out = append(out, "")
+			continue
+		}
+		out = append(out, "  "+line)
+	}
+	return strings.Join(out, "\n")
+}
 
 func loadAuditPolicy(root string) audit.Policy {
 	return audit.DefaultPolicy()
