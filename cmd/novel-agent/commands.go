@@ -18,7 +18,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/api"
-	"github.com/PeneyLove/ai-novel-matrix-studio/skilldata"
+	"github.com/PeneyLove/ai-novel-matrix-studio"
 )
 
 // --- Helpers ---
