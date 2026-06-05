@@ -2,7 +2,7 @@
 
 > 单二进制 Harness + 可插拔 YAML Skill — 聚焦商业网文全流程 AI 辅助创作。
 >
-> `npm install -g novelAgent` → `novel-agent` → 终端对话开始创作
+> `npm install -g novel-agent-cli-cli` → `novel-agent` → 终端对话开始创作
 
 ---
 
@@ -42,7 +42,7 @@
 | 状态 | 无记忆 | **伏笔台账 + 大纲版本 + 人物谱系** 持久化 |
 | 模型 | 绑定单一模型 | **4 个国产大模型按阶段分工** |
 | 提示词 | 写死不可变 | **3 种迭代方式**（手动编辑 / AI 自动优化 / 版本快照回滚） |
-| 分发 | 网页访问 | `npm install -g novelAgent` |
+| 分发 | 网页访问 | `npm install -g novel-agent-cli-cli` |
 
 ---
 
@@ -51,7 +51,7 @@
 ### 方式一：npm 全局安装（推荐）
 
 ```bash
-npm install -g novelAgent
+npm install -g novel-agent-cli
 ```
 
 安装完成后验证：

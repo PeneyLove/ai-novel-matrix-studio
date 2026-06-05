@@ -1,8 +1,11 @@
 {
-  "name": "novelAgent",
+  "name": "novel-agent-cli",
   "version": "2.0.0-alpha",
   "description": "AI Novel Agent — Go single-binary harness with 54 pluggable YAML-defined skills for AI-powered novel creation",
   "main": "install.js",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "novel-agent": "install.js"
   },

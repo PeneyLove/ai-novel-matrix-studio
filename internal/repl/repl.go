@@ -41,11 +41,12 @@ import (
 
 // Session holds the active REPL state.
 type Session struct {
-	h       *harness.Harness
-	audit   audit.Policy
-	project string // active project name
-	root    string // .novelAgent root
-	router  *model.Router
+	h        *harness.Harness
+	audit    audit.Policy
+	project  string // active project name
+	root     string // .novelAgent root
+	router   *model.Router
+	modeMgr  *modeState
 }
 
 // Run starts the interactive REPL loop.
@@ -58,10 +59,11 @@ func Run(h *harness.Harness, root string) error {
 	fmt.Println()
 
 	s := &Session{
-		h:      h,
-		audit:  auditPolicy,
-		root:   root,
-		router: h.Router,
+		h:       h,
+		audit:   auditPolicy,
+		root:    root,
+		router:  h.Router,
+		modeMgr: newModeState(),
 	}
 
 	// Check if any API key is configured. If not, guide user.
@@ -73,8 +75,8 @@ func Run(h *harness.Harness, root string) error {
 		fmt.Println("  💡 还没有项目。输入 /project <名称> 创建一个")
 	} else {
 		s.project = projects[0]
-		fmt.Printf("  📁 当前项目: %s\n", s.project)
 	}
+	s.printStatusBar()
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -96,6 +98,7 @@ func Run(h *harness.Harness, root string) error {
 		}
 
 		s.handle(input)
+		s.printStatusBar()
 	}
 
 	return nil
@@ -105,14 +108,33 @@ func (s *Session) handle(input string) {
 	switch {
 	case input == "/help":
 		s.cmdHelp()
+	case input == "/mode" || strings.HasPrefix(input, "/mode "):
+		s.cmdMode(strings.TrimSpace(strings.TrimPrefix(input, "/mode")))
+	case input == "/auto-plan" || strings.HasPrefix(input, "/auto-plan "):
+		s.cmdAutoPlan(strings.TrimSpace(strings.TrimPrefix(input, "/auto-plan")))
 	case strings.HasPrefix(input, "/project"):
 		s.cmdProject(strings.TrimSpace(strings.TrimPrefix(input, "/project")))
 	case input == "/projects":
 		s.cmdListProjects()
 	case input == "/char evolve" || strings.HasPrefix(input, "/char evolve "):
+		if err := s.checkWritePermission(WriteChar); err != nil {
+			fmt.Println("  ✗", err)
+			return
+		}
 		s.cmdCharEvolve(strings.TrimSpace(strings.TrimPrefix(input, "/char evolve ")))
 	case strings.HasPrefix(input, "/char "):
-		s.cmdChar(strings.TrimSpace(strings.TrimPrefix(input, "/char ")))
+		// Viewing a char is read-only; creating is a write
+		name := strings.TrimSpace(strings.TrimPrefix(input, "/char "))
+		id := project.CharacterID(name)
+		_, readErr := project.ReadCharacter(s.root, s.project, id)
+		if readErr != nil {
+			// Character doesn't exist → will create → needs permission
+			if err := s.checkWritePermission(WriteChar); err != nil {
+				fmt.Println("  ✗", err)
+				return
+			}
+		}
+		s.cmdChar(name)
 	case input == "/chars":
 		s.cmdListChars()
 	case input == "/world":
@@ -124,13 +146,22 @@ func (s *Session) handle(input string) {
 	case input == "/model" || strings.HasPrefix(input, "/model "):
 		s.cmdModel(strings.TrimSpace(strings.TrimPrefix(input, "/model")))
 	case strings.HasPrefix(input, "/write"):
+		if err := s.checkWritePermission(WriteChapter); err != nil {
+			fmt.Println("  ✗", err)
+			return
+		}
 		s.cmdWrite(strings.TrimSpace(strings.TrimPrefix(input, "/write")))
 	case input == "/export":
 		s.cmdExport()
 	case strings.HasPrefix(input, "/killchar "):
+		if err := s.checkWritePermission(WriteKillChar); err != nil {
+			fmt.Println("  ✗", err)
+			return
+		}
 		s.cmdDeactivate(strings.TrimSpace(strings.TrimPrefix(input, "/killchar ")))
 	default:
-		// Free-form writing request → pipeline input
+		// Free-form writing request — run through maybeAutoPlan
+		s.maybeAutoPlan(input)
 		s.handleFreeForm(input)
 	}
 }
@@ -141,6 +172,8 @@ func (s *Session) cmdHelp() {
 	lines := []string{
 		"",
 		"  可用命令:",
+		"  /mode              查看/切换模式（Agent / Plan✎）",
+		"  /auto-plan on|off|ask  复杂意图自动切 Plan 先出方案",
 		"  /project <名称>    切换到指定项目（不存在则创建）",
 		"  /projects          列出所有项目",
 		"  /world             查看世界观设定",
@@ -155,10 +188,67 @@ func (s *Session) cmdHelp() {
 		"  /export            导出全书到 output/",
 		"  /quit              退出",
 		"",
-		"  也可以直接打字描述你想做什么，AI 会尝试理解并执行。",
+		"  模式说明:",
+		"  Agent  自由模式 — 续写/修改/创建 全权限",
+		"  Plan✎  只读模式 — 审阅/规划，写操作被拦截并弹确认",
+		"  默认 AutoPlan=Ask：输入复杂意图时提示是否先出方案",
 		"",
 	}
 	fmt.Print(strings.Join(lines, "\n"))
+}
+
+// ---- mode commands ----
+
+func (s *Session) cmdMode(arg string) {
+	switch arg {
+	case "", "show":
+		modeName := s.modeMgr.mode.String()
+		hint := "所有操作可用"
+		if s.modeMgr.mode.IsReadOnly() {
+			hint = "只读—写操作被拦截，需确认切换"
+		}
+		fmt.Printf("  当前模式: %s (%s)\n", modeName, hint)
+		fmt.Printf("  AutoPlan: %s\n", s.autoPlanLabel())
+		fmt.Println("  切换方式: /mode agent  |  /mode plan")
+	case "agent":
+		fmt.Println("  " + s.modeMgr.switchTo(AgentMode))
+	case "plan":
+		fmt.Println("  " + s.modeMgr.switchTo(PlanMode))
+	default:
+		fmt.Println("  用法: /mode [agent|plan]")
+	}
+}
+
+func (s *Session) cmdAutoPlan(arg string) {
+	switch arg {
+	case "on":
+		s.modeMgr.autoPlan = AutoPlanOn
+		fmt.Println("  ✓ AutoPlan: 开 — 复杂意图自动切 Plan 先出方案")
+	case "off":
+		s.modeMgr.autoPlan = AutoPlanOff
+		fmt.Println("  ✓ AutoPlan: 关 — 永远不自动切 Plan")
+	case "ask":
+		s.modeMgr.autoPlan = AutoPlanAsk
+		fmt.Println("  ✓ AutoPlan: Ask — 复杂意图弹确认再切 Plan")
+	case "", "show":
+		fmt.Printf("  AutoPlan: %s\n", s.autoPlanLabel())
+		fmt.Println("  用法: /auto-plan on|off|ask")
+	default:
+		fmt.Println("  用法: /auto-plan on|off|ask")
+	}
+}
+
+func (s *Session) autoPlanLabel() string {
+	switch s.modeMgr.autoPlan {
+	case AutoPlanOn:
+		return "开（自动切换）"
+	case AutoPlanAsk:
+		return "Ask（弹确认）"
+	case AutoPlanOff:
+		return "关"
+	default:
+		return "?"
+	}
 }
 
 func (s *Session) cmdProject(name string) {
