@@ -60,7 +60,17 @@ func (ms *modeState) switchTo(m Mode) string {
 	return fmt.Sprintf("已从 %s 切换至 %s 模式", old, m)
 }
 
-// ---- Write Guard ----
+// toggle cycles between Agent and Plan mode.
+func (ms *modeState) toggle() string {
+	var next Mode
+	if ms.mode == AgentMode {
+		next = PlanMode
+	} else {
+		next = AgentMode
+	}
+	ms.mode = next
+	return fmt.Sprintf("已切换至 %s 模式", next)
+}
 
 // WriteOperation names the write op being attempted, for user-facing messages.
 type WriteOperation string

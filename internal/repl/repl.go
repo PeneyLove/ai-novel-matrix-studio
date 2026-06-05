@@ -81,6 +81,7 @@ func Run(h *harness.Harness, root string) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
+		s.printStatusBar()
 		fmt.Print("\n✍ novel> ")
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -89,6 +90,9 @@ func Run(h *harness.Harness, root string) error {
 		}
 		input = strings.TrimSpace(input)
 		if input == "" {
+			// Empty line → toggle Agent/Plan mode
+			msg := s.modeMgr.toggle()
+			fmt.Println("  " + msg)
 			continue
 		}
 
@@ -98,7 +102,6 @@ func Run(h *harness.Harness, root string) error {
 		}
 
 		s.handle(input)
-		s.printStatusBar()
 	}
 
 	return nil
@@ -726,6 +729,7 @@ func (s *Session) cmdCharEvolve(name string) {
 	)
 
 	fmt.Println("  ⏳ 调用 AI 模型优化角色提示词...")
+	stopSpinner := StartSpinner("⏳ 思考中")
 	ctx := context.Background()
 
 	// Use fallback model to refine the prompt
@@ -739,6 +743,7 @@ func (s *Session) cmdCharEvolve(name string) {
 	}
 
 	refined, err := client.Generate(ctx, "你是专业的角色设定师，擅长根据人物成长轨迹提炼精确的角色提示词。", metaPrompt)
+	stopSpinner()
 	if err != nil {
 		fmt.Printf("  ✗ AI 调用失败: %v\n", err)
 		return
@@ -775,6 +780,7 @@ func (s *Session) cmdWrite(arg string) {
 		s.project, world["genre"], outline["version"], chNo)
 
 	fmt.Printf("  ✍ 正在续写第 %d 章（调用 AI 模型...）\n", chNo)
+	stopSpinner := StartSpinner("⏳ 思考中")
 	ctx := context.Background()
 
 	taskID := fmt.Sprintf("%s-ch%03d-%d", s.project, chNo, time.Now().Unix())
@@ -791,6 +797,7 @@ func (s *Session) cmdWrite(arg string) {
 		ChapterNo:      chNo,
 		NovelID:        s.project,
 	})
+	stopSpinner()
 	if err != nil {
 		fmt.Printf("  ✗ 续写失败: %v\n", err)
 		return
