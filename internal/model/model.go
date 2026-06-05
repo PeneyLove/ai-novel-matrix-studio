@@ -14,7 +14,6 @@ package model
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"time"
 )
 
