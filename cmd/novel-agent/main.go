@@ -13,6 +13,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tui"
+
+	// Wire compile-time built-in tools
+	_ "github.com/PeneyLove/ai-novel-matrix-studio/internal/tool/builtin"
 )
 
 var rootCmd = &cobra.Command{

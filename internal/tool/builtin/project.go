@@ -18,7 +18,7 @@ func (t projectSwitchTool) Name() string        { return "project_switch" }
 func (t projectSwitchTool) ReadOnly() bool       { return false }
 func (t projectSwitchTool) Description() string  { return "切换到指定项目（不存在则创建）；列出所有项目" }
 func (t projectSwitchTool) Schema() json.RawMessage {
-	return tool.ObjSchema(tool.Props("name", "string", "项目名称（留空列出所有项目）"), nil)
+	return tool.ObjSchema(tool.Prop("name", "string", "项目名称（留空列出所有项目）"), nil)
 }
 
 func (t projectSwitchTool) Execute(ctx context.Context, args json.RawMessage) (string, error) {
