@@ -238,8 +238,7 @@ func (m *Model) render(out *os.File) {
 	sb.WriteString(fgPurple + "[" + m.mode + "]" + reset)
 	sb.WriteByte('\n')
 	sb.WriteString("> ")
-	sb.WriteString(string(m.inputBuf))
-	sb.WriteString("█") // cursor
+	sb.WriteString("█") // cursor placeholder
 	sb.WriteByte('\n')
 
 	hint := "Enter发送 · Shift+Tab切模式 · Ctrl+C退出 · Ctrl+L清屏  "
@@ -322,15 +321,6 @@ func Run(h *harness.Harness, root string) error {
 			}
 
 		case input := <-inputCh:
-			if input == "\x00" {
-				// Keystroke refresh (backspace/char) — inline echo only
-				m.echoInput()
-				continue
-			}
-			if input == "\t" {
-				// Tab received but not Shift+Tab — ignore
-				continue
-			}
 			if input == "\x01" {
 				// Mode changed via Shift+Tab — full render
 				m.render(os.Stdout)
@@ -362,119 +352,48 @@ func Run(h *harness.Harness, root string) error {
 	return nil
 }
 
-func (m *Model) readInput(ch chan<- string) {
-	// Read bytes in bursts with a 80ms drain window — pasted text
-	// arrives as a rapid burst and we batch it before signaling.
-	reader := bufio.NewReader(os.Stdin)
-	pasteBuf := make([]byte, 0, 4096)
 
+func (m *Model) readInput(ch chan<- string) {
+	reader := bufio.NewReader(os.Stdin)
 	for m.running {
 		m.mu.Lock()
 		m.render(os.Stdout)
 		m.mu.Unlock()
 
-		b, err := reader.ReadByte()
+		line, err := reader.ReadString('\n')
 		if err != nil {
 			ch <- "/quit"
 			return
 		}
+		line = strings.TrimRight(line, "\r\n")
 
-		switch b {
-		case 3: // Ctrl+C
+		if strings.ContainsRune(line, 3) {
 			ch <- "/quit"
 			return
-		case 12: // Ctrl+L
+		}
+		if strings.ContainsRune(line, 12) {
 			m.mu.Lock()
 			m.chatLines = nil
 			m.mu.Unlock()
 			ch <- "\x01"
 			continue
-		case 127: // Backspace
-			m.mu.Lock()
-			if len(m.inputBuf) > 0 {
-				m.inputBuf = m.inputBuf[:len(m.inputBuf)-1]
-			}
-			m.mu.Unlock()
-			ch <- "\x00"
-			continue
-		case 13: // Enter
-			text := string(m.inputBuf)
-			m.mu.Lock()
-			m.inputBuf = m.inputBuf[:0]
-			m.mu.Unlock()
-			ch <- text
-			continue
-		case '\033': // Escape sequence
-			seq := make([]byte, 0, 8)
-			for i := 0; i < 7; i++ {
-				next, err := reader.ReadByte()
-				if err != nil {
-					break
-				}
-				seq = append(seq, next)
-				if (next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z') || next == '~' {
-					break
-				}
-			}
-			if string(seq) == "[Z" || string(seq) == "[91;6u" {
-				m.mu.Lock()
-				if m.mode == ModeAgent {
-					m.mode = ModePlan
-				} else {
-					m.mode = ModeAgent
-				}
-				m.addSystem("切换至 " + m.mode + " 模式")
-				m.mu.Unlock()
-				ch <- "\x01"
-			}
-			continue
-		default:
-			// First byte of a burst — accumulate to pasteBuf then drain
-			pasteBuf = pasteBuf[:0]
-			pasteBuf = append(pasteBuf, b)
-			// Drain remaining bytes with 80ms timeout (paste burst window)
-			for {
-				reader.SetReadDeadline(time.Now().Add(80 * time.Millisecond))
-				next, drainErr := reader.ReadByte()
-				if drainErr != nil {
-					break
-				}
-				if next == 13 {
-					// Enter during paste → submit what we have so far
-					// (the Enter itself after paste, not during)
-					pasteBuf = append(pasteBuf, next)
-					break
-				}
-				if next == 3 || next == 127 || next == '\033' {
-					// Control char in paste — abort burst
-					_ = reader.UnreadByte()
-					break
-				}
-				pasteBuf = append(pasteBuf, next)
-			}
-			reader.SetReadDeadline(time.Time{}) // clear deadline
-
-			// If the burst ends with Enter, submit as full line
-			if len(pasteBuf) > 0 && pasteBuf[len(pasteBuf)-1] == 13 {
-				pasteBuf = pasteBuf[:len(pasteBuf)-1] // strip Enter
-				text := string(pasteBuf)
-				m.mu.Lock()
-				m.inputBuf = m.inputBuf[:0]
-				m.mu.Unlock()
-				ch <- text
-				continue
-			}
-
-			// Otherwise, append all drained bytes to input buffer
-			m.mu.Lock()
-			m.inputBuf = append(m.inputBuf, []rune(string(pasteBuf))...)
-			m.mu.Unlock()
-			ch <- "\x00"
 		}
+		if strings.Contains(line, "\033[Z") {
+			m.mu.Lock()
+			if m.mode == ModeAgent {
+				m.mode = ModePlan
+			} else {
+				m.mode = ModeAgent
+			}
+			m.addSystem("切换至 " + m.mode + " 模式")
+			m.mu.Unlock()
+			ch <- "\x01"
+			continue
+		}
+
+		ch <- line
 	}
 }
-
-// --- Input dispatch ---
 
 func (m *Model) handleInput(text string) {
 	text = strings.TrimSpace(text)
@@ -847,22 +766,6 @@ func (m *Model) cmdFreeForm(text string) {
 }
 
 // --- Chat helpers ---
-
-// echoInput writes just the input area (3 lines) inline, without full render.
-func (m *Model) echoInput() {
-	// Move to bottom of terminal:
-	//   \r = carriage return
-	//   \033[K = clear to end of line
-	//   \033[A = up one line
-
-	// Input area is last 3 lines. Use cursor positioning to overwrite just those.
-	// Simpler approach: use absolute cursor position based on termH.
-	// But absolute positioning varies. Instead use relative: \033[s (save cursor)
-	// + reposition + restore. Even simpler: just write \r\033[K for the single
-	// input line, plus the mode label + hint if nothing else changed.
-	// For now, print just the input line in-place:
-	fmt.Fprintf(os.Stdout, "\r\033[K> %s█", string(m.inputBuf))
-}
 
 func (m *Model) checkAPIKey() bool {
 	for _, p := range []string{"deepseek", "mimo", "minimax"} {
