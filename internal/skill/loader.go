@@ -3,7 +3,6 @@ package skill
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
 
 	"gopkg.in/yaml.v3"
