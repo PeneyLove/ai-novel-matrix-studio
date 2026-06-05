@@ -44,6 +44,9 @@ const (
 	clearToEOL = "\033[K"
 
 	bgBlue   = "\033[44m"
+	reverse  = "\033[7m"   // reverse video
+	accent   = "\033[36m"  // cyan
+	fgCyan   = "\033[36m"
 	fgWhite  = "\033[37m"
 	fgPurple = "\033[35m"
 	fgGreen  = "\033[32m"
@@ -619,43 +622,108 @@ func (m *Model) cmdWrite(arg string) {
 }
 
 func (m *Model) cmdModel(arg string) {
+	// "/model" with no args → styled list (reasonix renderModels pattern)
 	if arg == "" || arg == "list" {
-		for _, p := range []string{"deepseek","mimo","minimax"} {
+		m.addAIHeader("模型列表")
+
+		var refs []string
+		for _, p := range []string{"deepseek", "mimo", "minimax"} {
 			_, err := m.harness.Router.GetClient(p)
-			icon := "✗"; if err == nil { icon = "✓"; m.activeModel = p }
-			label := model.ProviderLabels[p]; if label == "" { label = p }
-			m.addSystem(fmt.Sprintf("  %s %s — %s", icon, p, label))
+			if err != nil {
+				continue // skip unconfigured
+			}
+			cfg := model.DefaultConfig(p)
+			refs = append(refs, p+"/"+cfg.ModelName)
 		}
+
+		activeRef := m.activeModel
+		if ref := m.activeModel; ref != "" {
+			if cfg := model.DefaultConfig(ref); cfg.ModelName != "" {
+				activeRef = ref + "/" + cfg.ModelName
+			}
+		}
+
+		for _, ref := range refs {
+			marker := "  "
+			if ref == activeRef {
+				marker = accent + "▸" + reset + " "
+			}
+			status := ""
+			if ref == activeRef {
+				status = reverse(" active ") + " "
+			}
+			labelText := ""
+			parts := strings.SplitN(ref, "/", 2)
+			if len(parts) == 2 {
+				if pl := model.ProviderLabels[parts[0]]; pl != "" {
+					labelText = dim + pl + reset
+				}
+			}
+			m.addSystem(fmt.Sprintf("%s%s %s%s", marker, ref, status, labelText))
+		}
+		m.addSystem(dim + "  输入 /model <provider/model> 切换  例: /model deepseek/deepseek-chat" + reset)
+		m.addSystem(dim + "  输入 /model set <provider> <key> 配置 Key" + reset)
 		return
 	}
+
+	// "/model deepseek/deepseek-chat" — direct ref switch (reasonix style)
+	if !strings.Contains(arg, " ") && strings.Contains(arg, "/") {
+		parts := strings.SplitN(arg, "/", 2)
+		provider := parts[0]
+		_, err := m.harness.Router.GetClient(provider)
+		if err != nil {
+			m.addError(fmt.Sprintf("%s 未配置 API Key。使用 /model set %s <key> 先配置。", provider, provider))
+			return
+		}
+		m.activeModel = provider
+		// Optionally update model_name in config for this provider
+		m.addSystem(fmt.Sprintf("%s ▸ 已切换到 %s/%s %s", accent, provider, parts[1], model.ProviderLabels[provider]))
+		return
+	}
+
+	// Legacy sub-commands: set / switch
 	parts := strings.SplitN(arg, " ", 2)
-	if len(parts)==2 && parts[0]=="set" {
-		parts2 := strings.SplitN(parts[1]," ",2)
-		if len(parts2)<2 { m.addSystem("用法: /model set <deepseek|minimax|mimo> <api-key>"); return }
+	if len(parts) == 2 && parts[0] == "set" {
+		parts2 := strings.SplitN(parts[1], " ", 2)
+		if len(parts2) < 2 {
+			m.addSystem("用法: /model set <deepseek|minimax|mimo> <api-key>")
+			return
+		}
 		provider, key := parts2[0], parts2[1]
 		cfg, _ := storage.ReadConfig(m.root)
-		if cfg == nil { cfg = make(map[string]any) }
-		cfg[provider] = map[string]any{
-			"api_key":key, "api_endpoint":model.DefaultConfig(provider).Endpoint,
-			"model_name":model.DefaultConfig(provider).ModelName,
-			"max_tokens":model.DefaultConfig(provider).MaxTokens,
-			"temperature":model.DefaultConfig(provider).Temperature,
-			"timeout":60,"retry_times":3,
+		if cfg == nil {
+			cfg = make(map[string]any)
 		}
-		if err := storage.WriteConfig(m.root, cfg); err != nil { m.addError("保存: "+err.Error()); return }
+		cfg[provider] = map[string]any{
+			"api_key": key, "api_endpoint": model.DefaultConfig(provider).Endpoint,
+			"model_name": model.DefaultConfig(provider).ModelName,
+			"max_tokens": model.DefaultConfig(provider).MaxTokens,
+			"temperature": model.DefaultConfig(provider).Temperature,
+			"timeout": 60, "retry_times": 3,
+		}
+		if err := storage.WriteConfig(m.root, cfg); err != nil {
+			m.addError("保存: " + err.Error())
+			return
+		}
 		mcs, fb := modelConfigsFromConfig(cfg)
 		newRouter, err := model.NewRouter(mcs, fb)
-		if err != nil { m.addError("路由: "+err.Error()); return }
+		if err != nil {
+			m.addError("路由: " + err.Error())
+			return
+		}
 		m.harness.Router = newRouter
 		m.activeModel = provider
-		m.addSystem(fmt.Sprintf("✓ %s API Key 已配置", model.ProviderLabels[provider]))
+		m.addSystem(fmt.Sprintf("%s ✓ %s API Key 已配置", accent, model.ProviderLabels[provider]))
 		return
 	}
-	if len(parts)==2 && parts[0]=="switch" {
+	if len(parts) == 2 && parts[0] == "switch" {
 		p := parts[1]
-		if _, err := m.harness.Router.GetClient(p); err != nil { m.addSystem(fmt.Sprintf("✗ %s 未配置", p)); return }
+		if _, err := m.harness.Router.GetClient(p); err != nil {
+			m.addError(fmt.Sprintf("%s 未配置 API Key", p))
+			return
+		}
 		m.activeModel = p
-		m.addSystem(fmt.Sprintf("✓ 切换到 %s", model.ProviderLabels[p]))
+		m.addSystem(fmt.Sprintf("%s ▸ 切换到 %s %s", accent, p, model.ProviderLabels[p]))
 		return
 	}
 	m.addSystem("用法: /model | /model set <模型> <key> | /model switch <模型>")
@@ -755,6 +823,7 @@ func (m *Model) cmdFreeForm(text string) {
 func (m *Model) addSystem(s string) { m.chatLines = append(m.chatLines, chatLine{Type:"system",Text:s}) }
 func (m *Model) addUser(s string)   { m.chatLines = append(m.chatLines, chatLine{Type:"user",Text:s}) }
 func (m *Model) addAI(s string)     { m.chatLines = append(m.chatLines, chatLine{Type:"ai",Text:s}) }
+func (m *Model) addAIHeader(s string) { m.chatLines = append(m.chatLines, chatLine{Type:"aiHeader",Text: "▌ " + s}) }
 func (m *Model) addError(s string)  { m.chatLines = append(m.chatLines, chatLine{Type:"error",Text:s}) }
 func (m *Model) addWarning(s string){ m.chatLines = append(m.chatLines, chatLine{Type:"warning",Text:s}) }
 
