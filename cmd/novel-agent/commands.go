@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -220,14 +221,14 @@ func runInit(cmd *cobra.Command, args []string) error {
 	installed := 0
 	for _, genre := range builtinGenres {
 		for _, sub := range builtinSubSkills {
-			path := filepath.Join("skills", genre, sub+".yaml")
-			if err := installSkillFromEmbed(root, path, genre+"_"+sub); err == nil {
+			spath := path.Join("skills", genre, sub+".yaml")
+			if err := installSkillFromEmbed(root, spath, genre+"_"+sub); err == nil {
 				installed++
 			}
 		}
 		for _, opt := range builtinOptimizes {
-			path := filepath.Join("skills", genre, "optimize", opt+".yaml")
-			if err := installSkillFromEmbed(root, path, genre+"_optimize_"+opt); err == nil {
+			sopath := path.Join("skills", genre, "optimize", opt+".yaml")
+			if err := installSkillFromEmbed(root, sopath, genre+"_optimize_"+opt); err == nil {
 				installed++
 			}
 		}
