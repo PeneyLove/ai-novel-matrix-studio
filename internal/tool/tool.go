@@ -5,6 +5,7 @@ package tool
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"sync"
 )
 
@@ -188,4 +189,9 @@ func RootFrom(ctx context.Context) string {
 		return v.(string)
 	}
 	return ""
+}
+
+// Err returns a JSON error string.
+func Err(msg string) string {
+	return fmt.Sprintf(`{"error":"%s"}`, msg)
 }
