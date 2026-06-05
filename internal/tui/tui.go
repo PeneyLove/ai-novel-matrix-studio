@@ -1,47 +1,60 @@
-// Package tui implements the Bubble Tea terminal UI for novel-agent.
+// Package tui implements a zero-dependency terminal UI using raw ANSI/VT100
+// escape sequences. Same 3-section layout (status + chat + input) as Bubble Tea
+// but without any external packages — single binary, no network flakiness.
 //
-// Layout (top → bottom):
+// Layout:
 //
-//	┌─ status bar (1 line) ────────────────────────────────┐
-//	│ 📁 凡人修仙  ✍ 3章  🤖 deepseek  [Agent]             │
-//	├─ chat viewport (scrollable) ─────────────────────────┤
-//	│                                                        │
-//	│ 🤖 [玄幻修仙-大纲Skill] 根据你的构思，我已生成...       │
-//	│                                                        │
-//	│ ✍ 我想让男主在第3章觉醒能力                            │
-//	│                                                        │
-//	│ ⠋ 思考中...                                            │
-//	├─ input area (3 lines, fixed) ────────────────────────┤
-//	│ [Agent]                                                │
-//	│ > _                                                    │
-//	│ Enter发送 · Shift+Tab切模式 · Ctrl+C退出 · Ctrl+L清屏  │
-//	└────────────────────────────────────────────────────────┘
+//	┌─ status bar ───────────────────────────────────────┐
+//	│ 📁 凡人修仙  ✍ 3章  🤖 deepseek  [Agent]           │
+//	├─ chat (scrollable) ────────────────────────────────┤
+//	│ ✍ user message                                     │
+//	│ 🤖 AI response                                     │
+//	│ ⠋ 思考中...                                        │
+//	├─ input ────────────────────────────────────────────┤
+//	│ > typing...█                                       │
+//	│ Enter发送 · Shift+Tab切模式 · Ctrl+C退出            │
+//	└─────────────────────────────────────────────────────┘
 package tui
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	"golang.org/x/term"
 
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/audit"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/harness"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+)
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/audit"
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/harness"
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+// ANSI escapes
+const (
+	esc       = "\033["
+	cursorOff = esc + "?25l"
+	cursorOn  = esc + "?25h"
+	clearAll  = esc + "2J"
+	clearLine = esc + "2K"
+	posHome   = esc + "H"
+	bgBlue    = esc + "44m"   // status bar background
+	fgWhite   = esc + "37m"   // status bar text
+	fgPurple  = esc + "35m"   // AI header
+	fgGreen   = esc + "32m"   // user text
+	fgGray    = esc + "90m"   // system/hint text
+	fgRed     = esc + "31m"   // error
+	fgYellow  = esc + "33m"   // warning
+	reset     = esc + "0m"
+	bold      = esc + "1m"
+	dim       = esc + "2m"
 )
 
 // Mode constants
@@ -50,95 +63,61 @@ const (
 	ModePlan  = "Plan✎"
 )
 
-// --- Styles ---
-var (
-	statusStyle = lipgloss.NewStyle().
-			Background(lipgloss.Color("37")). // blue-ish
-			Foreground(lipgloss.Color("255")).
-			Bold(true).
-			Padding(0, 1).
-			Width(0) // auto
-
-	thinkingStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240")).
-			Italic(true)
-
-	userMsgStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("114")).
-			Bold(true)
-
-	aiHeaderStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("183")).
-			Bold(true)
-
-	aiBodyStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("253"))
-
-	systemStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240"))
-
-	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("204"))
-
-	inputModeStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("183"))
-
-	hintStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("240"))
-)
+// Spinner frames
+var spinnerFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 
 // --- Model ---
 
 type Model struct {
-	harness   *harness.Harness
-	root      string
-	audit     audit.Policy
-	project   string
-	mode      string
-	autoPlan  string
-	modeMgr   interface{ toggle() string }
+	mu sync.Mutex
 
-	// Chat lines
-	chatLines   []string
-	viewportPos int // current scroll position (line index from top)
-
-	// Input
-	input      strings.Builder
-	cursorPos  int
-
-	// State
-	width     int
-	height    int
-	running   bool
-	thinking  bool
-	thinkingFrame int
-	thinkingFrames []string
-	thinkingMsg  string
-
-	// Async events
-	eventCh    chan any
-	onboarding *onboardState
+	harness     *harness.Harness
+	root        string
+	project     string
+	mode        string
+	autoPlan    string
 	activeModel string
 
-	// Raw terminal width for layout
-	termWidth int
+	// Chat buffer (ring)
+	chatLines []chatLine
+	chatCap   int
+
+	// Input
+	inputBuf []rune
+	cursor   int
+
+	// Display
+	termW int
+	termH int
+
+	// Thinking state
+	thinking      bool
+	thinkingFrame int
+	thinkingMsg   string
+
+	// Lifecycle
+	running bool
+	reader  *bufio.Reader
+
+	// Async
+	eventCh   chan any
+	pendingFn func() // next render callback
 }
 
-type onboardState struct {
-	genre, subGenre, powerSystem, desc string
-	title1, title2, title3             string
+type chatLine struct {
+	Type string // "system", "user", "ai", "aiHeader", "error", "warning"
+	Text string
 }
 
-// ChatEvent carries AI result or error back from goroutine.
 type ChatEvent struct {
-	Line   string
-	Err    error
-	SpinnerStop bool
+	Line        string
+	Err         error
+	StopSpinner bool
 }
 
-// New creates a TUI Model.
+// --- Constructor ---
+
 func New(h *harness.Harness, root string) *Model {
-	// Find active model
 	modelName := ""
 	for _, p := range []string{"deepseek", "mimo", "minimax"} {
 		if _, err := h.Router.GetClient(p); err == nil {
@@ -148,574 +127,29 @@ func New(h *harness.Harness, root string) *Model {
 	}
 
 	return &Model{
-		harness:        h,
-		root:           root,
-		audit:          audit.DefaultPolicy(),
-		mode:           ModeAgent,
-		autoPlan:       "Ask",
-		chatLines:      make([]string, 0, 200),
-		eventCh:        make(chan any, 256),
-		thinkingFrames: []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"},
-		activeModel:    modelName,
+		harness:     h,
+		root:        root,
+		mode:        ModeAgent,
+		autoPlan:    "Ask",
+		activeModel: modelName,
+		chatLines:   make([]chatLine, 0, 500),
+		chatCap:     1000,
+		inputBuf:    make([]rune, 0, 4096),
+		eventCh:     make(chan any, 256),
+		running:     true,
 	}
 }
 
-// Init implements tea.Model.
-func (m *Model) Init() tea.Cmd {
-	return tea.Batch(
-		m.tickThinking(),
-		m.listenEvents(),
-		// Emit startup events
-		m.emitStartup(),
-	)
-}
+// --- Render ---
 
-// Update implements tea.Model.
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.termWidth = msg.Width
-		return m, nil
+func (m *Model) render(out *os.File) {
+	var sb strings.Builder
 
-	case tea.KeyMsg:
-		return m, m.handleKey(msg)
-
-	case ChatEvent:
-		if msg.SpinnerStop {
-			m.thinking = false
-		}
-		if msg.Err != nil {
-			m.addSystemLine(msg.Err.Error())
-		} else if msg.Line != "" {
-			m.addAILine(msg.Line)
-		}
-		return m, m.listenEvents()
-
-	case startupMsg:
-		m.addSystemLine(msg.text)
-		return m, m.listenEvents()
-
-	case tickMsg:
-		if m.thinking {
-			m.thinkingFrame = (m.thinkingFrame + 1) % len(m.thinkingFrames)
-		}
-		return m, m.tickThinking()
-
-	default:
-		return m, nil
-	}
-}
-
-// View implements tea.Model.
-func (m *Model) View() string {
-	sb := strings.Builder{}
+	// Cursor off during frame render
+	sb.WriteString(cursorOff)
+	sb.WriteString(posHome)
 
 	// ── Status bar ──
-	sb.WriteString(m.renderStatus())
-	sb.WriteByte('\n')
-
-	// ── Chat viewport ──
-	chatHeight := m.height - 5 // status(1) + input(3) + separator(1)
-	if chatHeight < 3 {
-		chatHeight = 3
-	}
-
-	start := len(m.chatLines) - chatHeight
-	if start < 0 {
-		start = 0
-	}
-	if m.viewportPos > 0 {
-		// User has scrolled up — adjust view
-		start = m.viewportPos
-	}
-	end := start + chatHeight
-	if end > len(m.chatLines) {
-		end = len(m.chatLines)
-	}
-	for _, line := range m.chatLines[start:end] {
-		sb.WriteString(line)
-		sb.WriteByte('\n')
-	}
-	// Fill remaining lines
-	for i := end - start; i < chatHeight; i++ {
-		sb.WriteByte('\n')
-	}
-
-	// ── Thinking indicator ──
-	if m.thinking {
-		frame := m.thinkingFrames[m.thinkingFrame]
-		sb.WriteString(thinkingStyle.Render(fmt.Sprintf("  %s %s", frame, m.thinkingMsg)))
-		sb.WriteByte('\n')
-	}
-
-	// ── Separator ──
-	sb.WriteString(strings.Repeat("─", m.termWidth))
-	sb.WriteByte('\n')
-
-	// ── Input area ──
-	modeLabel := inputModeStyle.Render(fmt.Sprintf("[%s]", m.mode))
-	sb.WriteString(modeLabel)
-	sb.WriteByte('\n')
-
-	sb.WriteString("> ")
-	sb.WriteString(m.input.String())
-	if m.cursorPos >= 0 {
-		sb.WriteString("█") // cursor
-	}
-	sb.WriteByte('\n')
-
-	sb.WriteString(hintStyle.Render("Enter发送 · Shift+Tab切模式 · Ctrl+C退出 · Ctrl+L清屏"))
-
-	return sb.String()
-}
-
-// --- Key handling ---
-
-func (m *Model) handleKey(msg tea.KeyMsg) tea.Cmd {
-	switch msg.Type {
-	case tea.KeyCtrlC:
-		m.running = false
-		return tea.Quit
-
-	case tea.KeyCtrlL:
-		m.chatLines = nil
-		return nil
-
-	case tea.KeyShiftTab:
-		if m.mode == ModeAgent {
-			m.mode = ModePlan
-		} else {
-			m.mode = ModeAgent
-		}
-		m.addSystemLine(fmt.Sprintf("切换至 %s 模式", m.mode))
-		return nil
-
-	case tea.KeyEnter:
-		text := strings.TrimSpace(m.input.String())
-		m.input.Reset()
-		m.cursorPos = 0
-		if text == "" {
-			// Toggle mode
-			if m.mode == ModeAgent {
-				m.mode = ModePlan
-			} else {
-				m.mode = ModeAgent
-			}
-			m.addSystemLine(fmt.Sprintf("切换至 %s 模式", m.mode))
-			return nil
-		}
-
-		m.addUserLine(text)
-		return m.handleUserInput(text)
-
-	case tea.KeyBackspace:
-		s := m.input.String()
-		if len(s) > 0 {
-			runes := []rune(s)
-			m.input.Reset()
-			m.input.WriteString(string(runes[:len(runes)-1]))
-		}
-		return nil
-
-	case tea.KeyRunes:
-		m.input.WriteString(string(msg.Runes))
-		return nil
-
-	default:
-		return nil
-	}
-}
-
-// --- Async event loop ---
-
-type tickMsg struct{}
-type startupMsg struct{ text string }
-
-func (m *Model) tickThinking() tea.Cmd {
-	return tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg {
-		return tickMsg{}
-	})
-}
-
-func (m *Model) listenEvents() tea.Cmd {
-	return func() tea.Msg {
-		select {
-		case ev := <-m.eventCh:
-			return ev
-		default:
-			return nil
-		}
-	}
-}
-
-func (m *Model) emitStartup() tea.Cmd {
-	return func() tea.Msg {
-		// Check API key
-		hasKey := false
-		for _, p := range []string{"deepseek", "mimo", "minimax"} {
-			if _, err := m.harness.Router.GetClient(p); err == nil {
-				hasKey = true
-				m.activeModel = p
-				break
-			}
-		}
-
-		lines := []string{
-			"✍  AI Novel Agent v2 · 交互式写作终端",
-		}
-		if hasKey {
-			lines = append(lines, fmt.Sprintf("🤖 活跃模型: %s | /model 切换", m.activeModel))
-		} else {
-			lines = append(lines, "⚠ 未检测到 API Key。输入 /model set deepseek <key> 配置。")
-			lines = append(lines, "  申请: https://platform.deepseek.com/api_keys")
-		}
-
-		projects, _ := project.ListProjects(m.root)
-		if len(projects) > 0 {
-			m.project = projects[0]
-			lines = append(lines, fmt.Sprintf("📁 当前项目: %s", m.project))
-			lines = append(lines, "直接描述你的创作意图，或输入 /help 查看命令。")
-		} else {
-			lines = append(lines, "你想写一本怎样的小说？直接告诉我书名、类型、核心灵感。")
-		}
-
-		// Send startup lines one by one with small delay
-		for _, l := range lines {
-			m.eventCh <- startupMsg{text: l}
-			time.Sleep(50 * time.Millisecond)
-		}
-		return nil
-	}
-}
-
-// --- Input handling ---
-
-func (m *Model) handleUserInput(text string) tea.Cmd {
-	if strings.HasPrefix(text, "/quit") || strings.HasPrefix(text, "/exit") {
-		m.running = false
-		return tea.Quit
-	}
-
-	if strings.HasPrefix(text, "/help") {
-		m.addSystemLine("可用命令: /project /chars /outline /world /write /export /model /mode")
-		m.addSystemLine("模式: Agent(自由) / Plan✎(只读) · Shift+Tab 切换")
-		return nil
-	}
-
-	if strings.HasPrefix(text, "/project") {
-		name := strings.TrimSpace(strings.TrimPrefix(text, "/project"))
-		return m.handleProject(name)
-	}
-
-	if strings.HasPrefix(text, "/chars") {
-		return m.handleListChars()
-	}
-
-	if strings.HasPrefix(text, "/char ") {
-		name := strings.TrimSpace(strings.TrimPrefix(text, "/char "))
-		return m.handleChar(name)
-	}
-
-	if strings.HasPrefix(text, "/world") {
-		return m.handleWorld()
-	}
-
-	if strings.HasPrefix(text, "/outline") {
-		return m.handleOutline()
-	}
-
-	if strings.HasPrefix(text, "/write") {
-		arg := strings.TrimSpace(strings.TrimPrefix(text, "/write"))
-		return m.handleWrite(arg)
-	}
-
-	if strings.HasPrefix(text, "/model") {
-		arg := strings.TrimSpace(strings.TrimPrefix(text, "/model"))
-		return m.handleModel(arg)
-	}
-
-	if strings.HasPrefix(text, "/mode") {
-		arg := strings.TrimSpace(strings.TrimPrefix(text, "/mode"))
-		switch arg {
-		case "plan":
-			m.mode = ModePlan
-		case "agent":
-			m.mode = ModeAgent
-		}
-		m.addSystemLine(fmt.Sprintf("当前模式: %s", m.mode))
-		return nil
-	}
-
-	if strings.HasPrefix(text, "/killchar") {
-		name := strings.TrimSpace(strings.TrimPrefix(text, "/killchar "))
-		return m.handleKillChar(name)
-	}
-
-	// Check write permission
-	if m.mode == ModePlan && isWriteOp(text) {
-		m.addSystemLine("⚠ Plan 模式不允许写操作。按 Shift+Tab 切换到 Agent 模式后重试。")
-		return nil
-	}
-
-	// Free-form — route to AI discussion
-	return m.handleFreeForm(text)
-}
-
-func isWriteOp(text string) bool {
-	kw := []string{"/write", "/char", "/killchar"}
-	for _, k := range kw {
-		if strings.HasPrefix(text, k) {
-			return true
-		}
-	}
-	for _, k := range []string{"写", "续写", "创建角色", "修改", "删除", "下线"} {
-		if strings.Contains(text, k) {
-			return true
-		}
-	}
-	return false
-}
-
-// --- Handler stubs (to be filled) ---
-
-func (m *Model) handleProject(name string) tea.Cmd {
-	if name == "" {
-		projs, _ := project.ListProjects(m.root)
-		if len(projs) == 0 {
-			m.addSystemLine("还没有项目。用法: /project <名称>")
-			return nil
-		}
-		m.addSystemLine(fmt.Sprintf("项目列表: %s", strings.Join(projs, ", ")))
-		return nil
-	}
-	if _, err := os.Stat(project.Dir(m.root, name)); os.IsNotExist(err) {
-		project.Init(m.root, name)
-		m.addSystemLine(fmt.Sprintf("✓ 已创建项目「%s」", name))
-	}
-	m.project = name
-	m.addSystemLine(fmt.Sprintf("✓ 切换到项目「%s」", name))
-	return nil
-}
-
-func (m *Model) handleListChars() tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	chars, err := project.ListCharacters(m.root, m.project)
-	if err != nil || len(chars) == 0 {
-		m.addSystemLine("还没有角色。使用 /char <角色名> 创建")
-		return nil
-	}
-	for _, ch := range chars {
-		icon := "🟢"
-		if ch.Status == "deactivated" {
-			icon = "⚫"
-		}
-		m.addSystemLine(fmt.Sprintf("  %s %s (%s) %s", icon, ch.Name, ch.Role, ch.Personality))
-	}
-	return nil
-}
-
-func (m *Model) handleChar(name string) tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	if name == "" {
-		m.addSystemLine("用法: /char <角色名>")
-		return nil
-	}
-	id := project.CharacterID(name)
-	_, err := project.ReadCharacter(m.root, m.project, id)
-	if err == nil {
-		m.addSystemLine(fmt.Sprintf("📝 角色「%s」已存在。编辑请直接修改 .novelAgent/projects/%s/characters/%s.yaml", name, m.project, id))
-		return nil
-	}
-	ch := project.CharacterProfile{
-		ID: id, Name: name, Role: "配角", Status: "active",
-		Personality: "待设定", Background: "待设定", Motivation: "待设定",
-	}
-	project.WriteCharacter(m.root, m.project, ch)
-	m.addSystemLine(fmt.Sprintf("✓ 角色「%s」已创建", name))
-	return nil
-}
-
-func (m *Model) handleWorld() tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	w, _ := project.ReadWorld(m.root, m.project)
-	m.addSystemLine(fmt.Sprintf("🌍 世界观: %v / %v", w["genre"], w["sub_genre"]))
-	m.addSystemLine(fmt.Sprintf("   力量体系: %v", w["power_system"]))
-	if factions, ok := w["factions"].([]any); ok && len(factions) > 0 {
-		m.addSystemLine("   势力: " + fmt.Sprint(factions))
-	}
-	return nil
-}
-
-func (m *Model) handleOutline() tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	o, _ := project.ReadOutline(m.root, m.project)
-	m.addSystemLine(fmt.Sprintf("📋 大纲 V%v | 已定稿: %v | 章节数: %v", o["version"], o["finalized"], o["chapter_count"]))
-	return nil
-}
-
-func (m *Model) handleWrite(arg string) tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	chNo := 1
-	if arg != "" {
-		if n, err := strconv.Atoi(arg); err == nil {
-			chNo = n
-		}
-	}
-
-	m.thinking = true
-	m.thinkingMsg = "正在续写第" + itoa(chNo) + "章..."
-	fullTask := fmt.Sprintf("%s-ch%03d-%d", m.project, chNo, time.Now().Unix())
-
-	// Run AI call in background
-	go func() {
-		outline, _ := project.ReadOutline(m.root, m.project)
-		world, _ := project.ReadWorld(m.root, m.project)
-		trendData := fmt.Sprintf("项目: %s, 世界观: %v, 续写第%d章", m.project, world["genre"], chNo)
-
-		skillName := "xuanhuan_writing"
-		if g, ok := world["genre"].(string); ok && g != "" {
-			skillName = g + "_writing"
-		}
-
-		ctx := context.Background()
-		out, err := m.harness.RunStage(ctx, fullTask, skillName, "content_generation", pipeline.StageInput{
-			TrendData:      trendData,
-			ChapterOutline: fmt.Sprintf("第%d章大纲", chNo),
-			ChapterNo:      chNo,
-			NovelID:        m.project,
-		})
-		if err != nil {
-			m.eventCh <- ChatEvent{SpinnerStop: true, Err: err}
-			return
-		}
-
-		project.WriteChapter(m.root, m.project, chNo, out.Content)
-		outline["chapter_count"] = chNo
-		project.WriteOutline(m.root, m.project, outline)
-
-		m.eventCh <- ChatEvent{
-			SpinnerStop: true,
-			Line:        fmt.Sprintf("✓ 第%d章完成 (%d字)", chNo, len([]rune(out.Content))),
-		}
-	}()
-
-	return nil
-}
-
-func (m *Model) handleModel(arg string) tea.Cmd {
-	if arg == "" || arg == "list" {
-		for _, p := range []string{"deepseek", "mimo", "minimax"} {
-			_, err := m.harness.Router.GetClient(p)
-			icon := "✗"
-			if err == nil {
-				icon = "✓"
-			}
-			label := model.ProviderLabels[p]
-			m.addSystemLine(fmt.Sprintf("  %s %s  %s", icon, p, label))
-		}
-		return nil
-	}
-	parts := strings.SplitN(arg, " ", 2)
-	if len(parts) >= 2 && parts[0] == "set" {
-		parts2 := strings.SplitN(parts[1], " ", 2)
-		if len(parts2) >= 2 {
-			m.addSystemLine(fmt.Sprintf("✓ %s API Key 已配置", parts2[0]))
-		}
-		return nil
-	}
-	if parts[0] == "switch" && len(parts) >= 2 {
-		m.activeModel = parts[1]
-		m.addSystemLine(fmt.Sprintf("✓ 已切换到 %s", parts[1]))
-		return nil
-	}
-	m.addSystemLine("用法: /model | /model set <模型> <key> | /model switch <模型>")
-	return nil
-}
-
-func (m *Model) handleKillChar(name string) tea.Cmd {
-	if m.project == "" {
-		m.addSystemLine("请先选择项目: /project <名称>")
-		return nil
-	}
-	if name == "" {
-		m.addSystemLine("用法: /killchar <角色名>")
-		return nil
-	}
-	id := project.CharacterID(name)
-	summary, err := project.DeactivateCharacter(m.root, m.project, id, "用户手动下线")
-	if err != nil {
-		m.addSystemLine(fmt.Sprintf("✗ %v", err))
-		return nil
-	}
-	m.addSystemLine("⚠ 角色" + summary)
-	return nil
-}
-
-func (m *Model) handleFreeForm(text string) tea.Cmd {
-	m.thinking = true
-	m.thinkingMsg = "思考中..."
-
-	go func() {
-		client, _ := m.harness.Router.GetClient("deepseek")
-		if client == nil {
-			client, _ = m.harness.Router.GetClient("mimo")
-		}
-		if client == nil {
-			m.eventCh <- ChatEvent{SpinnerStop: true, Err: fmt.Errorf("没有可用的 AI 模型")}
-			return
-		}
-		ctx := context.Background()
-		reply, err := client.Generate(ctx, "你是小说创作助手。回答简洁，有网文创作经验。", text)
-		if err != nil {
-			m.eventCh <- ChatEvent{SpinnerStop: true, Err: err}
-			return
-		}
-		m.eventCh <- ChatEvent{SpinnerStop: true, Line: reply}
-	}()
-
-	return nil
-}
-
-// --- Line helpers ---
-
-func (m *Model) addUserLine(text string) {
-	m.chatLines = append(m.chatLines, userMsgStyle.Render("✍ "+text))
-}
-
-func (m *Model) addAILine(text string) {
-	for _, line := range strings.Split(text, "\n") {
-		if line = strings.TrimSpace(line); line != "" {
-			m.chatLines = append(m.chatLines, aiBodyStyle.Render("  "+line))
-		}
-	}
-}
-
-func (m *Model) addSystemLine(text string) {
-	m.chatLines = append(m.chatLines, systemStyle.Render("  "+text))
-}
-
-// --- Helpers ---
-
-func (m *Model) renderStatus() string {
-	parts := []string{}
-	parts = append(parts, "📁 "+m.project)
 	chCount := 0
 	if m.project != "" {
 		chDir := project.Dir(m.root, m.project) + "/output"
@@ -727,25 +161,612 @@ func (m *Model) renderStatus() string {
 			}
 		}
 	}
-	parts = append(parts, fmt.Sprintf("✍ %d章", chCount))
-	parts = append(parts, "🤖 "+m.activeModel)
-	parts = append(parts, fmt.Sprintf("[%s]", m.mode))
-	if m.autoPlan != "Off" {
-		parts = append(parts, fmt.Sprintf("[AP:%s]", m.autoPlan))
+	statusLeft := fmt.Sprintf("📁 %s  ✍ %d章  🤖 %s  [%s]",
+		m.project, chCount, m.activeModel, m.mode)
+	if statusLeft == "📁   ✍ 0章  🤖   [Agent]" {
+		statusLeft = "📁 （新项目） ✍ 0章  🤖 " + m.activeModel + "  [Agent]"
 	}
-	return statusStyle.Render(strings.Join(parts, "  "))
+	status := bgBlue + fgWhite + bold + " " + statusLeft
+	pad := m.termW - len([]rune(statusLeft)) - 3
+	if pad < 0 {
+		pad = 0
+	}
+	status += strings.Repeat(" ", pad) + reset
+	sb.WriteString(status)
+	sb.WriteByte('\n')
+
+	// ── Chat area ──
+	chatHeight := m.termH - 4 // status(1) + input(3) + thinking(1 optional)
+	if chatHeight < 3 {
+		chatHeight = 3
+	}
+
+	// Calculate visible range
+	start := len(m.chatLines) - chatHeight
+	if start < 0 {
+		start = 0
+	}
+
+	for i := start; i < len(m.chatLines); i++ {
+		cl := m.chatLines[i]
+		switch cl.Type {
+		case "system":
+			sb.WriteString(fgGray + "  " + cl.Text + reset)
+		case "user":
+			sb.WriteString(fgGreen + bold + "✍ " + cl.Text + reset)
+		case "ai":
+			for _, line := range strings.Split(cl.Text, "\n") {
+				line = strings.TrimSpace(line)
+				if line != "" {
+					sb.WriteString("  " + line)
+				}
+			}
+		case "aiHeader":
+			sb.WriteString(fgPurple + bold + "🤖 [" + cl.Text + "]" + reset)
+		case "error":
+			sb.WriteString(fgRed + "✗ " + cl.Text + reset)
+		case "warning":
+			sb.WriteString(fgYellow + "⚠ " + cl.Text + reset)
+		}
+		sb.WriteByte('\n')
+	}
+
+	// Fill remaining chat lines
+	for i := len(m.chatLines) - start; i < chatHeight; i++ {
+		sb.WriteByte('\n')
+	}
+
+	// ── Thinking indicator ──
+	if m.thinking {
+		frame := spinnerFrames[m.thinkingFrame]
+		sb.WriteString(dim + fgGray + "  " + frame + " " + m.thinkingMsg + reset)
+	}
+	sb.WriteByte('\n')
+
+	// ── Separator ──
+	sep := strings.Repeat("─", m.termW)
+	sb.WriteString(fgGray + sep + reset)
+	sb.WriteByte('\n')
+
+	// ── Input ──
+	sb.WriteString(fgPurple + "[" + m.mode + "]" + reset)
+	sb.WriteByte('\n')
+	sb.WriteString("> ")
+	sb.WriteString(string(m.inputBuf))
+	sb.WriteString("█") // cursor
+	sb.WriteByte('\n')
+
+	hint := "Enter发送 · Shift+Tab切模式 · Ctrl+C退出 · Ctrl+L清屏  "
+	hint = fgGray + dim + hint + strings.Repeat(" ", m.termW-len([]rune(hint))) + reset
+	sb.WriteString(hint)
+
+	out.WriteString(sb.String())
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
+// --- Run: main loop ---
+
+func Run(h *harness.Harness, root string) error {
+	m := New(h, root)
+
+	// Get terminal size
+	if w, h, err := getTermSize(); err == nil {
+		m.termW = w
+		m.termH = h
+	} else {
+		m.termW = 80
+		m.termH = 24
 	}
-	s := ""
-	for n > 0 {
-		s = string(rune('0'+n%10)) + s
-		n /= 10
+
+	// Switch to raw mode
+	raw, err := enableRawMode()
+	if err != nil {
+		return fmt.Errorf("terminal raw mode: %w", err)
 	}
-	return s
+	defer disableRawMode(raw)
+
+	// Listen for SIGWINCH (window resize)
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGWINCH)
+	defer signal.Stop(sigCh)
+
+	// Startup
+	m.addSystem("✍  AI Novel Agent v2 · 交互式写作终端")
+	m.addSystem("直接描述你的小说构思开始创作，或输入 /help 查看命令")
+	m.addSystem("")
+
+	projects, _ := project.ListProjects(root)
+	if len(projects) > 0 {
+		m.project = projects[0]
+		m.addSystem("📁 当前项目: " + m.project)
+	} else {
+		m.addSystem("你想写一本怎样的小说？")
+	}
+
+	m.render(os.Stdout)
+
+	// Input goroutine
+	inputCh := make(chan string, 32)
+	go m.readInput(inputCh)
+
+	// Spinner ticker
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+
+	// Main event loop
+	for m.running {
+		select {
+		case <-ticker.C:
+			if m.thinking {
+				m.mu.Lock()
+				m.thinkingFrame = (m.thinkingFrame + 1) % len(spinnerFrames)
+				m.mu.Unlock()
+				m.render(os.Stdout)
+			}
+
+		case input := <-inputCh:
+			m.handleInput(input)
+			m.render(os.Stdout)
+
+		case ev := <-m.eventCh:
+			switch e := ev.(type) {
+			case ChatEvent:
+				m.mu.Lock()
+				if e.StopSpinner {
+					m.thinking = false
+				}
+				if e.Err != nil {
+					m.addError(e.Err.Error())
+				} else if e.Line != "" {
+					m.addAI(e.Line)
+				}
+				m.mu.Unlock()
+				m.render(os.Stdout)
+			}
+
+		case <-sigCh:
+			if w, h, err := getTermSize(); err == nil {
+				m.termW = w
+				m.termH = h
+			}
+			m.render(os.Stdout)
+		}
+	}
+
+	// Restore cursor + clear screen
+	fmt.Fprint(os.Stdout, cursorOn+clearAll+posHome)
+	return nil
 }
 
+func (m *Model) readInput(ch chan<- string) {
+	reader := bufio.NewReader(os.Stdin)
+	for m.running {
+		m.mu.Lock()
+		m.render(os.Stdout)
+		m.mu.Unlock()
 
+		// Read byte by byte for key control
+		b, err := reader.ReadByte()
+		if err != nil {
+			ch <- "/quit"
+			return
+		}
+
+		switch b {
+		case 3: // Ctrl+C
+			ch <- "/quit"
+			return
+		case 12: // Ctrl+L
+			m.mu.Lock()
+			m.chatLines = nil
+			m.mu.Unlock()
+			ch <- "\x00" // signal to rerender
+			continue
+		case 127: // Backspace
+			m.mu.Lock()
+			if len(m.inputBuf) > 0 {
+				m.inputBuf = m.inputBuf[:len(m.inputBuf)-1]
+			}
+			m.mu.Unlock()
+			ch <- "\x00"
+			continue
+		case 13: // Enter
+			text := string(m.inputBuf)
+			m.mu.Lock()
+			m.inputBuf = m.inputBuf[:0]
+			m.mu.Unlock()
+			ch <- text
+			continue
+		case 9: // Tab
+			ch <- "\t"
+			continue
+		case '\033': // Escape sequence
+			seq := make([]byte, 0, 8)
+			// Read the rest of the escape sequence with timeout
+			reader2 := bufio.NewReader(reader)
+			for i := 0; i < 7; i++ {
+				next, err := reader2.ReadByte()
+				if err != nil {
+					break
+				}
+				seq = append(seq, next)
+				if (next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z') || next == '~' {
+					break
+				}
+			}
+			seqStr := string(seq)
+			if seqStr == "[Z" || seqStr == "[91;6u" {
+				// Shift+Tab
+				m.mu.Lock()
+				if m.mode == ModeAgent {
+					m.mode = ModePlan
+				} else {
+					m.mode = ModeAgent
+				}
+				m.addSystem("切换至 " + m.mode + " 模式")
+				m.mu.Unlock()
+				ch <- "\x00"
+			}
+			continue
+		default:
+			m.mu.Lock()
+			m.inputBuf = append(m.inputBuf, rune(b))
+			m.mu.Unlock()
+			ch <- "\x00"
+		}
+	}
+}
+
+// --- Input dispatch ---
+
+func (m *Model) handleInput(text string) {
+	text = strings.TrimSpace(text)
+	if text == "" || text == "\x00" || text == "\t" {
+		return
+	}
+
+	switch {
+	case text == "/quit" || text == "/exit":
+		m.running = false
+
+	case text == "/help":
+		m.addSystem("  /project <名>  /chars  /outline  /world  /write <n>  /export")
+		m.addSystem("  /model  /mode agent|plan  /killchar <名>  /quit")
+		m.addSystem("  Shift+Tab 切换 Agent/Plan 模式")
+
+	case strings.HasPrefix(text, "/project"):
+		name := strings.TrimSpace(strings.TrimPrefix(text, "/project"))
+		m.cmdProject(name)
+
+	case strings.HasPrefix(text, "/chars"):
+		m.cmdListChars()
+
+	case strings.HasPrefix(text, "/char "):
+		name := strings.TrimSpace(strings.TrimPrefix(text, "/char "))
+		m.cmdChar(name)
+
+	case strings.HasPrefix(text, "/world"):
+		m.cmdWorld()
+
+	case strings.HasPrefix(text, "/outline"):
+		m.cmdOutline()
+
+	case strings.HasPrefix(text, "/write"):
+		arg := strings.TrimSpace(strings.TrimPrefix(text, "/write"))
+		m.cmdWrite(arg)
+
+	case strings.HasPrefix(text, "/model"):
+		arg := strings.TrimSpace(strings.TrimPrefix(text, "/model"))
+		m.cmdModel(arg)
+
+	case strings.HasPrefix(text, "/mode"):
+		arg := strings.TrimSpace(strings.TrimPrefix(text, "/mode"))
+		switch arg {
+		case "plan":
+			m.mode = ModePlan
+		case "agent":
+			m.mode = ModeAgent
+		}
+		m.addSystem("当前模式: " + m.mode)
+
+	case strings.HasPrefix(text, "/killchar"):
+		name := strings.TrimSpace(strings.TrimPrefix(text, "/killchar "))
+		m.cmdKillChar(name)
+
+	case strings.HasPrefix(text, "/export"):
+		m.cmdExport()
+
+	default:
+		// Free-form — check write permission then AI route
+		if m.mode == ModePlan && isWriteOp(text) {
+			m.addWarning("Plan 模式不允许写操作。按 Shift+Tab 切换到 Agent 后重试。")
+			return
+		}
+		m.addUser(text)
+		m.cmdFreeForm(text)
+	}
+}
+
+// --- Command handlers ---
+
+func (m *Model) cmdProject(name string) {
+	if name == "" {
+		projs, _ := project.ListProjects(m.root)
+		if len(projs) == 0 {
+			m.addSystem("还没有项目。用法: /project <名称>")
+			return
+		}
+		m.addSystem("项目列表: " + strings.Join(projs, ", "))
+		return
+	}
+	dir := project.Dir(m.root, name)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := project.Init(m.root, name); err != nil {
+			m.addError("创建项目失败: " + err.Error())
+			return
+		}
+	}
+	m.project = name
+	m.addSystem("✓ 切换至项目: " + name)
+}
+
+func (m *Model) cmdListChars() {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	chars, err := project.ListCharacters(m.root, m.project)
+	if err != nil || len(chars) == 0 {
+		m.addSystem("还没有角色。使用 /char <角色名> 创建")
+		return
+	}
+	for _, ch := range chars {
+		icon := "🟢"
+		if ch.Status == "deactivated" {
+			icon = "⚫"
+		}
+		m.addSystem(fmt.Sprintf("  %s %s (%s)", icon, ch.Name, ch.Role))
+	}
+}
+
+func (m *Model) cmdChar(name string) {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	if name == "" {
+		m.addSystem("用法: /char <角色名>")
+		return
+	}
+	id := project.CharacterID(name)
+	existing, err := project.ReadCharacter(m.root, m.project, id)
+	if err == nil {
+		m.addSystem(fmt.Sprintf("📝 %s (%s) — %s", existing.Name, existing.Role, existing.Personality))
+		return
+	}
+	ch := project.CharacterProfile{
+		ID: id, Name: name, Role: "配角", Status: "active",
+		Personality: "待设定", Background: "待设定", Motivation: "待设定",
+	}
+	project.WriteCharacter(m.root, m.project, ch)
+	m.addSystem(fmt.Sprintf("✓ 角色「%s」已创建", name))
+}
+
+func (m *Model) cmdWorld() {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	w, _ := project.ReadWorld(m.root, m.project)
+	m.addSystem(fmt.Sprintf("🌍 %v / %v | 力量体系: %v", w["genre"], w["sub_genre"], w["power_system"]))
+}
+
+func (m *Model) cmdOutline() {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	o, _ := project.ReadOutline(m.root, m.project)
+	m.addSystem(fmt.Sprintf("📋 大纲 V%v | 已定稿: %v | 已写 %v 章", o["version"], o["finalized"], o["chapter_count"]))
+}
+
+func (m *Model) cmdWrite(arg string) {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	chNo := 1
+	if arg != "" {
+		if n, err := strconv.Atoi(arg); err == nil {
+			chNo = n
+		}
+	}
+
+	m.thinking = true
+	m.thinkingMsg = fmt.Sprintf("正在续写第%d章...", chNo)
+
+	taskID := fmt.Sprintf("%s-ch%03d-%d", m.project, chNo, time.Now().Unix())
+
+	go func() {
+		outline, _ := project.ReadOutline(m.root, m.project)
+		world, _ := project.ReadWorld(m.root, m.project)
+
+		skillName := "xuanhuan_writing"
+		if g, ok := world["genre"].(string); ok && g != "" {
+			skillName = g + "_writing"
+		}
+
+		ctx := context.Background()
+		out, err := m.harness.RunStage(ctx, taskID, skillName, "content_generation", pipeline.StageInput{
+			TrendData:      fmt.Sprintf("续写第%d章", chNo),
+			ChapterOutline: fmt.Sprintf("第%d章大纲", chNo),
+			ChapterNo:      chNo,
+			NovelID:        m.project,
+		})
+
+		if err != nil {
+			m.eventCh <- ChatEvent{StopSpinner: true, Err: err}
+			return
+		}
+
+		m.mu.Lock()
+		project.WriteChapter(m.root, m.project, chNo, out.Content)
+		outline["chapter_count"] = chNo
+		project.WriteOutline(m.root, m.project, outline)
+		m.mu.Unlock()
+
+		m.eventCh <- ChatEvent{
+			StopSpinner: true,
+			Line:        fmt.Sprintf("✓ 第%d章完成 (%d字)\n\n%s", chNo, len([]rune(out.Content)), trunc(out.Content, 500)),
+		}
+	}()
+}
+
+func (m *Model) cmdModel(arg string) {
+	if arg == "" || arg == "list" {
+		for _, p := range []string{"deepseek", "mimo", "minimax"} {
+			_, err := m.harness.Router.GetClient(p)
+			icon := "✗"
+			if err == nil {
+				icon = "✓"
+			}
+			label := model.ProviderLabels[p]
+			if label == "" {
+				label = p
+			}
+			m.addSystem(fmt.Sprintf("  %s %s — %s", icon, p, label))
+		}
+		return
+	}
+	parts := strings.SplitN(arg, " ", 2)
+	if len(parts) == 2 && parts[0] == "switch" {
+		m.activeModel = parts[1]
+		m.addSystem(fmt.Sprintf("✓ 切换至 %s", parts[1]))
+	}
+}
+
+func (m *Model) cmdKillChar(name string) {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	if name == "" {
+		m.addSystem("用法: /killchar <角色名>")
+		return
+	}
+	id := project.CharacterID(name)
+	summary, err := project.DeactivateCharacter(m.root, m.project, id, "用户手动下线")
+	if err != nil {
+		m.addError(err.Error())
+		return
+	}
+	m.addWarning(summary)
+}
+
+func (m *Model) cmdExport() {
+	if m.project == "" {
+		m.addSystem("请先选择项目: /project <名称>")
+		return
+	}
+	all, err := project.ExportAll(m.root, m.project)
+	if err != nil || all == "" {
+		m.addSystem("还没有可导出的章节。使用 /write 续写")
+		return
+	}
+	path := m.project + "-全书.txt"
+	os.WriteFile(path, []byte(all), 0o644)
+	m.addSystem(fmt.Sprintf("✓ 导出至 %s (%d字)", path, len([]rune(all))))
+}
+
+func (m *Model) cmdFreeForm(text string) {
+	m.thinking = true
+	m.thinkingMsg = "思考中..."
+
+	go func() {
+		client, _ := m.harness.Router.GetClient("deepseek")
+		if client == nil {
+			client, _ = m.harness.Router.GetClient("mimo")
+		}
+		if client == nil {
+			m.eventCh <- ChatEvent{StopSpinner: true, Err: fmt.Errorf("没有可用的 AI 模型")}
+			return
+		}
+
+		ctx := context.Background()
+		reply, err := client.Generate(ctx, "你是小说创作助手。回答简洁，有网文创作经验。", text)
+		if err != nil {
+			m.eventCh <- ChatEvent{StopSpinner: true, Err: err}
+			return
+		}
+		m.eventCh <- ChatEvent{StopSpinner: true, Line: reply}
+	}()
+}
+
+// --- Chat helpers ---
+
+func (m *Model) addSystem(s string) {
+	m.chatLines = append(m.chatLines, chatLine{Type: "system", Text: s})
+}
+func (m *Model) addUser(s string) {
+	m.chatLines = append(m.chatLines, chatLine{Type: "user", Text: s})
+}
+func (m *Model) addAI(s string) {
+	m.chatLines = append(m.chatLines, chatLine{Type: "ai", Text: s})
+}
+func (m *Model) addError(s string) {
+	m.chatLines = append(m.chatLines, chatLine{Type: "error", Text: s})
+}
+func (m *Model) addWarning(s string) {
+	m.chatLines = append(m.chatLines, chatLine{Type: "warning", Text: s})
+}
+
+func isWriteOp(text string) bool {
+	for _, kw := range []string{"/write", "/char ", "/killchar", "写", "续写", "创建", "删除", "下线"} {
+		if strings.Contains(text, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+func trunc(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n {
+		return s
+	}
+	return string(runes[:n]) + "\n...（后续内容已保存到 output/）"
+}
+
+// Terminal helpers
+
+// Get terminal size using golang.org/x/term (cross-platform)
+func getTermSize() (int, int, error) {
+	w, h, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		return 80, 24, err
+	}
+	return w, h, nil
+}
+
+// Raw mode using golang.org/x/term (handles Windows + Unix)
+var origState *term.State
+
+func enableRawMode() (*term.State, error) {
+	fd := int(os.Stdin.Fd())
+	state, err := term.MakeRaw(fd)
+	if err != nil {
+		return nil, err
+	}
+	origState = state
+	return state, nil
+}
+
+func disableRawMode(_ *term.State) {
+	if origState != nil {
+		term.Restore(int(os.Stdin.Fd()), origState)
+	}
+}
+
+func init() {
+	// Suppress unused imports
+	_ = audit.DefaultPolicy
+}

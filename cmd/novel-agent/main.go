@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tui"
@@ -51,12 +50,5 @@ func runTUI(cmd *cobra.Command, args []string) error {
 	}
 	defer h.Close()
 
-	root := agentRoot()
-	m := tui.New(h, root)
-	p := tea.NewProgram(m, tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "TUI 错误: %v\n", err)
-		return err
-	}
-	return nil
+	return tui.Run(h, agentRoot())
 }
