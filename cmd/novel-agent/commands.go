@@ -18,6 +18,7 @@ import (
 	"github.com/penney-101/ai-novel-agent/internal/skill"
 	"github.com/penney-101/ai-novel-agent/internal/storage"
 	"github.com/penney-101/ai-novel-agent/internal/api"
+	"github.com/penney-101/ai-novel-agent/skilldata"
 )
 
 // --- Helpers ---
@@ -216,33 +217,22 @@ func runInit(cmd *cobra.Command, args []string) error {
 		cmd.Println("ⓘ config.yaml already exists (use --force to overwrite)")
 	}
 
-	// Copy built-in skills (v2.0 genre system)
+	// Copy built-in skills (v2.0 genre system) from embedded FS
 	builtinGenres := []string{"xuanhuan", "dushi", "guyan", "xuanyi", "kehuan", "tianchong"}
 	builtinSubSkills := []string{"genre_init", "outline", "hooks", "writing"}
 	builtinOptimizes := []string{"shuangdian", "fubi", "jiezou", "renshe", "chongtu"}
+	installed := 0
 	for _, genre := range builtinGenres {
 		for _, sub := range builtinSubSkills {
-			srcPath := filepath.Join("skills", genre, sub+".yaml")
-			if data, err := os.ReadFile(srcPath); err == nil {
-				var skillMap map[string]any
-				if err := yaml.Unmarshal(data, &skillMap); err == nil {
-					name := genre + "_" + sub
-					if err := storage.WriteSkill(root, name, skillMap); err != nil {
-						cmd.Printf("⚠ Failed to install skill %q: %v\n", name, err)
-					}
-				}
+			path := filepath.Join("skills", genre, sub+".yaml")
+			if err := installSkillFromEmbed(root, path, genre+"_"+sub); err == nil {
+				installed++
 			}
 		}
 		for _, opt := range builtinOptimizes {
-			srcPath := filepath.Join("skills", genre, "optimize", opt+".yaml")
-			if data, err := os.ReadFile(srcPath); err == nil {
-				var skillMap map[string]any
-				if err := yaml.Unmarshal(data, &skillMap); err == nil {
-					name := genre + "_optimize_" + opt
-					if err := storage.WriteSkill(root, name, skillMap); err != nil {
-						cmd.Printf("⚠ Failed to install skill %q: %v\n", name, err)
-					}
-				}
+			path := filepath.Join("skills", genre, "optimize", opt+".yaml")
+			if err := installSkillFromEmbed(root, path, genre+"_optimize_"+opt); err == nil {
+				installed++
 			}
 		}
 	}
@@ -262,8 +252,20 @@ func runInit(cmd *cobra.Command, args []string) error {
 	cmd.Println("\nNext steps:")
 	cmd.Println("  1. Edit .novelAgent/config.yaml to add your API keys")
 	cmd.Println("  2. Run: novel-agent skill list")
-	cmd.Println("  3. Run: novel-agent pipeline --skill female_rebirth --trend-data \"your trend data\"")
+	cmd.Println("  3. Run: novel-agent pipeline --skill xuanhuan_genre_init --trend-data \"你的选题方向\"")
 	return nil
+}
+
+func installSkillFromEmbed(root, embedPath, skillName string) error {
+	data, err := skilldata.FS.ReadFile(embedPath)
+	if err != nil {
+		return err
+	}
+	var skillMap map[string]any
+	if err := yaml.Unmarshal(data, &skillMap); err != nil {
+		return err
+	}
+	return storage.WriteSkill(root, skillName, skillMap)
 }
 
 // --- run ---
