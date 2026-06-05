@@ -32,11 +32,11 @@ import (
 	"time"
 
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/audit"
-	"github.com/PeneyLove/ai-novel-matrix-studio/internal/global"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/harness"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Session holds the active REPL state.
@@ -63,6 +63,9 @@ func Run(h *harness.Harness, root string) error {
 		root:   root,
 		router: h.Router,
 	}
+
+	// Check if any API key is configured. If not, guide user.
+	s.checkAPIKeyOnStartup()
 
 	// Auto-detect or prompt for project
 	projects, _ := project.ListProjects(root)
@@ -118,6 +121,8 @@ func (s *Session) handle(input string) {
 		s.cmdShowOutline()
 	case input == "/skills":
 		s.cmdListSkills()
+	case input == "/model" || strings.HasPrefix(input, "/model "):
+		s.cmdModel(strings.TrimSpace(strings.TrimPrefix(input, "/model")))
 	case strings.HasPrefix(input, "/write"):
 		s.cmdWrite(strings.TrimSpace(strings.TrimPrefix(input, "/write")))
 	case input == "/export":
@@ -140,10 +145,11 @@ func (s *Session) cmdHelp() {
 		"  /projects          列出所有项目",
 		"  /world             查看世界观设定",
 		"  /outline           查看大纲和伏笔台账",
-		"  /char evolve <名>   优化角色自适应性提示词（基于成长轨迹）"
-	"  /char <名称>       查看或创建角色",
+		"  /char evolve <名>   优化角色自适应性提示词（基于成长轨迹）",
+		"  /char <名称>       查看或创建角色",
 		"  /chars             列出所有活跃角色",
 		"  /killchar <名称>   下线一个角色（需确认）",
+		"  /model             查看/切换 AI 模型",
 		"  /skills            列出可用 Skill",
 		"  /write <章节号>     续写指定章节",
 		"  /export            导出全书到 output/",
@@ -336,6 +342,187 @@ func (s *Session) cmdShowOutline() {
 	if hooks, ok := o["hooks"].([]any); ok && len(hooks) > 0 {
 		fmt.Printf("    伏笔: %d 条\n", len(hooks))
 	}
+}
+
+// ---- model management ----
+
+// checkAPIKeyOnStartup checks if at least one model has a valid API key.
+func (s *Session) checkAPIKeyOnStartup() {
+	_, err := s.router.GetClient("deepseek")
+	hasDS := err == nil
+	_, err = s.router.GetClient("mimo")
+	hasMiMo := err == nil
+	_, err = s.router.GetClient("minimax")
+	hasMM := err == nil
+
+	if hasDS || hasMiMo || hasMM {
+		active := ""
+		if hasDS {
+			active = "DeepSeek"
+		} else if hasMiMo {
+			active = "MiMo"
+		} else {
+			active = "MiniMax"
+		}
+		fmt.Printf("  🤖 活跃模型: %s | 输入 /model 切换\n", active)
+		return
+	}
+
+	// No API key configured — walk user through it
+	fmt.Println()
+	fmt.Println("  ╔══════════════════════════════════════════════════╗")
+	fmt.Println("  ║  首次使用：配置 AI 模型 API Key                  ║")
+	fmt.Println("  ║                                                  ║")
+	fmt.Println("  ║  推荐 DeepSeek（最便宜 ¥0.001/千tokens）          ║")
+	fmt.Println("  ║  申请: https://platform.deepseek.com/api_keys     ║")
+	fmt.Println("  ║                                                  ║")
+	fmt.Println("  ║  输入 /model set deepseek <你的key> 立即配置      ║")
+	fmt.Println("  ╚══════════════════════════════════════════════════╝")
+	fmt.Println()
+}
+
+func (s *Session) cmdModel(arg string) {
+	if arg == "" || arg == "list" {
+		providers := []string{"deepseek", "minimax", "mimo"}
+		fmt.Println("  AI 模型状态:")
+		hasAny := false
+		for _, p := range providers {
+			_, err := s.router.GetClient(p)
+			icon := "✗"
+			if err == nil {
+				icon = "✓"
+				hasAny = true
+			}
+			label := model.ProviderLabels[p]
+			if label == "" {
+				label = p
+			}
+			fmt.Printf("    %s %s  %s\n", icon, p, label)
+		}
+		if !hasAny {
+			fmt.Println()
+			fmt.Println("  还没有配置任何 API Key。")
+			fmt.Println("  用法: /model set deepseek sk-xxx")
+		}
+		return
+	}
+
+	parts := strings.SplitN(arg, " ", 2)
+	if len(parts) < 2 {
+		fmt.Println("  用法: /model set <模型> <key>  或  /model switch <模型>")
+		return
+	}
+
+	switch parts[0] {
+	case "set":
+		parts2 := strings.SplitN(parts[1], " ", 2)
+		if len(parts2) < 2 {
+			fmt.Println("  用法: /model set <deepseek|minimax|mimo> <api-key>")
+			return
+		}
+		provider := parts2[0]
+		apiKey := parts2[1]
+
+		valid := map[string]bool{"deepseek": true, "minimax": true, "mimo": true}
+		if !valid[provider] {
+			fmt.Printf("  ✗ 未知模型: %s。可选: deepseek, minimax, mimo\n", provider)
+			return
+		}
+
+		cfg, err := loadConfig(s.root)
+		if err != nil {
+			fmt.Printf("  ✗ 读取配置失败: %v\n", err)
+			return
+		}
+		if _, ok := cfg[provider]; !ok {
+			cfg[provider] = map[string]any{}
+		}
+		pmap := cfg[provider].(map[string]any)
+		pmap["api_key"] = apiKey
+		cfg[provider] = pmap
+
+		if err := writeConfig(s.root, cfg); err != nil {
+			fmt.Printf("  ✗ 保存配置失败: %v\n", err)
+			return
+		}
+
+		if err := s.reloadHarness(); err != nil {
+			fmt.Printf("  ⚠ 配置已保存但热重载失败: %v\n", err)
+			fmt.Println("  请重启 novel-agent 使配置生效。")
+			return
+		}
+
+		label := model.ProviderLabels[provider]
+		if label == "" {
+			label = provider
+		}
+		fmt.Printf("  ✓ %s API Key 已配置并生效\n", label)
+
+	case "switch":
+		provider := parts[1]
+		_, err := s.router.GetClient(provider)
+		if err != nil {
+			label := model.ProviderLabels[provider]
+			if label == "" {
+				label = provider
+			}
+			fmt.Printf("  ✗ %s 未配置 API Key。\n", label)
+			fmt.Print("  📝 请输入 API Key（留空取消）: ")
+			reader := bufio.NewReader(os.Stdin)
+			inp, _ := reader.ReadString('\n')
+			inp = strings.TrimSpace(inp)
+			if inp == "" {
+				fmt.Println("  ✗ 已取消")
+				return
+			}
+			s.cmdModel("set " + provider + " " + inp)
+			return
+		}
+
+		// Update fallback to this provider
+		cfg, err := loadConfig(s.root)
+		if err != nil {
+			fmt.Printf("  ✗ 读取配置失败: %v\n", err)
+			return
+		}
+		if routing, ok := cfg["stage_routing"]; ok {
+			if rmap, ok := routing.(map[string]any); ok {
+				rmap["fallback"] = provider
+			}
+		}
+		if err := writeConfig(s.root, cfg); err != nil {
+			fmt.Printf("  ✗ 保存配置失败: %v\n", err)
+			return
+		}
+		if err := s.reloadHarness(); err != nil {
+			fmt.Printf("  ⚠ 配置已保存但热重载失败: %v\n", err)
+			return
+		}
+		label := model.ProviderLabels[provider]
+		if label == "" {
+			label = provider
+		}
+		fmt.Printf("  ✓ 已切换到 %s\n", label)
+
+	default:
+		fmt.Println("  用法: /model | /model set <模型> <key> | /model switch <模型>")
+	}
+}
+
+// reloadHarness reloads the model router from config.yaml without restarting.
+func (s *Session) reloadHarness() error {
+	cfg, err := loadConfig(s.root)
+	if err != nil {
+		return fmt.Errorf("load config: %w", err)
+	}
+	mcs, fallback := modelConfigsFromYAML(cfg)
+	newRouter, err := model.NewRouter(mcs, fallback)
+	if err != nil {
+		return fmt.Errorf("create router: %w", err)
+	}
+	s.router = newRouter
+	s.h.Router = newRouter
+	return nil
 }
 
 // cmdCharEvolve calls AI to refine a character's skill prompt based on their
@@ -547,6 +734,81 @@ func (s *Session) handleFreeForm(input string) {
 
 func loadAuditPolicy(root string) audit.Policy {
 	return audit.DefaultPolicy()
+}
+
+// loadConfig reads and resolves env vars from .novelAgent/config.yaml.
+func loadConfig(root string) (map[string]any, error) {
+	cfg, err := storage.ReadConfig(root)
+	if err != nil {
+		return nil, err
+	}
+	resolveEnvVars(cfg)
+	return cfg, nil
+}
+
+func writeConfig(root string, cfg map[string]any) error {
+	return storage.WriteConfig(root, cfg)
+}
+
+// resolveEnvVars replaces ${VAR} placeholders in a config map.
+func resolveEnvVars(m map[string]any) {
+	for k, v := range m {
+		switch val := v.(type) {
+		case string:
+			if strings.HasPrefix(val, "${") && strings.HasSuffix(val, "}") {
+				envKey := val[2 : len(val)-1]
+				if envVal := os.Getenv(envKey); envVal != "" {
+					m[k] = envVal
+				}
+			}
+		case map[string]any:
+			resolveEnvVars(val)
+		}
+	}
+}
+
+func modelConfigsFromYAML(cfg map[string]any) (map[string]model.Config, string) {
+	configs := make(map[string]model.Config)
+	fallback := "deepseek"
+	for _, provider := range []string{"deepseek", "minimax", "mimo"} {
+		if raw, ok := cfg[provider]; ok {
+			if pmap, ok := raw.(map[string]any); ok {
+				mc := model.DefaultConfig(provider)
+				if v, ok := pmap["api_key"].(string); ok && v != "" && !strings.HasPrefix(v, "${") {
+					mc.APIKey = v
+				}
+				if v, ok := pmap["endpoint"].(string); ok {
+					mc.Endpoint = v
+				} else if v, ok := pmap["api_endpoint"].(string); ok {
+					mc.Endpoint = v
+				}
+				if v, ok := pmap["model_name"].(string); ok {
+					mc.ModelName = v
+				}
+				if v, ok := pmap["max_tokens"].(int); ok {
+					mc.MaxTokens = v
+				}
+				if v, ok := pmap["temperature"].(float64); ok {
+					mc.Temperature = v
+				}
+				if v, ok := pmap["timeout"].(int); ok {
+					mc.Timeout = time.Duration(v) * time.Second
+				}
+				if v, ok := pmap["retry_times"].(int); ok {
+					mc.RetryTimes = v
+				}
+				configs[provider] = mc
+			}
+		}
+	}
+	if routing, ok := cfg["stage_routing"]; ok {
+		if rmap, ok := routing.(map[string]any); ok {
+			if fb, ok := rmap["fallback"].(string); ok {
+				fallback = fb
+			}
+		}
+	}
+	return configs, fallback
 }
 
 func truncate(s string, n int) string {

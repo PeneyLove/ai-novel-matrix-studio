@@ -58,10 +58,10 @@ func resolveEnvVars(m map[string]any) {
 
 func modelConfigsFromYAML(cfg map[string]any) (map[string]model.Config, string) {
 	configs := make(map[string]model.Config)
-	fallback := "qwen"
+	fallback := "deepseek"
 
-	// Parse model configs
-	for _, provider := range []string{"minimax", "doubao", "qwen", "deepseek"} {
+	// Parse model configs for 3 core providers
+	for _, provider := range []string{"deepseek", "minimax", "mimo"} {
 		if raw, ok := cfg[provider]; ok {
 			if pmap, ok := raw.(map[string]any); ok {
 				mc := model.DefaultConfig(provider)
@@ -152,33 +152,6 @@ func runInit(cmd *cobra.Command, args []string) error {
 	configPath := filepath.Join(root, "config.yaml")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) || force {
 		defaultConfig := map[string]any{
-			"minimax": map[string]any{
-				"api_key":      "${MINIMAX_API_KEY}",
-				"api_endpoint": "https://api.minimax.chat/v1/text/chatcompletion_v2",
-				"model_name":   "abab6.5s-chat",
-				"max_tokens":   4096,
-				"temperature":  0.8,
-				"timeout":      60,
-				"retry_times":  3,
-			},
-			"doubao": map[string]any{
-				"api_key":      "${DOUBAO_API_KEY}",
-				"api_endpoint": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
-				"model_name":   "doubao-pro-32k",
-				"max_tokens":   8192,
-				"temperature":  0.7,
-				"timeout":      90,
-				"retry_times":  3,
-			},
-			"qwen": map[string]any{
-				"api_key":      "${QWEN_API_KEY}",
-				"api_endpoint": "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
-				"model_name":   "qwen-long",
-				"max_tokens":   6000,
-				"temperature":  0.75,
-				"timeout":      120,
-				"retry_times":  3,
-			},
 			"deepseek": map[string]any{
 				"api_key":      "${DEEPSEEK_API_KEY}",
 				"api_endpoint": "https://api.deepseek.com/v1/chat/completions",
@@ -188,12 +161,31 @@ func runInit(cmd *cobra.Command, args []string) error {
 				"timeout":      60,
 				"retry_times":  3,
 			},
+			"minimax": map[string]any{
+				"api_key":      "${MINIMAX_API_KEY}",
+				"api_endpoint": "https://api.minimax.chat/v1/text/chatcompletion_v2",
+				"model_name":   "abab6.5s-chat",
+				"max_tokens":   4096,
+				"temperature":  0.8,
+				"timeout":      60,
+				"retry_times":  3,
+			},
+			"mimo": map[string]any{
+				"api_key":      "${MIMO_API_KEY}",
+				"api_endpoint": "https://token-plan-cn.xiaomimimo.com/v1/chat/completions",
+				"model_name":   "mimo-v2.5",
+				"max_tokens":   8192,
+				"temperature":  0.7,
+				"timeout":      60,
+				"retry_times":  3,
+			},
 			"stage_routing": map[string]any{
-				"topic_generation":   "minimax",
-				"outline_generation": "doubao",
-				"content_generation": "qwen",
-				"polish":             "deepseek",
-				"fallback":           "qwen",
+				"genre_init":          "deepseek",
+				"outline_generation":  "deepseek",
+				"hooks_placement":     "deepseek",
+				"content_generation":  "deepseek",
+				"polish":              "deepseek",
+				"fallback":            "deepseek",
 			},
 			"global_rules": map[string]any{
 				"language": "zh-CN",

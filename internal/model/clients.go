@@ -30,6 +30,8 @@ func NewClient(cfg Config) Client {
 		return &qwenNativeClient{httpClient: httpClient, cfg: cfg}
 	case ProviderDeepSeek:
 		return &deepSeekClient{httpClient: httpClient, cfg: cfg}
+	case ProviderMiMo:
+		return &mimoClient{httpClient: httpClient, cfg: cfg}
 	default:
 		return nil
 	}
@@ -373,6 +375,49 @@ func (c *doubaoClient) Generate(ctx context.Context, systemPrompt, userPrompt st
 	}
 	if len(r.Choices) == 0 {
 		return "", fmt.Errorf("doubao: empty response choices")
+	}
+	return r.Choices[0].Message.Content, nil
+}
+
+// ---- MiMo (小米) ----
+
+type mimoClient struct {
+	httpClient *http.Client
+	cfg        Config
+}
+
+func (c *mimoClient) Provider() string { return ProviderMiMo }
+
+func (c *mimoClient) Generate(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
+	req := deepSeekReq{
+		Model:       c.cfg.ModelName,
+		Temperature: c.cfg.Temperature,
+		MaxTokens:   c.cfg.MaxTokens,
+		TopP:        c.cfg.TopP,
+	}
+	if systemPrompt != "" {
+		req.Messages = append(req.Messages, roleMsg{Role: "system", Content: systemPrompt})
+	}
+	req.Messages = append(req.Messages, roleMsg{Role: "user", Content: userPrompt})
+
+	body, _ := json.Marshal(req)
+	resp, respBody, err := doPost(ctx, c.httpClient, c.cfg.Endpoint, c.cfg.APIKey, body, nil)
+	if err != nil {
+		return "", err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", parseAPIError(ProviderMiMo, resp.StatusCode, respBody)
+	}
+
+	var r dsResp
+	if err := json.Unmarshal(respBody, &r); err != nil {
+		return "", fmt.Errorf("mimo: parse response: %w", err)
+	}
+	if r.Error != nil {
+		return "", fmt.Errorf("mimo: API error [%s]: %s", r.Error.Code, r.Error.Message)
+	}
+	if len(r.Choices) == 0 {
+		return "", fmt.Errorf("mimo: empty response choices")
 	}
 	return r.Choices[0].Message.Content, nil
 }

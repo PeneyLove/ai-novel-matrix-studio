@@ -2,10 +2,9 @@
 //
 // Supported providers and their idiosyncrasies:
 //
-//	MiniMax  — OpenAI-compatible, requires group_id, reply_constraints
 //	DeepSeek — OpenAI-compatible, supports frequency_penalty, stop tokens
-//	Qwen     — Dual-mode: DashScope native + OpenAI-compatible fallback
-//	Doubao   — Volcengine Ark, endpoint_id-based routing
+//	MiniMax  — requires group_id, reply_constraints, sender_type messages
+//	MiMo     — OpenAI-compatible (Xiaomi), token-plan endpoint
 //
 // Each client handles its own request/response serialization natively
 // to avoid the "lowest common denominator" problem.
@@ -19,18 +18,20 @@ import (
 
 // Provider identifiers.
 const (
+	ProviderDeepSeek = "deepseek"
 	ProviderMiniMax  = "minimax"
+	ProviderMiMo     = "mimo"
 	ProviderDoubao   = "doubao"
 	ProviderQwen     = "qwen"
-	ProviderDeepSeek = "deepseek"
 )
 
 // ProviderLabels maps provider codes to Chinese display names.
 var ProviderLabels = map[string]string{
-	ProviderMiniMax:  "MiniMax (海螺AI)",
-	ProviderDoubao:   "豆包 (字节跳动)",
-	ProviderQwen:     "通义千问 (阿里云)",
-	ProviderDeepSeek: "DeepSeek (深度求索)",
+	ProviderDeepSeek: "DeepSeek（深度求索）¥0.001/千tokens",
+	ProviderMiniMax:  "MiniMax（海螺AI） ¥0.01/千tokens",
+	ProviderMiMo:     "MiMo（小米）     ¥0.006/千tokens",
+	ProviderDoubao:   "豆包（字节跳动） ¥0.008/千tokens",
+	ProviderQwen:     "通义千问（阿里） ¥0.006/千tokens",
 }
 
 // Client is the interface every model provider must implement.
@@ -89,6 +90,11 @@ func DefaultConfig(provider string) Config {
 		cfg.ModelName = "deepseek-chat"
 		cfg.Temperature = 0.6
 		cfg.TopP = 0.95
+	case ProviderMiMo:
+		cfg.Endpoint = "https://token-plan-cn.xiaomimimo.com/v1/chat/completions"
+		cfg.ModelName = "mimo-v2.5"
+		cfg.Temperature = 0.7
+		cfg.MaxTokens = 8192
 	}
 	return cfg
 }

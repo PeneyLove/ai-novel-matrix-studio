@@ -167,10 +167,11 @@ var SubSkillLabels = map[string]string{
 
 // ValidModelProviders is the set of supported model providers.
 var ValidModelProviders = map[string]bool{
+	"deepseek": true,
 	"minimax":  true,
+	"mimo":     true,
 	"doubao":   true,
 	"qwen":     true,
-	"deepseek": true,
 }
 
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]{1,31}$`)
