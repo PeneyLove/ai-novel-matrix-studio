@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
 )
 
 // Mode controls whether the REPL runs in read-only (Plan) or read-write (Agent) mode.
