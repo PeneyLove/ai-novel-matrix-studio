@@ -308,53 +308,70 @@ func (m *Model) refreshStatus() {
 	fmt.Fprintf(os.Stdout, "\033[1;1H%s%s", clearLine, status)
 }
 
-// --- Input reader (byte loop, echoes characters) ---
-
 func (m *Model) readInput(ch chan<- string) {
 	rd := bufio.NewReader(os.Stdin)
 	for m.running {
-		// Echo the input prompt before waiting for input
 		m.refreshInputPrompt()
-
 		buf := make([]byte, 0, 4096)
 		for {
 			b, err := rd.ReadByte()
-			if err != nil {
-				ch <- "/quit"; return
-			}
-			if b == '\r' || b == '\n' {
-				fmt.Fprint(os.Stdout, "\r\n"); break
-			}
-			if b == 3 { // Ctrl+C
-				ch <- "/quit"; return
-			}
-			if b == 12 { // Ctrl+L
-				m.mu.Lock(); m.chatLines = nil; m.mu.Unlock()
-				ch <- "\x01"; return
-			}
+			if err != nil { ch <- "/quit"; return }
+			if b == '\r' || b == '\n' { fmt.Fprint(os.Stdout, "\r\n"); break }
+			if b == 3 { ch <- "/quit"; return }
+			if b == 12 { m.mu.Lock(); m.chatLines = nil; m.mu.Unlock(); ch <- "\x01"; return }
 			if b == 127 || b == '\b' {
 				if len(buf) > 0 { buf = buf[:len(buf)-1]; fmt.Fprint(os.Stdout, "\b \b") }
+				continue
+			}
+			// Mouse/wheel ESC sequences — swallow silently
+			if b == '\x1b' {
+				if consumeEscSequence(rd, m, ch) { return }
 				continue
 			}
 			buf = append(buf, b)
 			fmt.Fprint(os.Stdout, string(b))
 		}
-		line := string(buf)
-
-		// Shift+Tab detection
-		if strings.Contains(line, "\033[Z") {
-			m.mu.Lock()
-			if m.mode == ModeAgent { m.mode = ModePlan } else { m.mode = ModeAgent }
-			m.addSystem("切换至 " + m.mode + " 模式")
-			m.mu.Unlock()
-			ch <- "\x01"
-			continue
-		}
-		ch <- line
+		ch <- string(buf)
 	}
 }
 
+// consumeEscSequence reads an ESC-prefixed byte sequence and handles
+// Shift+Tab (mode toggle) and mouse events. Returns true if the caller
+// should return (mode was toggled).
+func consumeEscSequence(rd *bufio.Reader, m *Model, ch chan<- string) bool {
+	peek, err := rd.Peek(1)
+	if err != nil || len(peek) == 0 { return false }
+	if peek[0] != '[' { return false }
+	rd.ReadByte() // consume '['
+	peek2, _ := rd.Peek(1)
+	if len(peek2) == 0 { return false }
+	if peek2[0] == 'Z' { // Shift+Tab
+		rd.ReadByte()
+		m.mu.Lock()
+		if m.mode == ModeAgent { m.mode = ModePlan } else { m.mode = ModeAgent }
+		m.addSystem("切换至 " + m.mode + " 模式")
+		m.mu.Unlock()
+		if ch != nil { ch <- "\x01" }
+		return true
+	}
+	if peek2[0] == 'M' { // Mouse event: ESC[M + 3 bytes
+		rd.ReadByte(); rd.ReadByte(); rd.ReadByte(); rd.ReadByte()
+		return false
+	}
+	// Other CSI — swallow until terminating letter / ~
+	for {
+		b2, err := rd.ReadByte()
+		if err != nil { break }
+		if (b2 >= 'a' && b2 <= 'z') || (b2 >= 'A' && b2 <= 'Z') || b2 == '~' { break }
+	}
+	return false
+}
+
 func (m *Model) refreshInputPrompt() {
+	row := m.termH - 1
+	fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > _%s", row, clearLine, fgPurple+"["+m.mode+"]"+reset, clearToEOL)
+}
+
 	row := m.termH - 1
 	fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > _%s", row, clearLine, fgPurple+"["+m.mode+"]"+reset, clearToEOL)
 }
@@ -376,18 +393,19 @@ func (m *Model) promptAPIKeyLoop() {
 		fmt.Fprintf(os.Stdout, "\033[%d;1H%s> ", row, clearLine)
 
 		buf := make([]byte, 0, 4096)
-		for {
-			b, err := rd.ReadByte()
-			if err != nil { return }
-			if b == '\r' || b == '\n' { fmt.Fprint(os.Stdout, "\r\n"); break }
-			if b == 3 { return }
-			if b == 127 || b == '\b' {
-				if len(buf) > 0 { buf = buf[:len(buf)-1]; fmt.Fprint(os.Stdout, "\b \b") }
-				continue
+			for {
+				b, err := rd.ReadByte()
+				if err != nil { return }
+				if b == '\r' || b == '\n' { fmt.Fprint(os.Stdout, "\r\n"); break }
+				if b == 3 { return }
+				if b == 127 || b == '\b' {
+					if len(buf) > 0 { buf = buf[:len(buf)-1]; fmt.Fprint(os.Stdout, "\b \b") }
+					continue
+				}
+				if b == '\x1b' { consumeEscSequence(rd, m, nil); continue }
+				buf = append(buf, b)
+				fmt.Fprint(os.Stdout, "*")
 			}
-			buf = append(buf, b)
-			fmt.Fprint(os.Stdout, "*")
-		}
 		line := string(buf)
 		if line == "" || line == "/quit" || line == "/exit" {
 			m.addSystem("  ℹ 已跳过。后续可通过 /model set deepseek <key> 配置。")
