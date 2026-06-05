@@ -1,5 +1,5 @@
 {
-  "name": "ai-novel-agent",
+  "name": "@YOUR_USERNAME/ai-novel-agent",
   "version": "2.0.0-alpha",
   "description": "AI Novel Agent — Go single-binary harness with 54 pluggable YAML-defined skills for AI-powered novel creation",
   "main": "install.js",
@@ -12,6 +12,9 @@
   ],
   "scripts": {
     "postinstall": "node install.js"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "ai",
@@ -26,13 +29,16 @@
     "deepseek",
     "qwen"
   ],
-  "author": "penney-101",
+  "author": "",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://gitee.com/penney-101/ai-novel-matrix-studio"
+    "url": "git+https://github.com/YOUR_USERNAME/ai-novel-matrix-studio.git"
   },
-  "homepage": "https://gitee.com/penney-101/ai-novel-matrix-studio#readme",
+  "homepage": "https://github.com/YOUR_USERNAME/ai-novel-matrix-studio#readme",
+  "bugs": {
+    "url": "https://github.com/YOUR_USERNAME/ai-novel-matrix-studio/issues"
+  },
   "os": ["darwin", "linux", "win32"],
   "cpu": ["x64", "arm64"]
 }
