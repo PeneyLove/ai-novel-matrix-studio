@@ -2,23 +2,23 @@
 cd D:\codeSpace\ai-novel-matrix-studio
 git pull
 
-===== 2. 编译 =====
+===== 2. 强制重新初始化（加载 54 个 Skill） =====
+novel-agent init --force
+
+===== 3. 编译 =====
 set GOPROXY=https://goproxy.cn,direct
 go mod tidy
 go build -o novel-agent.exe .\cmd\novel-agent\
 
-===== 3. 更新 npm 本地二进制（可选） =====
-copy /Y novel-agent.exe npm\dist\novel-agent_windows_amd64.exe
-
 ===== 4. 启动 =====
 novel-agent
-
-===== 快捷键 =====
-Enter         发送消息
-Ctrl+C        退出
-Ctrl+L        清屏
 
 ===== 首次启动配置 API Key =====
 启动后直接粘贴 DeepSeek API Key，按回车即可。
 Key 无效会自动提示重新输入。
 申请地址: https://platform.deepseek.com/api_keys
+
+===== 快捷键 =====
+Enter         发送消息
+Ctrl+C        退出
+Ctrl+L        清屏

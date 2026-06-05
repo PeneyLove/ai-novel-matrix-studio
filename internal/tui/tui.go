@@ -279,14 +279,22 @@ func Run(h *harness.Harness, root string) error {
 		m.promptAPIKey()
 		m.render(os.Stdout)
 
-		keyReader := bufio.NewReader(os.Stdin)
+		rd := bufio.NewReader(os.Stdin)
 		for !m.checkAPIKey() {
 			fmt.Fprint(os.Stdout, "\r\033[K> ")
-			line, err := keyReader.ReadString('\n')
-			if err != nil {
-				return err
+			// Read until \r or \n (raw mode — Enter sends \r on Windows, \n on Unix)
+			buf := make([]byte, 0, 4096)
+			for {
+				b, err := rd.ReadByte()
+				if err != nil {
+					return err
+				}
+				if b == '\r' || b == '\n' {
+					break
+				}
+				buf = append(buf, b)
 			}
-			line = strings.TrimSpace(line)
+			line := string(buf)
 			if line == "" || line == "/quit" || line == "/exit" {
 				m.addSystem("  ℹ 已跳过。后续可通过 /model set deepseek <key> 配置。")
 				break
@@ -354,24 +362,35 @@ func Run(h *harness.Harness, root string) error {
 
 
 func (m *Model) readInput(ch chan<- string) {
-	reader := bufio.NewReader(os.Stdin)
 	for m.running {
 		m.mu.Lock()
 		m.render(os.Stdout)
 		m.mu.Unlock()
 
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			ch <- "/quit"
-			return
+		// Read byte-by-byte until \r or \n (works on all platforms in raw mode)
+		buf := make([]byte, 0, 4096)
+		rd := bufio.NewReader(os.Stdin)
+		for {
+			b, err := rd.ReadByte()
+			if err != nil {
+				ch <- "/quit"
+				return
+			}
+			if b == '\r' || b == '\n' {
+				break
+			}
+			buf = append(buf, b)
 		}
-		line = strings.TrimRight(line, "\r\n")
+		line := string(buf)
 
-		if strings.ContainsRune(line, 3) {
+		if line == "\x03" || line == "" && false { // Ctrl+C sent as raw byte
+			line = "/quit"
+		}
+		if strings.Contains(line, "\x03") {
 			ch <- "/quit"
 			return
 		}
-		if strings.ContainsRune(line, 12) {
+		if strings.Contains(line, "\x0c") {
 			m.mu.Lock()
 			m.chatLines = nil
 			m.mu.Unlock()
