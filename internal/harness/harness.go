@@ -1,4 +1,4 @@
-﻿// Package harness is the top-level runtime that ties together
+// Package harness is the top-level runtime that ties together
 // skill management, model routing, pipeline orchestration, and storage.
 //
 // Usage:

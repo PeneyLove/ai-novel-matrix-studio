@@ -1,4 +1,4 @@
-﻿// Package secure_test provides tests for the secure encryption package.
+// Package secure_test provides tests for the secure encryption package.
 package secure_test
 
 import (

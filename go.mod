@@ -1,4 +1,4 @@
-﻿module github.com/PeneyLove/ai-novel-matrix-studio
+module github.com/PeneyLove/ai-novel-matrix-studio
 
 go 1.22
 

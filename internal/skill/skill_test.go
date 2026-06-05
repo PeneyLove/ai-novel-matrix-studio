@@ -1,4 +1,4 @@
-﻿// Package skill_test provides property-based tests for skill validation and routing.
+// Package skill_test provides property-based tests for skill validation and routing.
 package skill_test
 
 import (

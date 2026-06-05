@@ -1,4 +1,4 @@
-﻿// Package state manages the persistent novel creation state — the "hook ledger"
+// Package state manages the persistent novel creation state — the "hook ledger"
 // (伏笔台账), character profiles, world-building data, and iteration history.
 //
 // Every time the user modifies something (outline, characters, hooks), the state

@@ -1,4 +1,4 @@
-﻿package global_test
+package global_test
 
 import (
 	"strings"

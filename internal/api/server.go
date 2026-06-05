@@ -1,4 +1,4 @@
-﻿// Package api provides the HTTP API server for the Flutter GUI.
+// Package api provides the HTTP API server for the Flutter GUI.
 //
 // It exposes a REST API on 127.0.0.1:9876 that mirrors the CLI commands.
 // Only listens on loopback — no external network access.

@@ -1,4 +1,4 @@
-﻿// Package pipeline implements the creation pipeline orchestration.
+// Package pipeline implements the creation pipeline orchestration.
 //
 // v2.0 — updated for Prompt.md comprehensive architecture:
 //   - 4-phase enforcement (init → outline+hooks → writing → optimize)
