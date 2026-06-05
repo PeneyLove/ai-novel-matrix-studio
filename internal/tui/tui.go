@@ -273,14 +273,36 @@ func Run(h *harness.Harness, root string) error {
 	// Startup
 	m.addSystem("✍  AI Novel Agent v2 · 交互式写作终端")
 
-	// Check API key on startup
+	// Check API key on startup — if missing, enter a dedicated blocking loop
+	// that reads the key directly via bufio (paste-friendly, no command needed).
 	if !m.checkAPIKey() {
 		m.render(os.Stdout)
-		// Block until user provides a valid key via /model set
 		m.promptAPIKey()
-	}
+		m.render(os.Stdout)
 
-	// Input goroutine
+		keyReader := bufio.NewReader(os.Stdin)
+		for !m.checkAPIKey() {
+			fmt.Fprint(os.Stdout, "\r\033[K> ")
+			line, err := keyReader.ReadString('\n')
+			if err != nil {
+				return err
+			}
+			line = strings.TrimSpace(line)
+			if line == "" || line == "/quit" || line == "/exit" {
+				m.addSystem("  ℹ 已跳过。后续可通过 /model set deepseek <key> 配置。")
+				break
+			}
+			if !m.setAPIKey(line) {
+				// setAPIKey already rendered the error — just prompt again
+				m.render(os.Stdout)
+				continue
+			}
+			break // success — setAPIKey renders the intro
+		}
+	}
+	m.render(os.Stdout)
+
+	// Input goroutine for normal operation
 	inputCh := make(chan string, 32)
 	go m.readInput(inputCh)
 
@@ -341,13 +363,16 @@ func Run(h *harness.Harness, root string) error {
 }
 
 func (m *Model) readInput(ch chan<- string) {
+	// Read bytes in bursts with a 80ms drain window — pasted text
+	// arrives as a rapid burst and we batch it before signaling.
 	reader := bufio.NewReader(os.Stdin)
+	pasteBuf := make([]byte, 0, 4096)
+
 	for m.running {
 		m.mu.Lock()
 		m.render(os.Stdout)
 		m.mu.Unlock()
 
-		// Read byte by byte for key control
 		b, err := reader.ReadByte()
 		if err != nil {
 			ch <- "/quit"
@@ -362,7 +387,7 @@ func (m *Model) readInput(ch chan<- string) {
 			m.mu.Lock()
 			m.chatLines = nil
 			m.mu.Unlock()
-			ch <- "\x01" // full render needed
+			ch <- "\x01"
 			continue
 		case 127: // Backspace
 			m.mu.Lock()
@@ -379,15 +404,10 @@ func (m *Model) readInput(ch chan<- string) {
 			m.mu.Unlock()
 			ch <- text
 			continue
-		case 9: // Tab
-			ch <- "\t"
-			continue
 		case '\033': // Escape sequence
 			seq := make([]byte, 0, 8)
-			// Read the rest of the escape sequence with timeout
-			reader2 := bufio.NewReader(reader)
 			for i := 0; i < 7; i++ {
-				next, err := reader2.ReadByte()
+				next, err := reader.ReadByte()
 				if err != nil {
 					break
 				}
@@ -396,9 +416,7 @@ func (m *Model) readInput(ch chan<- string) {
 					break
 				}
 			}
-			seqStr := string(seq)
-			if seqStr == "[Z" || seqStr == "[91;6u" {
-				// Shift+Tab
+			if string(seq) == "[Z" || string(seq) == "[91;6u" {
 				m.mu.Lock()
 				if m.mode == ModeAgent {
 					m.mode = ModePlan
@@ -407,12 +425,49 @@ func (m *Model) readInput(ch chan<- string) {
 				}
 				m.addSystem("切换至 " + m.mode + " 模式")
 				m.mu.Unlock()
-				ch <- "\x01" // signal: mode changed, full render needed
+				ch <- "\x01"
 			}
 			continue
 		default:
+			// First byte of a burst — accumulate to pasteBuf then drain
+			pasteBuf = pasteBuf[:0]
+			pasteBuf = append(pasteBuf, b)
+			// Drain remaining bytes with 80ms timeout (paste burst window)
+			for {
+				reader.SetReadDeadline(time.Now().Add(80 * time.Millisecond))
+				next, drainErr := reader.ReadByte()
+				if drainErr != nil {
+					break
+				}
+				if next == 13 {
+					// Enter during paste → submit what we have so far
+					// (the Enter itself after paste, not during)
+					pasteBuf = append(pasteBuf, next)
+					break
+				}
+				if next == 3 || next == 127 || next == '\033' {
+					// Control char in paste — abort burst
+					_ = reader.UnreadByte()
+					break
+				}
+				pasteBuf = append(pasteBuf, next)
+			}
+			reader.SetReadDeadline(time.Time{}) // clear deadline
+
+			// If the burst ends with Enter, submit as full line
+			if len(pasteBuf) > 0 && pasteBuf[len(pasteBuf)-1] == 13 {
+				pasteBuf = pasteBuf[:len(pasteBuf)-1] // strip Enter
+				text := string(pasteBuf)
+				m.mu.Lock()
+				m.inputBuf = m.inputBuf[:0]
+				m.mu.Unlock()
+				ch <- text
+				continue
+			}
+
+			// Otherwise, append all drained bytes to input buffer
 			m.mu.Lock()
-			m.inputBuf = append(m.inputBuf, rune(b))
+			m.inputBuf = append(m.inputBuf, []rune(string(pasteBuf))...)
 			m.mu.Unlock()
 			ch <- "\x00"
 		}
@@ -822,21 +877,100 @@ func (m *Model) checkAPIKey() bool {
 
 func (m *Model) promptAPIKey() {
 	m.addSystem("")
-	m.addSystem("╔══════════════════════════════════════════╗")
-	m.addSystem("║  首次使用：请配置 DeepSeek API Key         ║")
-	m.addSystem("║  申请: https://platform.deepseek.com       ║")
-	m.addSystem("║  输入: /model set deepseek sk-你的key       ║")
-	m.addSystem("╚══════════════════════════════════════════╝")
+	m.addSystem("╔══════════════════════════════════════════════════╗")
+	m.addSystem("║  首次使用：请粘贴 DeepSeek API Key 后按回车       ║")
+	m.addSystem("║  申请: https://platform.deepseek.com/api_keys     ║")
+	m.addSystem("║  （粘贴后直接按 Enter，无需输入任何命令）          ║")
+	m.addSystem("╚══════════════════════════════════════════════════╝")
+	m.addSystem("")
+	m.addSystem("📝 请粘贴 DeepSeek API Key 后按回车：")
+	m.render(os.Stdout)
+}
+
+// setAPIKey validates the key against DeepSeek and saves it on success.
+// Returns true if the key was accepted, false if user should retry.
+func (m *Model) setAPIKey(key string) bool {
+	if key == "" {
+		return false
+	}
+
+	// Quick validation
+	m.addSystem(fmt.Sprintf("  ⏳ 验证 Key（%s...）...", maskKey(key)))
+	m.render(os.Stdout)
+
+	if err := m.validateKey(key); err != nil {
+		if strings.Contains(err.Error(), "401") || strings.Contains(err.Error(), "invalid") || strings.Contains(err.Error(), "Authentication") {
+			m.addError("Key 无效（401 认证失败），请重新粘贴")
+		} else {
+			m.addError("验证失败: " + err.Error())
+		}
+		return false
+	}
+
+	// Key is valid — save to config
+	cfg, _ := storage.ReadConfig(m.root)
+	if cfg == nil {
+		cfg = make(map[string]any)
+	}
+	cfg["deepseek"] = map[string]any{
+		"api_key":      key,
+		"api_endpoint": model.DefaultConfig("deepseek").Endpoint,
+		"model_name":   model.DefaultConfig("deepseek").ModelName,
+		"max_tokens":   model.DefaultConfig("deepseek").MaxTokens,
+		"temperature":  model.DefaultConfig("deepseek").Temperature,
+		"timeout":      60,
+		"retry_times":  3,
+	}
+	if err := storage.WriteConfig(m.root, cfg); err != nil {
+		m.addError("保存配置失败: " + err.Error())
+		return false
+	}
+
+	// Hot-reload harness
+	mcs, fb := modelConfigsFromConfig(cfg)
+	newRouter, err := model.NewRouter(mcs, fb)
+	if err != nil {
+		m.addError("热加载模型路由失败: " + err.Error())
+		return false
+	}
+	m.harness.Router = newRouter
+	m.activeModel = "deepseek"
+	m.addSystem("  ✓ DeepSeek 已就绪！")
 	m.addSystem("")
 
-	// If a key was set, show the projects/help after
+	// Show intro
 	projects, _ := project.ListProjects(m.root)
 	if len(projects) > 0 {
 		m.project = projects[0]
 		m.addSystem("📁 当前项目: " + m.project)
+		m.addSystem("直接描述你的创作意图，或输入 /help 查看命令。")
 	} else {
-		m.addSystem("你想写一本怎样的小说？")
+		m.addSystem("你想写一本怎样的小说？直接告诉我书名、类型、核心灵感。")
 	}
+	m.render(os.Stdout)
+	return true
+}
+
+func (m *Model) validateKey(key string) error {
+	cfg := model.DefaultConfig("deepseek")
+	cfg.APIKey = key
+	cfg.MaxTokens = 4
+	cfg.Timeout = 15 * time.Second
+	client := model.NewClient(cfg)
+	if client == nil {
+		return fmt.Errorf("不支持的模型")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_, err := client.Generate(ctx, "hi", "hi")
+	return err
+}
+
+func maskKey(key string) string {
+	if len(key) <= 8 {
+		return strings.Repeat("*", len(key))
+	}
+	return key[:3] + "****" + key[len(key)-4:]
 }
 
 func (m *Model) addSystem(s string) {
