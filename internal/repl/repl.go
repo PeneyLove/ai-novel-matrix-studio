@@ -447,28 +447,95 @@ func (s *Session) checkAPIKeyOnStartup() {
 
 	if hasDS || hasMiMo || hasMM {
 		active := ""
-		if hasDS {
+		switch {
+		case hasDS:
 			active = "DeepSeek"
-		} else if hasMiMo {
+		case hasMiMo:
 			active = "MiMo"
-		} else {
+		default:
 			active = "MiniMax"
 		}
 		fmt.Printf("  🤖 活跃模型: %s | 输入 /model 切换\n", active)
 		return
 	}
 
-	// No API key configured — walk user through it
+	// No API key — interactive onboarding
 	fmt.Println()
 	fmt.Println("  ╔══════════════════════════════════════════════════╗")
-	fmt.Println("  ║  首次使用：配置 AI 模型 API Key                  ║")
+	fmt.Println("  ║  首次使用：配置 DeepSeek API Key                 ║")
 	fmt.Println("  ║                                                  ║")
-	fmt.Println("  ║  推荐 DeepSeek（最便宜 ¥0.001/千tokens）          ║")
+	fmt.Println("  ║  推荐 DeepSeek（¥0.001/千tokens，最便宜）         ║")
 	fmt.Println("  ║  申请: https://platform.deepseek.com/api_keys     ║")
-	fmt.Println("  ║                                                  ║")
-	fmt.Println("  ║  输入 /model set deepseek <你的key> 立即配置      ║")
 	fmt.Println("  ╚══════════════════════════════════════════════════╝")
 	fmt.Println()
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("  📝 请输入 DeepSeek API Key（留空跳过）: ")
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+		if input == "" {
+			fmt.Println()
+			fmt.Println("  ℹ 已跳过。后续输入 /model set deepseek <key> 配置。")
+			fmt.Println()
+			return
+		}
+
+		fmt.Print("  ⏳ 验证 API Key...")
+		if err := s.quickValidate("deepseek", input); err != nil {
+			fmt.Printf("\r  ✗ 验证失败: %v\n", err)
+			fmt.Println("  请检查 Key 是否正确，或输入空行跳过。")
+			continue
+		}
+		fmt.Println("\r  ✓ Key 验证通过")
+
+		// Save to config
+		cfg, err := loadConfig(s.root)
+		if err != nil {
+			fmt.Printf("  ✗ 读取配置失败: %v\n", err)
+			return
+		}
+		cfg["deepseek"] = map[string]any{
+			"api_key":    input,
+			"api_endpoint": "https://api.deepseek.com/v1/chat/completions",
+			"model_name": "deepseek-chat",
+			"max_tokens": 4096,
+			"temperature": 0.6,
+			"timeout":   60,
+			"retry_times": 3,
+		}
+		if err := writeConfig(s.root, cfg); err != nil {
+			fmt.Printf("  ✗ 保存配置失败: %v\n", err)
+			return
+		}
+
+		if err := s.reloadHarness(); err != nil {
+			fmt.Printf("  ⚠ 配置已保存但热重载失败，请重启: %v\n", err)
+			return
+		}
+
+		fmt.Printf("  ✓ DeepSeek 已就绪，开始创作吧！\n\n")
+		return
+	}
+}
+
+// quickValidate makes a minimal API call to verify the key works.
+func (s *Session) quickValidate(provider, key string) error {
+	cfg := model.DefaultConfig(provider)
+	cfg.APIKey = key
+	cfg.MaxTokens = 1 // minimal call
+	cfg.Timeout = 15 * time.Second
+
+	client := model.NewClient(cfg)
+	if client == nil {
+		return fmt.Errorf("不支持的模型: %s", provider)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	_, err := client.Generate(ctx, "hi", "hi")
+	return err
 }
 
 func (s *Session) cmdModel(arg string) {
