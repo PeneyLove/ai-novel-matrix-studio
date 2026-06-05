@@ -9,7 +9,7 @@
  *      friendly message and exits 0 so npm link still succeeds.
  *
  *   2. runtime — user runs `novel-agent <args>`.
- *      Finds the real binary (npm global install, local dist/, or PATH)
+ *      Finds the real Go binary (npm global install, local dist/, or PATH)
  *      and spawns it with the user's arguments.
  *
  * Platform detection:
@@ -35,50 +35,55 @@ function detectPlatform() {
   const platform = os.platform();
   const arch = os.arch();
   const key = `${platform}-${arch}`;
-  const binary = PLATFORM_MAP[key];
-  if (!binary) {
+  const binaryName = PLATFORM_MAP[key];
+  if (!binaryName) {
     console.error(
       `ai-novel-agent: unsupported platform: ${key}\n` +
       `Supported: darwin-x64, darwin-arm64, linux-x64, win32-x64`
     );
     process.exit(1);
   }
-  return { platform, arch, binary };
+  return { platform, arch, binaryName };
 }
 
 // ---------------------------------------------------------------------------
-// Find the real Go binary
+// Find the real Go binary (NOT npm wrapper scripts)
 // ---------------------------------------------------------------------------
 
-function findBinary() {
-  const { binary } = detectPlatform();
-  const ext = process.platform === "win32" ? ".exe" : "";
+function isRealBinary(fpath) {
+  try {
+    const stat = fs.statSync(fpath);
+    // Real Go binaries are > 1 MB. npm wrappers (shell scripts, .cmd) are < 10 KB.
+    if (stat.size < 100 * 1024) return false;
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 
-  // 1. npm global install target (prefix/bin/)
+function findBinary() {
+  const { platform, binaryName } = detectPlatform();
+  const exeExt = platform === "win32" ? ".exe" : "";
+
+  // 1. npm global install target — the Go binary copied by postinstall
   const prefix = process.env.npm_config_prefix
     || path.resolve(os.homedir(), ".npm-global");
-  const globalPath = path.join(prefix, "bin", `novel-agent${ext}`);
-  if (fs.existsSync(globalPath)) return globalPath;
+  const globalBin = path.join(prefix, "bin", `novel-agent${exeExt}`);
+  if (isRealBinary(globalBin)) return globalBin;
 
   // 2. Local dist/ directory (development — npm link context)
-  const localDist = path.join(__dirname, "dist", binary);
-  if (fs.existsSync(localDist)) return localDist;
+  const localDist = path.join(__dirname, "dist", binaryName);
+  if (isRealBinary(localDist)) return localDist;
 
   // 3. Project root dist/ (from go build or make build)
-  const rootDist = path.join(__dirname, "..", "dist", binary);
-  if (fs.existsSync(rootDist)) return rootDist;
+  const rootDist = path.join(__dirname, "..", "dist", binaryName);
+  if (isRealBinary(rootDist)) return rootDist;
 
-  // 4. PATH search (e.g. go install)
-  const pathExts = (process.env.PATHEXT || "")
-    .split(";")
-    .map((e) => e.toLowerCase());
+  // 4. PATH search — only match real binaries, not npm wrapper scripts
   const pathDirs = (process.env.PATH || "").split(path.delimiter);
   for (const dir of pathDirs) {
-    const candidate = path.join(dir, "novel-agent");
-    if (fs.existsSync(candidate)) return candidate;
-    for (const ext of pathExts) {
-      if (fs.existsSync(candidate + ext)) return candidate + ext;
-    }
+    const candidate = path.join(dir, `novel-agent${exeExt}`);
+    if (isRealBinary(candidate)) return candidate;
   }
 
   return null;
@@ -89,35 +94,35 @@ function findBinary() {
 // ---------------------------------------------------------------------------
 
 function install() {
-  const { binary } = detectPlatform();
+  const { binaryName } = detectPlatform();
   const srcDir = path.join(__dirname, "dist");
-  const srcPath = path.join(srcDir, binary);
+  const srcPath = path.join(srcDir, binaryName);
 
   if (!fs.existsSync(srcPath)) {
     console.log("");
-    console.log("  ┌─────────────────────────────────────────────────────┐");
-    console.log("  │  AI Novel Agent — development mode                  │");
-    console.log("  │                                                     │");
-    console.log("  │  Pre-compiled binary not found in npm/dist/.        │");
-    console.log("  │  This is normal if you are linked locally.          │");
-    console.log("  │                                                     │");
-    console.log("  │  To build the binary:                               │");
-    console.log("  │    go build -o npm/dist/novel-agent_windows_amd64   │");
-    console.log("  │        ./cmd/novel-agent/                           │");
-    console.log("  │                                                     │");
-    console.log("  │  Or use Makefile:                                   │");
-    console.log("  │    make build                                       │");
-    console.log("  └─────────────────────────────────────────────────────┘");
+    console.log("  ╔═══════════════════════════════════════════════════╗");
+    console.log("  ║  AI Novel Agent — development mode               ║");
+    console.log("  ║                                                   ║");
+    console.log("  ║  Pre-compiled Go binary not found.               ║");
+    console.log("  ║  This is normal if you are developing locally.    ║");
+    console.log("  ║                                                   ║");
+    console.log("  ║  To compile from source:                          ║");
+    console.log("  ║    cd ai-novel-matrix-studio                     ║");
+    console.log("  ║    go build -o npm\\dist\\" + binaryName.padEnd(35) + " ║");
+    console.log("  ║        .\\cmd\\novel-agent\\                        ║");
+    console.log("  ║                                                   ║");
+    console.log("  ║  Or:  make build   (cross-compiles all platforms) ║");
+    console.log("  ╚═══════════════════════════════════════════════════╝");
     console.log("");
-    return; // exit 0 — allow npm link to succeed
+    return;
   }
 
   // Install to global bin
   const prefix = process.env.npm_config_prefix
     || path.resolve(os.homedir(), ".npm-global");
   const binDir = path.join(prefix, "bin");
-  const ext = process.platform === "win32" ? ".exe" : "";
-  const targetPath = path.join(binDir, `novel-agent${ext}`);
+  const exeExt = process.platform === "win32" ? ".exe" : "";
+  const targetPath = path.join(binDir, `novel-agent${exeExt}`);
 
   if (!fs.existsSync(binDir)) {
     fs.mkdirSync(binDir, { recursive: true });
@@ -140,22 +145,27 @@ function install() {
 function run(args) {
   const binPath = findBinary();
   if (!binPath) {
-    console.error("ai-novel-agent: Go binary not found.");
-    console.error("");
-    console.error("  The binary needs to be compiled from source.");
-    console.error("  Install Go 1.22+ from https://go.dev/dl/ then run:");
-    console.error("");
-    console.error("    cd ai-novel-matrix-studio");
-    console.error("    go build -o novel-agent.exe ./cmd/novel-agent/");
-    console.error("");
-    console.error("  Then place novel-agent.exe in your PATH.");
+    console.error("╔═══════════════════════════════════════════════════╗");
+    console.error("║  AI Novel Agent — Go binary not found            ║");
+    console.error("║                                                   ║");
+    console.error("║  The Go binary has not been compiled yet.          ║");
+    console.error("║  Install Go 1.22+ from https://go.dev/dl/         ║");
+    console.error("║  Then run these commands:                          ║");
+    console.error("║                                                     ║");
+    console.error("║    cd ai-novel-matrix-studio                       ║");
+    console.error("║    go build -o novel-agent.exe .\\cmd\\novel-agent\\  ║");
+    console.error("║                                                     ║");
+    console.error("║  Then either:                                      ║");
+    console.error("║    a) Add this folder to your PATH, or              ║");
+    console.error("║    b) Move novel-agent.exe to a folder in PATH      ║");
+    console.error("╚═══════════════════════════════════════════════════╝");
     process.exit(1);
   }
 
   try {
     execFileSync(binPath, args, { stdio: "inherit" });
   } catch (err) {
-    if (err.status) {
+    if (err.status != null) {
       process.exit(err.status);
     }
     console.error("ai-novel-agent: failed to run binary:", err.message);
@@ -167,7 +177,6 @@ function run(args) {
 // Entry point
 // ---------------------------------------------------------------------------
 
-// npm postinstall sets npm_config_global or runs from lifecycle scripts
 const isPostInstall =
   process.env.npm_lifecycle_event === "postinstall" ||
   process.env.npm_command === "install" ||
@@ -177,7 +186,6 @@ if (require.main === module) {
   if (isPostInstall) {
     install();
   } else {
-    // User invoked `novel-agent` directly — strip node and script path
     const args = process.argv.slice(2);
     run(args);
   }
