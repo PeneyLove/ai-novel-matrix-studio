@@ -282,19 +282,28 @@ func Run(h *harness.Harness, root string) error {
 		rd := bufio.NewReader(os.Stdin)
 		for !m.checkAPIKey() {
 			fmt.Fprint(os.Stdout, "\r\033[K> ")
-			// Read until \r or \n (raw mode — Enter sends \r on Windows, \n on Unix)
-			buf := make([]byte, 0, 4096)
-			for {
-				b, err := rd.ReadByte()
-				if err != nil {
-					return err
-				}
-				if b == '\r' || b == '\n' {
-					break
-				}
-				buf = append(buf, b)
+		// Read until \r or \n, echo masked chars for privacy
+		buf := make([]byte, 0, 4096)
+		for {
+			b, err := rd.ReadByte()
+			if err != nil {
+				return err
 			}
-			line := string(buf)
+			if b == '\r' || b == '\n' {
+				fmt.Fprint(os.Stdout, "\r\n")
+				break
+			}
+			if b == 127 || b == '\b' {
+				if len(buf) > 0 {
+					buf = buf[:len(buf)-1]
+					fmt.Fprint(os.Stdout, "\b \b")
+				}
+				continue
+			}
+			buf = append(buf, b)
+			fmt.Fprint(os.Stdout, "*")
+		}
+		line := string(buf)
 			if line == "" || line == "/quit" || line == "/exit" {
 				m.addSystem("  ℹ 已跳过。后续可通过 /model set deepseek <key> 配置。")
 				break
@@ -361,13 +370,13 @@ func Run(h *harness.Harness, root string) error {
 }
 
 
+
 func (m *Model) readInput(ch chan<- string) {
 	for m.running {
 		m.mu.Lock()
 		m.render(os.Stdout)
 		m.mu.Unlock()
 
-		// Read byte-by-byte until \r or \n (works on all platforms in raw mode)
 		buf := make([]byte, 0, 4096)
 		rd := bufio.NewReader(os.Stdin)
 		for {
@@ -377,26 +386,32 @@ func (m *Model) readInput(ch chan<- string) {
 				return
 			}
 			if b == '\r' || b == '\n' {
+				fmt.Fprint(os.Stdout, "\r\n")
 				break
 			}
+			if b == 3 { // Ctrl+C
+				ch <- "/quit"
+				return
+			}
+			if b == 12 { // Ctrl+L
+				m.mu.Lock()
+				m.chatLines = nil
+				m.mu.Unlock()
+				ch <- "\x01"
+				return
+			}
+			if b == 127 || b == '\b' {
+				if len(buf) > 0 {
+					buf = buf[:len(buf)-1]
+					fmt.Fprint(os.Stdout, "\b \b")
+				}
+				continue
+			}
 			buf = append(buf, b)
+			fmt.Fprint(os.Stdout, string(b))
 		}
 		line := string(buf)
 
-		if line == "\x03" || line == "" && false { // Ctrl+C sent as raw byte
-			line = "/quit"
-		}
-		if strings.Contains(line, "\x03") {
-			ch <- "/quit"
-			return
-		}
-		if strings.Contains(line, "\x0c") {
-			m.mu.Lock()
-			m.chatLines = nil
-			m.mu.Unlock()
-			ch <- "\x01"
-			continue
-		}
 		if strings.Contains(line, "\033[Z") {
 			m.mu.Lock()
 			if m.mode == ModeAgent {
