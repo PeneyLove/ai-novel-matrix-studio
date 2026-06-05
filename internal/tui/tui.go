@@ -89,6 +89,12 @@ type Model struct {
 	thinkingFrame int
 	thinkingMsg   string
 
+	// Streaming state (reasonix pattern: reasoning collapses, content accumulates)
+	reasoningBuf    strings.Builder // accumulates during stream, collapses on first content
+	reasoningStart  time.Time       // when reasoning started (for "thought for Xs")
+	pendingContent  strings.Builder // content accumulated during streaming
+	streaming       bool            // true during an active stream
+
 	// Lifecycle
 	running bool
 
@@ -153,8 +159,9 @@ func Run(h *harness.Harness, root string) error {
 	fmt.Fprint(os.Stdout, altEnter+cursorOff)
 	defer fmt.Fprint(os.Stdout, altExit+cursorOn)
 
-	// Startup
-	m.addSystem("✍  AI Novel Agent v2 · 交互式写作终端")
+	// Startup — boxed welcome banner (reasonix pattern)
+	m.addAIHeader("AI Novel Agent v2")
+	m.addSystem("交互式网文写作终端 · " + dim + "54 Skills · 4阶段流水线" + reset)
 	if !m.checkAPIKey() {
 		m.fullRender()
 		m.promptAPIKeyLoop()
@@ -194,7 +201,11 @@ func Run(h *harness.Harness, root string) error {
 		case ev := <-m.eventCh:
 			if e, ok := ev.(ChatEvent); ok {
 				m.mu.Lock()
-				if e.StopSpinner { m.thinking = false }
+				if e.StopSpinner {
+					m.thinking = false
+					m.streaming = false
+					m.pendingContent.Reset()
+				}
 				if e.Err != nil { m.addError(e.Err.Error()) } else if e.Line != "" { m.addAI(e.Line) }
 				m.mu.Unlock()
 				m.fullRender()
@@ -241,7 +252,16 @@ func (m *Model) fullRender() {
 	if chatRows < 1 { chatRows = 1 }
 	start := len(m.chatLines) - chatRows
 	if start < 0 { start = 0 }
-	visible := m.chatLines[start:]
+	// Build visible range from chatLines + optional pending content during streaming
+	visible := make([]chatLine, len(m.chatLines[start:]))
+	copy(visible, m.chatLines[start:])
+
+	// During streaming, append pending content as additional lines
+	if m.streaming && m.pendingContent.Len() > 0 {
+		for _, line := range strings.Split(m.pendingContent.String(), "\n") {
+			visible = append(visible, chatLine{Type: "pending", Text: line})
+		}
+	}
 
 	for i := 0; i < chatRows; i++ {
 		row := 2 + i
@@ -255,6 +275,9 @@ func (m *Model) fullRender() {
 			case "ai":
 				sb.WriteString("  ")
 				sb.WriteString(cl.Text)
+			case "pending":
+				sb.WriteString("  ")
+				sb.WriteString(cl.Text)
 			case "aiHeader": sb.WriteString(fgPurple + bold + cl.Text + reset)
 			case "error": sb.WriteString(fgRed + "✗ " + cl.Text + reset)
 			case "warning": sb.WriteString(fgYellow + "⚠ " + cl.Text + reset)
@@ -262,13 +285,19 @@ func (m *Model) fullRender() {
 		}
 	}
 
-	// ── Thinking indicator (overwrites last chat row if active) ──
-	if m.thinking {
+	// ── Thinking indicator (only in pure reasoning phase, not during content streaming) ──
+	if m.thinking && m.pendingContent.Len() == 0 {
 		row := 2 + chatRows - 1
 		frame := spinnerFrames[m.thinkingFrame]
 		sb.WriteString(fmt.Sprintf("\033[%d;1H", row))
 		sb.WriteString(clearLine)
-		sb.WriteString(dim + fgGray + "  " + frame + " " + m.thinkingMsg + reset)
+		tag := dim + fgGray + "  " + frame + " " + m.thinkingMsg + reset
+		sb.WriteString(tag)
+	} else if m.thinking && m.pendingContent.Len() > 0 {
+		row := 2 + chatRows - 1
+		sb.WriteString(fmt.Sprintf("\033[%d;1H", row))
+		sb.WriteString(clearLine)
+		sb.WriteString(dim + fgGray + "  " + m.thinkingMsg + reset)
 	}
 
 	// ── Input area: rows H-2, H-1, H ──
@@ -747,9 +776,6 @@ func (m *Model) cmdExport() {
 }
 
 func (m *Model) cmdFreeForm(text string) {
-	m.thinking = true; m.thinkingMsg = "思考中..."
-	m.fullRender()
-
 	// Build dynamic system prompt from project context
 	sysPrompt := "你是专业网文作家，擅长有节奏感的叙事、生动的对话、紧凑的冲突。"
 	if m.project != "" {
@@ -761,7 +787,6 @@ func (m *Model) cmdFreeForm(text string) {
 		if g != "" {
 			sysPrompt = fmt.Sprintf("你是%s领域的专业网文作家。当前小说力量体系：%s。", skill.GenreLabels[g], ps)
 		}
-		// Inject character list
 		chars, err := project.ListCharacters(m.root, m.project)
 		if err == nil && len(chars) > 0 {
 			names := make([]string, 0, len(chars))
@@ -775,46 +800,77 @@ func (m *Model) cmdFreeForm(text string) {
 	}
 	sysPrompt += " 回答要有网文节奏感，多写对话和冲突，少写总结。如果用户要求续写，请用 /write <章节号>。"
 
+	// Start streaming state
+	m.mu.Lock()
+	m.streaming = true
+	m.thinking = true
+	m.thinkingMsg = "思考中..."
+	m.reasoningBuf.Reset()
+	m.pendingContent.Reset()
+	m.reasoningStart = time.Now()
+	m.mu.Unlock()
+	m.fullRender()
+
 	go func() {
+		defer func() {
+			m.mu.Lock()
+			m.streaming = false
+			m.thinking = false
+			m.mu.Unlock()
+		}()
+
 		client, _ := m.harness.Router.GetClient("deepseek")
 		if client == nil { client, _ = m.harness.Router.GetClient("mimo") }
-		if client == nil { m.eventCh <- ChatEvent{StopSpinner:true,Err:fmt.Errorf("没有可用的 AI 模型")}; return }
+		if client == nil { m.eventCh <- ChatEvent{StopSpinner: true, Err: fmt.Errorf("没有可用的 AI 模型")}; return }
 
 		ctx := context.Background()
 		stream := client.StreamGenerate(ctx, sysPrompt, text)
 
-		var reasoning, content strings.Builder
 		for chunk := range stream {
 			if chunk.Error != nil {
 				m.eventCh <- ChatEvent{StopSpinner: true, Err: chunk.Error}
 				return
 			}
+
+			// ---- Reasoning phase ----
 			if chunk.Reasoning != "" {
-				reasoning.WriteString(chunk.Reasoning)
 				m.mu.Lock()
-				m.thinkingMsg = "思考: " + trunc(reasoning.String(), 80)
+				if m.pendingContent.Len() == 0 {
+					// Still in reasoning phase — show live thinking text
+					m.reasoningBuf.WriteString(chunk.Reasoning)
+					m.thinkingMsg = "思考: " + truncMsg(m.reasoningBuf.String(), 80)
+				}
 				m.mu.Unlock()
 				m.fullRender()
+				continue
 			}
+
+			// ---- Content phase: first content chunk collapses reasoning ----
 			if chunk.Content != "" {
-				content.WriteString(chunk.Content)
 				m.mu.Lock()
-				m.thinkingMsg = "输出中 (" + strconv.Itoa(len([]rune(content.String()))) + "字)..."
+				if m.pendingContent.Len() == 0 && m.reasoningBuf.Len() > 0 {
+					// Collapse reasoning to "thought for Xs"
+					elapsed := time.Since(m.reasoningStart).Round(100 * time.Millisecond)
+					m.addSystem(dim + "  thought for " + elapsed.String() + reset)
+				}
+				m.pendingContent.WriteString(chunk.Content)
+				m.thinkingMsg = dim + "输出中 (" + strconv.Itoa(len([]rune(m.pendingContent.String()))) + "字)" + reset
 				m.mu.Unlock()
 				m.fullRender()
 			}
+
 			if chunk.Done && chunk.Reasoning == "" && chunk.Content == "" && chunk.Error == nil {
 				break
 			}
 		}
 
-		result := ""
-		if reasoning.Len() > 0 {
-			result += "【思考过程】\n" + reasoning.String() + "\n\n"
+		// Commit final result
+		result := strings.TrimSpace(m.pendingContent.String())
+		if result == "" {
+			result = strings.TrimSpace(m.reasoningBuf.String())
 		}
-		result += content.String()
 		if result == "" { result = "（模型返回空内容）" }
-		m.eventCh <- ChatEvent{StopSpinner: true, Line: strings.TrimSpace(result)}
+		m.eventCh <- ChatEvent{StopSpinner: true, Line: result}
 	}()
 }
 
@@ -864,6 +920,31 @@ func trunc(s string, n int) string {
 	runes := []rune(s)
 	if len(runes) <= n { return s }
 	return string(runes[:n]) + "\n...（后续内容已保存到 output/）"
+}
+
+func truncMsg(s string, n int) string {
+	runes := []rune(s)
+	if len(runes) <= n { return s }
+	return string(runes[:n]) + "..."
+}
+
+func boxed(lines []string) string {
+	maxW := 0
+	for _, l := range lines {
+		r := []rune(l)
+		if len(r) > maxW { maxW = len(r) }
+	}
+	maxW += 2
+	bar := strings.Repeat("─", maxW)
+	var b strings.Builder
+	b.WriteString(accent + "╭" + bar + "╮" + reset + "\n")
+	for _, l := range lines {
+		pad := maxW - len([]rune(l)) - 2
+		if pad < 0 { pad = 0 }
+		b.WriteString(accent + "│" + reset + " " + l + strings.Repeat(" ", pad) + " " + accent + "│" + reset + "\n")
+	}
+	b.WriteString(accent + "╰" + bar + "╯" + reset)
+	return b.String()
 }
 
 // Suppress unused import
