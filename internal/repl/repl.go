@@ -106,6 +106,8 @@ func (s *Session) handle(input string) {
 		s.cmdProject(strings.TrimSpace(strings.TrimPrefix(input, "/project")))
 	case input == "/projects":
 		s.cmdListProjects()
+	case input == "/char evolve" || strings.HasPrefix(input, "/char evolve "):
+		s.cmdCharEvolve(strings.TrimSpace(strings.TrimPrefix(input, "/char evolve ")))
 	case strings.HasPrefix(input, "/char "):
 		s.cmdChar(strings.TrimSpace(strings.TrimPrefix(input, "/char ")))
 	case input == "/chars":
@@ -138,7 +140,8 @@ func (s *Session) cmdHelp() {
 		"  /projects          列出所有项目",
 		"  /world             查看世界观设定",
 		"  /outline           查看大纲和伏笔台账",
-		"  /char <名称>       查看或创建角色",
+		"  /char evolve <名>   优化角色自适应性提示词（基于成长轨迹）"
+	"  /char <名称>       查看或创建角色",
 		"  /chars             列出所有活跃角色",
 		"  /killchar <名称>   下线一个角色（需确认）",
 		"  /skills            列出可用 Skill",
@@ -335,6 +338,79 @@ func (s *Session) cmdShowOutline() {
 	}
 }
 
+// cmdCharEvolve calls AI to refine a character's skill prompt based on their
+// full evolution history, then writes the refined prompt back to the YAML.
+func (s *Session) cmdCharEvolve(name string) {
+	if s.project == "" {
+		fmt.Println("  请先选择一个项目: /project <名称>")
+		return
+	}
+	if name == "" {
+		fmt.Println("  用法: /char evolve <角色名>")
+		return
+	}
+
+	id := project.CharacterID(name)
+	ch, err := project.ReadCharacter(s.root, s.project, id)
+	if err != nil {
+		fmt.Printf("  ✗ 角色「%s」不存在\n", name)
+		return
+	}
+
+	if len(ch.Evolution) == 0 {
+		fmt.Printf("  ℹ 角色「%s」还没有成长记录。\n", name)
+		fmt.Println("    使用 /write 续写章节后，系统会自动检测角色变化。")
+		fmt.Println("    也可以手动调用 /char <名> 编辑后再次 evolve。")
+		return
+	}
+
+	fmt.Printf("  🧠 提炼「%s」(%d 步成长轨迹)...\n", ch.Name, len(ch.Evolution))
+
+	// Build meta-prompt containing the full evolution log
+	state := ch.CurrentState()
+	metaPrompt := fmt.Sprintf(
+		"你是角色编辑助手。请根据以下角色的【当前状态】和【完整成长轨迹】，"+
+			"生成一段适配该角色当前设定的小说续写 system prompt。\n\n"+
+			"要求：\n"+
+			"1. 保留角色的核心性格和动机\n"+
+			"2. 融入最新的成长变化（能力提升、性格转变等）\n"+
+			"3. 描述该角色当前的行为模式、说话风格和情感状态\n"+
+			"4. 长度控制在 200 字以内\n"+
+			"5. 只输出 prompt 文本，不包含任何解释\n\n"+
+			"【角色状态】\n%s\n\n"+
+			"请输出该角色更新后的 system prompt：", state,
+	)
+
+	fmt.Println("  ⏳ 调用 AI 模型优化角色提示词...")
+	ctx := context.Background()
+
+	// Use fallback model to refine the prompt
+	client, err := s.router.GetClient("qwen")
+	if err != nil {
+		client, err = s.router.GetClient("deepseek")
+		if err != nil {
+			fmt.Printf("  ✗ 无可用的 AI 模型: %v\n", err)
+			return
+		}
+	}
+
+	refined, err := client.Generate(ctx, "你是专业的角色设定师，擅长根据人物成长轨迹提炼精确的角色提示词。", metaPrompt)
+	if err != nil {
+		fmt.Printf("  ✗ AI 调用失败: %v\n", err)
+		return
+	}
+
+	ch.EvolvePromptFromString(refined)
+	if err := project.WriteCharacter(s.root, s.project, *ch); err != nil {
+		fmt.Printf("  ✗ 保存角色失败: %v\n", err)
+		return
+	}
+
+	fmt.Printf("  ✓ 角色「%s」提示词已优化 (%d 字)\n", ch.Name, len([]rune(refined)))
+	fmt.Printf("  ─── 优化后 ───\n%s\n  ───────────\n", refined)
+	fmt.Println("  💡 下次使用 /write 续写时，系统会自动注入该角色的最新状态。")
+}
+
 func (s *Session) cmdWrite(arg string) {
 	if s.project == "" {
 		fmt.Println("  请先选择一个项目: /project <名称>")
@@ -388,6 +464,9 @@ func (s *Session) cmdWrite(arg string) {
 
 	fmt.Printf("  ✓ 第 %d 章已保存 → .novelAgent/projects/%s/output/ch%03d.txt\n", chNo, s.project, chNo)
 	fmt.Printf("  ─── 预览 ───\n%s\n  ───────────\n", truncate(out.Content, 400))
+
+	// Auto-detect character evolutions from the generated chapter
+	s.detectEvolutions(chNo, out.Content)
 }
 
 func (s *Session) cmdExport() {
@@ -476,4 +555,104 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return string(runes[:n]) + "..."
+}
+
+// detectEvolutions scans the generated chapter for character changes and prompts
+// the user to record them in the evolution log.
+func (s *Session) detectEvolutions(chapterNo int, content string) {
+	chars, err := project.ListCharacters(s.root, s.project)
+	if err != nil || len(chars) == 0 {
+		return
+	}
+
+	// Simple heuristic: find character names mentioned near change keywords
+	changeKeywords := []string{
+		"突破", "升级", "进阶", "觉醒", "领悟",
+		"获得", "习得", "掌握", "突破到",
+		"成为", "晋升", "蜕变", "进化",
+		"斩杀", "击败", "收服",
+	}
+	found := map[string]string{} // character ID → matched change phrase
+
+	for _, ch := range chars {
+		if ch.Status != "active" {
+			continue
+		}
+		for _, kw := range changeKeywords {
+			// Look for "character name ... keyword ..." within close proximity
+			if idx := strings.Index(content, ch.Name); idx >= 0 {
+				snippet := content[idx:]
+				maxLen := 300
+				if len(snippet) > maxLen {
+					snippet = snippet[:maxLen]
+				}
+				if kwIdx := strings.Index(snippet, kw); kwIdx > 0 && kwIdx < 200 {
+					found[ch.ID] = kw
+					break
+				}
+			}
+		}
+	}
+
+	if len(found) == 0 {
+		return
+	}
+
+	fmt.Println("\n  ⚡ 检测到可能的角色变化：")
+	for id, kw := range found {
+		for _, ch := range chars {
+			if ch.ID == id {
+				fmt.Printf("    %s — %s\n", ch.Name, kw)
+			}
+		}
+	}
+	fmt.Print("  是否记录这些变化到角色成长日志？[Y/n]: ")
+
+	reader := bufio.NewReader(os.Stdin)
+	resp, _ := reader.ReadString('\n')
+	resp = strings.TrimSpace(strings.ToLower(resp))
+	if resp != "" && resp != "y" && resp != "yes" {
+		fmt.Println("  ℹ 跳过。稍后可以用 /char <名> 手动编辑，或 /char evolve <名> 优化角色提示词。")
+		return
+	}
+
+	recorded := 0
+	for id, kw := range found {
+		for _, ch := range chars {
+			if ch.ID == id {
+				step := project.EvolutionStep{
+					Chapter:     chapterNo,
+					Type:        evolutionTypeFromKeyword(kw),
+					Description: fmt.Sprintf("第%d章：%s", chapterNo, kw),
+					Before:      ch.Abilities,
+					After:       fmt.Sprintf("第%d章 %s", chapterNo, kw),
+					ConfirmedBy: "user",
+				}
+				ch.AppendEvolution(step)
+				project.WriteCharacter(s.root, s.project, ch)
+				recorded++
+			}
+		}
+	}
+	fmt.Printf("  ✓ 已记录 %d 条角色变化。\n", recorded)
+	fmt.Println("  💡 下次 /write 续写时，系统会自动注入角色最新状态。")
+}
+
+func evolutionTypeFromKeyword(kw string) string {
+	switch kw {
+	case "突破", "升级", "进阶", "晋升", "进化", "蜕变", "突破到":
+		return "升级"
+	case "觉醒", "领悟":
+		return "觉醒"
+	case "获得", "习得", "掌握":
+		return "获得能力"
+	case "斩杀", "击败":
+		return "战斗转折"
+	case "成为":
+		return "身份转变"
+	case "收服":
+		return "关系变化"
+	default:
+		return "转折"
+	}
 }

@@ -82,8 +82,8 @@ func Init(root, name string) error {
 type CharacterProfile struct {
 	ID           string `yaml:"id" json:"id"`
 	Name         string `yaml:"name" json:"name"`
-	Role         string `yaml:"role"`          // 主角 / 配角 / 反派 / 路人
-	Status       string `yaml:"status"`        // active / deactivated
+	Role         string `yaml:"role"`   // 主角 / 配角 / 反派 / 路人
+	Status       string `yaml:"status"` // active / deactivated
 	Personality  string `yaml:"personality"`
 	Background   string `yaml:"background"`
 	Motivation   string `yaml:"motivation"`
@@ -91,10 +91,19 @@ type CharacterProfile struct {
 	Abilities    string `yaml:"abilities"`
 	Appearance   string `yaml:"appearance"`
 	Notes        string `yaml:"notes"`
+
+	// Evolution records the character's growth across chapters.
+	// Each step captures a state change (level-up, personality shift, death, etc.)
+	Evolution []EvolutionStep `yaml:"evolution"`
+
+	// EvolvePrompt is the AI-refined system prompt for this specific character.
+	// Updated via /char <name> evolve or automatically after chapter generation.
+	EvolvePrompt string `yaml:"evolve_prompt"`
+
 	CreatedAt    string `yaml:"created_at"`
 	UpdatedAt    string `yaml:"updated_at"`
 	DeactivatedAt string `yaml:"deactivated_at,omitempty"`
-	DeactivatedBy string `yaml:"deactivated_by,omitempty"` // which chapter/stage caused deactivation
+	DeactivatedBy string `yaml:"deactivated_by,omitempty"`
 }
 
 // WriteCharacter saves a character profile to characters/<id>.yaml.
