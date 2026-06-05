@@ -149,7 +149,8 @@ func (m *Model) render(out *os.File) {
 
 	var sb strings.Builder
 
-	// Cursor off during frame render
+	// Clear screen + cursor off + home
+	sb.WriteString(clearAll)
 	sb.WriteString(cursorOff)
 	sb.WriteString(posHome)
 
@@ -303,6 +304,20 @@ func Run(h *harness.Harness, root string) error {
 			}
 
 		case input := <-inputCh:
+			if input == "\x00" {
+				// Keystroke refresh (backspace/char) — inline echo only
+				m.echoInput()
+				continue
+			}
+			if input == "\t" {
+				// Tab received but not Shift+Tab — ignore
+				continue
+			}
+			if input == "\x01" {
+				// Mode changed via Shift+Tab — full render
+				m.render(os.Stdout)
+				continue
+			}
 			m.handleInput(input)
 			m.render(os.Stdout)
 
@@ -351,7 +366,7 @@ func (m *Model) readInput(ch chan<- string) {
 			m.mu.Lock()
 			m.chatLines = nil
 			m.mu.Unlock()
-			ch <- "\x00" // signal to rerender
+			ch <- "\x01" // full render needed
 			continue
 		case 127: // Backspace
 			m.mu.Lock()
@@ -396,7 +411,7 @@ func (m *Model) readInput(ch chan<- string) {
 				}
 				m.addSystem("切换至 " + m.mode + " 模式")
 				m.mu.Unlock()
-				ch <- "\x00"
+				ch <- "\x01" // signal: mode changed, full render needed
 			}
 			continue
 		default:
@@ -694,6 +709,22 @@ func (m *Model) cmdFreeForm(text string) {
 }
 
 // --- Chat helpers ---
+
+// echoInput writes just the input area (3 lines) inline, without full render.
+func (m *Model) echoInput() {
+	// Move to bottom of terminal:
+	//   \r = carriage return
+	//   \033[K = clear to end of line
+	//   \033[A = up one line
+
+	// Input area is last 3 lines. Use cursor positioning to overwrite just those.
+	// Simpler approach: use absolute cursor position based on termH.
+	// But absolute positioning varies. Instead use relative: \033[s (save cursor)
+	// + reposition + restore. Even simpler: just write \r\033[K for the single
+	// input line, plus the mode label + hint if nothing else changed.
+	// For now, print just the input line in-place:
+	fmt.Fprintf(os.Stdout, "\r\033[K> %s█", string(m.inputBuf))
+}
 
 func (m *Model) addSystem(s string) {
 	m.chatLines = append(m.chatLines, chatLine{Type: "system", Text: s})
