@@ -650,7 +650,7 @@ func (m *Model) cmdModel(arg string) {
 			}
 			status := ""
 			if ref == activeRef {
-				status = reverse(" active ") + " "
+				status = reverse + " active " + reset + " "
 			}
 			labelText := ""
 			parts := strings.SplitN(ref, "/", 2)
