@@ -372,10 +372,6 @@ func (m *Model) refreshInputPrompt() {
 	fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > _%s", row, clearLine, fgPurple+"["+m.mode+"]"+reset, clearToEOL)
 }
 
-	row := m.termH - 1
-	fmt.Fprintf(os.Stdout, "\033[%d;1H%s%s > _%s", row, clearLine, fgPurple+"["+m.mode+"]"+reset, clearToEOL)
-}
-
 // --- API Key onboarding loop ---
 
 func (m *Model) promptAPIKeyLoop() {
