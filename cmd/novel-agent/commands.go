@@ -46,9 +46,8 @@ func resolveEnvVars(m map[string]any) {
 		case string:
 			if strings.HasPrefix(val, "${") && strings.HasSuffix(val, "}") {
 				envKey := val[2 : len(val)-1]
-				if envVal := os.Getenv(envKey); envVal != "" {
-					m[k] = envVal
-				}
+				envVal := os.Getenv(envKey)
+				m[k] = envVal // empty string if not set — never pass literal ${VAR}
 			}
 		case map[string]any:
 			resolveEnvVars(val)
@@ -88,7 +87,10 @@ func modelConfigsFromYAML(cfg map[string]any) (map[string]model.Config, string) 
 				if v, ok := pmap["retry_times"].(int); ok {
 					mc.RetryTimes = v
 				}
-				configs[provider] = mc
+				// Only add if API key is not empty (resolved from env or set by user)
+				if mc.APIKey != "" {
+					configs[provider] = mc
+				}
 			}
 		}
 	}

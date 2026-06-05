@@ -33,6 +33,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/project"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // ANSI escapes
@@ -271,18 +272,13 @@ func Run(h *harness.Harness, root string) error {
 
 	// Startup
 	m.addSystem("✍  AI Novel Agent v2 · 交互式写作终端")
-	m.addSystem("直接描述你的小说构思开始创作，或输入 /help 查看命令")
-	m.addSystem("")
 
-	projects, _ := project.ListProjects(root)
-	if len(projects) > 0 {
-		m.project = projects[0]
-		m.addSystem("📁 当前项目: " + m.project)
-	} else {
-		m.addSystem("你想写一本怎样的小说？")
+	// Check API key on startup
+	if !m.checkAPIKey() {
+		m.render(os.Stdout)
+		// Block until user provides a valid key via /model set
+		m.promptAPIKey()
 	}
-
-	m.render(os.Stdout)
 
 	// Input goroutine
 	inputCh := make(chan string, 32)
@@ -635,6 +631,7 @@ func (m *Model) cmdModel(arg string) {
 			icon := "✗"
 			if err == nil {
 				icon = "✓"
+				m.activeModel = p
 			}
 			label := model.ProviderLabels[p]
 			if label == "" {
@@ -645,10 +642,96 @@ func (m *Model) cmdModel(arg string) {
 		return
 	}
 	parts := strings.SplitN(arg, " ", 2)
-	if len(parts) == 2 && parts[0] == "switch" {
-		m.activeModel = parts[1]
-		m.addSystem(fmt.Sprintf("✓ 切换至 %s", parts[1]))
+	if len(parts) == 2 && parts[0] == "set" {
+		parts2 := strings.SplitN(parts[1], " ", 2)
+		if len(parts2) < 2 {
+			m.addSystem("用法: /model set <deepseek|minimax|mimo> <api-key>")
+			return
+		}
+		provider := parts2[0]
+		key := parts2[1]
+
+		// Save to config.yaml
+		cfg, err := storage.ReadConfig(m.root)
+		if err != nil {
+			cfg = make(map[string]any)
+		}
+		cfg[provider] = map[string]any{
+			"api_key":      key,
+			"api_endpoint": model.DefaultConfig(provider).Endpoint,
+			"model_name":   model.DefaultConfig(provider).ModelName,
+			"max_tokens":   model.DefaultConfig(provider).MaxTokens,
+			"temperature":  model.DefaultConfig(provider).Temperature,
+			"timeout":      60,
+			"retry_times":  3,
+		}
+		if err := storage.WriteConfig(m.root, cfg); err != nil {
+			m.addError("保存配置失败: " + err.Error())
+			return
+		}
+
+		// Hot-reload harness
+		mcs, fb := modelConfigsFromConfig(cfg)
+		newRouter, err := model.NewRouter(mcs, fb)
+		if err != nil {
+			m.addError("创建路由失败: " + err.Error())
+			return
+		}
+		m.harness.Router = newRouter
+		m.activeModel = provider
+		m.addSystem(fmt.Sprintf("✓ %s API Key 已配置并生效", model.ProviderLabels[provider]))
+		return
 	}
+	if len(parts) == 2 && parts[0] == "switch" {
+		p := parts[1]
+		if _, err := m.harness.Router.GetClient(p); err != nil {
+			m.addSystem(fmt.Sprintf("✗ %s 未配置 API Key。使用 /model set %s <key> 配置", p, p))
+			return
+		}
+		m.activeModel = p
+		m.addSystem(fmt.Sprintf("✓ 已切换到 %s", model.ProviderLabels[p]))
+		return
+	}
+	m.addSystem("用法: /model | /model set <模型> <key> | /model switch <模型>")
+}
+
+// modelConfigsFromConfig parses YAML config map into model.Config map.
+func modelConfigsFromConfig(cfg map[string]any) (map[string]model.Config, string) {
+	configs := make(map[string]model.Config)
+	for _, provider := range []string{"deepseek", "mimo", "minimax"} {
+		if raw, ok := cfg[provider]; ok {
+			if pmap, ok := raw.(map[string]any); ok {
+				mc := model.DefaultConfig(provider)
+				if v, ok := pmap["api_key"].(string); ok && v != "" && !strings.HasPrefix(v, "${") {
+					mc.APIKey = v
+				}
+				if v, ok := pmap["endpoint"].(string); ok && v != "" {
+					mc.Endpoint = v
+				} else if v, ok := pmap["api_endpoint"].(string); ok && v != "" {
+					mc.Endpoint = v
+				}
+				if v, ok := pmap["model_name"].(string); ok && v != "" {
+					mc.ModelName = v
+				}
+				if v, ok := pmap["max_tokens"].(int); ok {
+					mc.MaxTokens = v
+				}
+				if v, ok := pmap["temperature"].(float64); ok {
+					mc.Temperature = v
+				}
+				configs[provider] = mc
+			}
+		}
+	}
+	fb := "deepseek"
+	if routing, ok := cfg["stage_routing"]; ok {
+		if rmap, ok := routing.(map[string]any); ok {
+			if f, ok := rmap["fallback"].(string); ok && f != "" {
+				fb = f
+			}
+		}
+	}
+	return configs, fb
 }
 
 func (m *Model) cmdKillChar(name string) {
@@ -724,6 +807,36 @@ func (m *Model) echoInput() {
 	// input line, plus the mode label + hint if nothing else changed.
 	// For now, print just the input line in-place:
 	fmt.Fprintf(os.Stdout, "\r\033[K> %s█", string(m.inputBuf))
+}
+
+func (m *Model) checkAPIKey() bool {
+	for _, p := range []string{"deepseek", "mimo", "minimax"} {
+		_, err := m.harness.Router.GetClient(p)
+		if err == nil {
+			m.activeModel = p
+			return true
+		}
+	}
+	return false
+}
+
+func (m *Model) promptAPIKey() {
+	m.addSystem("")
+	m.addSystem("╔══════════════════════════════════════════╗")
+	m.addSystem("║  首次使用：请配置 DeepSeek API Key         ║")
+	m.addSystem("║  申请: https://platform.deepseek.com       ║")
+	m.addSystem("║  输入: /model set deepseek sk-你的key       ║")
+	m.addSystem("╚══════════════════════════════════════════╝")
+	m.addSystem("")
+
+	// If a key was set, show the projects/help after
+	projects, _ := project.ListProjects(m.root)
+	if len(projects) > 0 {
+		m.project = projects[0]
+		m.addSystem("📁 当前项目: " + m.project)
+	} else {
+		m.addSystem("你想写一本怎样的小说？")
+	}
 }
 
 func (m *Model) addSystem(s string) {
