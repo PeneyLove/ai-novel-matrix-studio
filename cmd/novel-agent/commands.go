@@ -19,6 +19,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/api"
 	"github.com/PeneyLove/ai-novel-matrix-studio"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/repl"
 )
 
 // --- Helpers ---
@@ -137,6 +138,9 @@ func runInit(cmd *cobra.Command, args []string) error {
 		filepath.Join(root, "corpus"),
 		filepath.Join(root, "outputs"),
 		filepath.Join(root, "traces"),
+		filepath.Join(root, "projects"),
+		filepath.Join(root, "state"),
+		filepath.Join(root, "prompts_history"),
 	}
 	for _, d := range dirs {
 		if err := os.MkdirAll(d, 0o755); err != nil {
@@ -527,6 +531,11 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// startREPL launches the interactive terminal loop.
+func startREPL(h *harness.Harness, root string) {
+	repl.Run(h, root)
 }
 
 // startAPIServer boots the HTTP API for the Flutter GUI.

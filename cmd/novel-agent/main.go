@@ -1,15 +1,9 @@
 // Package main is the entry point for the AI Novel Agent CLI.
 //
-// The binary provides a single-command interface to the Harness:
+// Two modes:
 //
-//	novel-agent init                     Initialize .novelAgent/ directory
-//	novel-agent run --skill <name> ...   Execute a single stage
-//	novel-agent pipeline --skill <name>  Run full creation pipeline
-//	novel-agent skill list|install|...   Manage skills
-//	novel-agent export --task-id <id>    Export generated content
-//	novel-agent serve                    Start local HTTP API (for Flutter GUI)
-//	novel-agent migrate --from v0.x      Migrate data from legacy system
-//	novel-agent prompt edit|history|...   Manage skill prompt templates
+//	novel-agent             → interactive REPL (no arguments)
+//	novel-agent init|...    → subcommand (cobra)
 package main
 
 import (
@@ -21,10 +15,12 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "novel-agent",
-	Short: "AI Novel Agent — single-binary harness for AI-powered novel creation",
+	Short: "AI Novel Agent — interactive CLI for Chinese web novel creation",
 	Long: `A Go single-binary harness with pluggable YAML-defined skills.
+Run without arguments to enter the interactive writing terminal.
 All data is stored locally under .novelAgent/ — no external database required.`,
-	Version: "1.0.0-alpha",
+	Version: "2.0.0-alpha",
+	RunE:    runREPL,
 }
 
 func main() {
@@ -41,4 +37,18 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func runREPL(cmd *cobra.Command, args []string) error {
+	h, err := newHarness()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "❌ 无法启动: %v\n", err)
+		fmt.Fprintln(os.Stderr, "  请先运行 novel-agent init 初始化 .novelAgent/ 目录")
+		os.Exit(1)
+	}
+	defer h.Close()
+
+	root := agentRoot()
+	startREPL(h, root)
+	return nil
 }
