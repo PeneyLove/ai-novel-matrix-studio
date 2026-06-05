@@ -21,11 +21,9 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"golang.org/x/term"
@@ -143,6 +141,12 @@ func New(h *harness.Harness, root string) *Model {
 // --- Render ---
 
 func (m *Model) render(out *os.File) {
+	// Re-detect terminal size every render (no-op on unchanged)
+	if w, h, err := getTermSize(); err == nil && w > 0 {
+		m.termW = w
+		m.termH = h
+	}
+
 	var sb strings.Builder
 
 	// Cursor off during frame render
@@ -264,11 +268,6 @@ func Run(h *harness.Harness, root string) error {
 	}
 	defer disableRawMode(raw)
 
-	// Listen for SIGWINCH (window resize)
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGWINCH)
-	defer signal.Stop(sigCh)
-
 	// Startup
 	m.addSystem("✍  AI Novel Agent v2 · 交互式写作终端")
 	m.addSystem("直接描述你的小说构思开始创作，或输入 /help 查看命令")
@@ -322,13 +321,6 @@ func Run(h *harness.Harness, root string) error {
 				m.mu.Unlock()
 				m.render(os.Stdout)
 			}
-
-		case <-sigCh:
-			if w, h, err := getTermSize(); err == nil {
-				m.termW = w
-				m.termH = h
-			}
-			m.render(os.Stdout)
 		}
 	}
 
