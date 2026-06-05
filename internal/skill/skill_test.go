@@ -1,10 +1,10 @@
-// Package skill_test provides property-based tests for skill validation and routing.
+﻿// Package skill_test provides property-based tests for skill validation and routing.
 package skill_test
 
 import (
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
 )
 
 // P2: Model routing completeness — every stage of a valid skill has a model binding.

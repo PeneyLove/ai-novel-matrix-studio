@@ -1,4 +1,4 @@
-package prompt
+﻿package prompt
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/penney-101/ai-novel-agent/internal/model"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Optimizer uses the fallback model to refine a skill's prompt template based on

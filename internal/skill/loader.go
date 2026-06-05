@@ -1,4 +1,4 @@
-package skill
+﻿package skill
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Loader reads skill definitions from the .novelAgent/skills/ directory.

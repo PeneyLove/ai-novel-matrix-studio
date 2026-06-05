@@ -1,4 +1,4 @@
-module github.com/penney-101/ai-novel-agent
+﻿module github.com/PeneyLove/ai-novel-matrix-studio
 
 go 1.22
 

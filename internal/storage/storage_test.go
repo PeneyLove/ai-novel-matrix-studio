@@ -1,4 +1,4 @@
-// Package storage_test provides property-based tests for the storage layer.
+﻿// Package storage_test provides property-based tests for the storage layer.
 package storage_test
 
 import (
@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 func TestResolveRejectsTraversal(t *testing.T) {

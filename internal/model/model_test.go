@@ -1,11 +1,11 @@
-package model_test
+﻿package model_test
 
 import (
 	"encoding/json"
 	"strings"
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
 )
 
 // P2: Model routing completeness — golden test that every provider serializes

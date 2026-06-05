@@ -1,4 +1,4 @@
-// Package pipeline implements the creation pipeline orchestration.
+﻿// Package pipeline implements the creation pipeline orchestration.
 //
 // v2.0 — updated for Prompt.md comprehensive architecture:
 //   - 4-phase enforcement (init → outline+hooks → writing → optimize)
@@ -17,11 +17,11 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/penney-101/ai-novel-agent/internal/global"
-	"github.com/penney-101/ai-novel-agent/internal/model"
-	"github.com/penney-101/ai-novel-agent/internal/skill"
-	"github.com/penney-101/ai-novel-agent/internal/state"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/global"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/state"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Orchestrator runs pipeline tasks against a skill and model router.

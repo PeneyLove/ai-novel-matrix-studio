@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"fmt"
@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/penney-101/ai-novel-agent/internal/prompt"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/prompt"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 func promptCmd() *cobra.Command {

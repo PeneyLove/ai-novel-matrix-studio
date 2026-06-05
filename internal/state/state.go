@@ -1,4 +1,4 @@
-// Package state manages the persistent novel creation state — the "hook ledger"
+﻿// Package state manages the persistent novel creation state — the "hook ledger"
 // (伏笔台账), character profiles, world-building data, and iteration history.
 //
 // Every time the user modifies something (outline, characters, hooks), the state
@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // NovelState is the complete persistent state for one novel project.

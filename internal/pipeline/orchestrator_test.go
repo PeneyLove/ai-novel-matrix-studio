@@ -1,4 +1,4 @@
-package pipeline_test
+﻿package pipeline_test
 
 import (
 	"os"
@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/global"
-	"github.com/penney-101/ai-novel-agent/internal/model"
-	"github.com/penney-101/ai-novel-agent/internal/pipeline"
-	"github.com/penney-101/ai-novel-agent/internal/skill"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/global"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Helper: create a minimal .novelAgent root with a single skill installed.

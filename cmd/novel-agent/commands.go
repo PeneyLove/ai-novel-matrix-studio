@@ -1,4 +1,4 @@
-package main
+﻿package main
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/penney-101/ai-novel-agent/internal/harness"
-	"github.com/penney-101/ai-novel-agent/internal/model"
-	"github.com/penney-101/ai-novel-agent/internal/pipeline"
-	"github.com/penney-101/ai-novel-agent/internal/skill"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
-	"github.com/penney-101/ai-novel-agent/internal/api"
-	"github.com/penney-101/ai-novel-agent/skilldata"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/harness"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/api"
+	"github.com/PeneyLove/ai-novel-matrix-studio/skilldata"
 )
 
 // --- Helpers ---

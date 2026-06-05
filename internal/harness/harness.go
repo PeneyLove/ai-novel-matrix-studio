@@ -1,4 +1,4 @@
-// Package harness is the top-level runtime that ties together
+﻿// Package harness is the top-level runtime that ties together
 // skill management, model routing, pipeline orchestration, and storage.
 //
 // Usage:
@@ -13,11 +13,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/penney-101/ai-novel-agent/internal/global"
-	"github.com/penney-101/ai-novel-agent/internal/model"
-	"github.com/penney-101/ai-novel-agent/internal/pipeline"
-	"github.com/penney-101/ai-novel-agent/internal/skill"
-	"github.com/penney-101/ai-novel-agent/internal/storage"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/global"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/model"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/pipeline"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/storage"
 )
 
 // Harness is the top-level application runtime.

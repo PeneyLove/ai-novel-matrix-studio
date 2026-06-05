@@ -1,10 +1,10 @@
-// Package secure_test provides tests for the secure encryption package.
+﻿// Package secure_test provides tests for the secure encryption package.
 package secure_test
 
 import (
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/secure"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/secure"
 )
 
 func TestEncryptDecryptRoundtrip(t *testing.T) {

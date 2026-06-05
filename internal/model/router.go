@@ -1,4 +1,4 @@
-package model
+﻿package model
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/penney-101/ai-novel-agent/internal/skill"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/skill"
 )
 
 // Router maps creation stages to model clients based on a skill's model_bindings.

@@ -1,10 +1,10 @@
-package global_test
+﻿package global_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/penney-101/ai-novel-agent/internal/global"
+	"github.com/PeneyLove/ai-novel-matrix-studio/internal/global"
 )
 
 func TestDefaultRulesAsPromptPrefix(t *testing.T) {
