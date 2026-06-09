@@ -68,16 +68,16 @@ func specsToEntries(specs map[string]mcpServerSpec, skip map[string]bool) []Plug
 	return entries
 }
 
-// legacyConfigPath is the v0.x (TypeScript line) config file, ~/.reasonix/config.json.
+// legacyConfigPath is the v0.x (TypeScript line) config file, ~/.novel-agent/config.json.
 func legacyConfigPath() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(home, ".reasonix", "config.json")
+	return filepath.Join(home, ".novel-agent", "config.json")
 }
 
-// loadLegacyMCP reads the v0.x ~/.reasonix/config.json and returns its enabled
+// loadLegacyMCP reads the v0.x ~/.novel-agent/config.json and returns its enabled
 // mcpServers as PluginEntry values (servers listed in its mcpDisabled are
 // skipped), so upgrading from v0.x keeps MCP servers working without rewriting
 // them as [[plugins]]. Absent or malformed → nil: a stale legacy file must never

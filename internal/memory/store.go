@@ -18,7 +18,7 @@ import (
 // saved, and reads individual facts on demand with read_file. The whole thing is
 // plain files the user can edit by hand.
 type Store struct {
-	Dir string // ...reasonix/projects/<slug>/memory
+	Dir string // ...novel-agent/projects/<slug>/memory
 }
 
 // Type classifies a memory, mirroring the auto-memory taxonomy.

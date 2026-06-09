@@ -10,9 +10,9 @@ import (
 	"strings"
 )
 
-// legacyConfig is the subset of the v0.x (~/.reasonix/config.json) schema this
+// legacyConfig is the subset of the v0.x (~/.novel-agent/config.json) schema this
 // import carries forward. Fields absent here are dropped on purpose: desktop tab
-// state is frontend-owned, and skills already live in the shared ~/.reasonix/skills
+// state is frontend-owned, and skills already live in the shared ~/.novel-agent/skills
 // root that v1+ also scans, so they need no migration.
 type legacyConfig struct {
 	APIKey      string                       `json:"apiKey"`
@@ -61,7 +61,7 @@ func (r *MigrationResult) Notice() string {
 
 // MigrateLegacyIfNeeded performs a one-time, non-destructive import of older
 // installs into the current user config when the latter does not exist yet. It
-// checks v1-era TOML first, then v0.5/v0.x ~/.reasonix/config.json, and never
+// checks v1-era TOML first, then v0.5/v0.x ~/.novel-agent/config.json, and never
 // modifies or deletes the legacy files. Returns nil when there is nothing to
 // migrate, or when the current user config already exists.
 func MigrateLegacyIfNeeded() (*MigrationResult, error) {
@@ -79,7 +79,7 @@ func MigrateLegacyIfNeeded() (*MigrationResult, error) {
 	if res, err := migrateLegacyTOMLIfNeeded(dest, home); res != nil || err != nil {
 		return res, err
 	}
-	src := filepath.Join(home, ".reasonix", "config.json")
+	src := filepath.Join(home, ".novel-agent", "config.json")
 	data, err := os.ReadFile(src)
 	if err != nil {
 		return nil, nil
@@ -154,7 +154,7 @@ func migrateLegacyTOMLIfNeeded(dest, home string) (*MigrationResult, error) {
 func legacyTOMLPaths(dest, home string) []string {
 	paths := []string{filepath.Join(filepath.Dir(dest), "reasonix.toml")}
 	if home != "" {
-		paths = append(paths, filepath.Join(home, ".reasonix", "reasonix.toml"))
+		paths = append(paths, filepath.Join(home, ".novel-agent", "reasonix.toml"))
 	}
 	return paths
 }

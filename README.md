@@ -102,8 +102,8 @@ novel-agent
 ┌─────────────────────────────────────┐
 │           novel-agent.exe            │  ← 单二进制
 ├─────────────────────────────────────┤
-│  Reasonix Agent 底座                │  ← agent 循环 / TUI / provider / tools
-│  ├─ Bubble Tea TUI                  │     (ai-reasonix 同款终端 UI)
+│           Agent 底座                │  ← agent 循环 / TUI / provider / tools
+│  ├─ Bubble Tea TUI                  │     (reasonix 同款终端 UI)
 │  ├─ config-driven (reasonix.toml)   │     提供者/工具/技能全部配置化
 │  ├─ 20+ 内置工具                    │     write_file / read_file / bash / grep / glob / ask ...
 │  └─ Skill 系统                      │     .reasonix/skills/novel/*.md

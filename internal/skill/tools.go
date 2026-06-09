@@ -187,9 +187,9 @@ func (*installSkillTool) Name() string   { return "install_skill" }
 func (*installSkillTool) ReadOnly() bool { return false }
 
 func (t *installSkillTool) Description() string {
-	scope := "'global' (only option — no project workspace) writes to ~/.reasonix/skills/."
+	scope := "'global' (only option — no project workspace) writes to ~/.novel-agent/skills/."
 	if t.store.HasProjectScope() {
-		scope = "'project' (default) writes to <repo>/.reasonix/skills/ (this workspace only); 'global' writes to ~/.reasonix/skills/ (every project)."
+		scope = "'project' (default) writes to <repo>/.novel-agent/skills/ (this workspace only); 'global' writes to ~/.novel-agent/skills/ (every project)."
 	}
 	return "Author and save a new skill — a reusable playbook future turns invoke via run_skill (or /<name>). Runnable immediately this turn; appears in the pinned Skills index on the next launch. " + scope
 }

@@ -136,7 +136,7 @@ func TestRenderHelpGroupsCommands(t *testing.T) {
 func TestRenderSkillPathsStaysWithinWidth(t *testing.T) {
 	width := 72
 	got := renderSkillPaths(width, []skill.Root{{
-		Dir:      "/Users/me/projects/really/deep/path/to/.reasonix/skills",
+		Dir:      "/Users/me/projects/really/deep/path/to/.novel-agent/skills",
 		Scope:    skill.ScopeProject,
 		Priority: 0,
 		Status:   skill.StatusMissing,

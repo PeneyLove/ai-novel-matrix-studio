@@ -254,7 +254,7 @@ func Resources(host *plugin.Host) []ResourceInfo {
 	return out
 }
 
-// CommandInfo is one custom slash command loaded from .reasonix/commands. Name
+// CommandInfo is one custom slash command loaded from .novel-agent/commands. Name
 // has no leading slash (e.g. "review" or "git:commit").
 type CommandInfo struct {
 	Name        string `json:"name"`
