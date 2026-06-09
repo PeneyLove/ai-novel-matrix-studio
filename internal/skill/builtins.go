@@ -125,28 +125,23 @@ Don't: install/update dependencies without asking; skip/delete/disable failing t
 
 Lead each turn with a one-line status (e.g. "▸ running go test ./… ", "▸ 2 failures in foo_test.go — first is …") so the user always knows where you are.`
 
-const builtinInitBody = `This skill is INLINED — you run in the parent loop. The user invoked /init: bootstrap (or refresh) this project's AGENTS.md — the durable memory file folded into every future session. Analyze the codebase, then write a concise, high-signal AGENTS.md.
+const builtinInitBody = `This skill is INLINED — you run in the parent loop. The user invoked /init: initialize a new novel project by creating the standard directory structure with chapter templates, outline files, and metadata.
 
 How to operate:
-1. Check for an existing memory doc first: list the project root and look for AGENTS.md / REASONIX.md / CLAUDE.md. If one exists, read it and IMPROVE it in place (fix stale facts, fill gaps) — write back to that same filename, don't clobber it wholesale or create a second file.
-2. Explore enough to be accurate, not exhaustive:
-   - Project shape: ls / directory listing, the manifest (go.mod, package.json, pyproject.toml, Cargo.toml, …), the README.
-   - Build / test / run commands: derive them from the manifest + scripts and verify the exact names — don't guess.
-   - Architecture: the main packages/modules and how they fit; the entry point(s).
-   - Conventions: formatting, naming, error handling, testing patterns — infer from real code (read a few representative files), not assumptions.
-3. Write AGENTS.md with write_file (default filename AGENTS.md, unless an existing doc uses another name), each section terse:
-   - Title + one-line description of the project.
-   - ## Project — what it is, the stack, where the entry point lives.
-   - ## Commands — the exact build / test / run / lint commands.
-   - ## Architecture — the 3-7 load-bearing modules and their roles.
-   - ## Conventions — only rules an agent must follow (style, patterns, do/don't).
-   - ## Notes — leave an empty stub for later quick-adds.
-4. Keep it tight — it loads into every session's prompt, so every line costs context. Prefer specifics (file paths, command names) over prose. Never include secrets.
+1. Ask the user for their novel's genre (玄幻修仙/都市网文/古言权谋/悬疑灵异/科幻无限/现言甜宠) and a working title.
+2. Create the standard novel project structure:
+   - chapters/第1章/chapter.txt (first chapter template)
+   - outlines/main_outline.txt
+   - characters/protagonist.txt, characters/supporting_cast.txt
+   - .novelAgent/state.json → {"genre":"<genre>","phase":"init","chapter":0,"total_chapters":0}
+   - README.md with title + genre + one-line synopsis
+3. All files MUST be UTF-8 encoded, Simplified Chinese.
+4. After creating the structure, tell the user the project is ready and which Skill to use next (e.g. /xuanhuan-genre_init for 玄幻修仙).
 
 Rules:
-- Verify commands and paths against the actual files before writing them — a wrong build command is worse than none.
-- Don't fabricate conventions the code doesn't demonstrate.
-- After writing, summarize in one or two lines what you captured and tell the user to review and edit it.`
+- Never create code-related files or mention coding/development in this project.
+- This is a NOVEL project — all context is about Chinese web novel creation.
+- Keep answers focused on novel writing; reject any coding-related requests politely.`
 
 // builtinSkills returns the shipped skills. A fresh slice each call so callers
 // can't mutate the shared set.

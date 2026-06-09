@@ -4,11 +4,11 @@ package i18n
 // as English unless a phrase genuinely demands re-ordering — call sites pass
 // arguments positionally and won't reshuffle.
 var Chinese = Messages{
-	Subtitle:        "配置与插件驱动的 coding agent",
+	Subtitle:        "终端里的 AI 网文创作助手",
 	WelcomeTitleFmt: "欢迎使用 %s",
 	NoConfigYet:     "还没有配置 — 现在来设置一下吧。",
 	StartingChatFmt: "正在启动 %s…",
-	SetKeyHint:      "设置好 API key 后运行 `reasonix chat`。",
+	SetKeyHint:      "设置好 API key 后运行 `novel-agent`。",
 	ConfigLabel:     "配置",
 	ModelsLabel:     "模型",
 	ConfigNotFound:  "未找到 — 使用内置默认值",
@@ -16,18 +16,18 @@ var Chinese = Messages{
 	NoKey:           "未设置 key",
 	Ready:           "已就绪",
 	GetStarted:      "开始使用",
-	StepScaffold:    "生成 reasonix.toml",
+	StepScaffold:    "生成 reasonix.toml（novel-agent 配置）",
 	StepSetKey:      "设置 API key",
 
-	InitHint:       "项目记忆（AGENTS.md）在会话内由模型生成：运行 `reasonix chat`，然后 `/init` —— 模型会分析代码库并写入。配置请用 `reasonix setup`。",
-	StepSetKeyHint: "运行 `reasonix setup`，或 export DEEPSEEK_API_KEY=…",
+	InitHint:       "进入小说创作：运行 `novel-agent`，然后 `/novel-init` 初始化项目结构 —— Agent 会为你创建章节目录、大纲模板等。",
+	StepSetKeyHint: "运行 `novel-agent`（首次会自动提示配置），或 export DEEPSEEK_API_KEY=…",
 	StepChatDesc:   "交互式会话",
 	StepRunDesc:    "执行单次任务",
-	HelpFooter:     "reasonix help · 查看全部命令",
+	HelpFooter:     "novel-agent help · 查看全部命令",
 
 	ChatTip:           "对话上下文将跨轮保留。输入 'exit' 或按 Ctrl-D 退出。",
 	TurnCancelled:     "已取消 — 回到提示符",
-	NoSessionToResume: "没有可恢复的会话 — 用 `reasonix chat` 开一个新的",
+	NoSessionToResume: "没有可恢复的会话 — 用 `novel-agent` 开一个新的",
 	ResumeRequiresTTY: "--resume 需要交互式终端；用 --continue 直接恢复最近一次",
 	PickSessionLabel:  "恢复哪个会话？",
 
@@ -68,7 +68,7 @@ var Chinese = Messages{
 
 	OutputStyleNone:    "没有可用的输出风格",
 	OutputStyleHeader:  "输出风格：",
-	OutputStyleHint:    "在 reasonix.toml 设置 agent.output_style 即可启用（下次会话生效）",
+	OutputStyleHint:    "在 reasonix.toml 中设置 agent.output_style 即可启用（下次会话生效）",
 	ThemeHeader:        "主题：",
 	ThemeHint:          "使用 /theme <auto|light|dark|style> 切换",
 	ThemeChangedFmt:    "已切换主题为 %s / %s",
@@ -137,7 +137,7 @@ var Chinese = Messages{
 	SkillPickerStatusNotDir:      "非目录",
 	SkillPickerStatusUnreadable:  "无权限",
 	SlashPromptEmpty:             "该 MCP prompt 没有返回可发送的内容",
-	SlashMCPNone:                 "没有配置 MCP 服务器 — 在 reasonix.toml 加一个 [[plugins]] 条目",
+	SlashMCPNone:                 "没有配置 MCP 服务器 — 在 reasonix.toml 中添加 [[plugins]] 条目",
 	CtrlCQuitHint:                "再按一次 Ctrl+C 退出",
 	CompHintSlash:                "↑/↓ 移动 · Tab/Enter 选中 · Esc 关闭",
 	CompHintFile:                 "↑/↓ 移动 · Tab/Enter 进入文件夹或选中文件 · Esc 关闭",
@@ -235,12 +235,12 @@ var Chinese = Messages{
 
 	SelectProvidersLabel:  "选择要启用的 provider",
 	EnterAPIKeysHeader:    "输入 API key（回车跳过、稍后再设）：",
-	MissingKeyIntro:       "reasonix.toml 已配置好 — 只差一个 API key 就可以开始。",
+	MissingKeyIntro:       "配置文件已就绪 — 只差一个 API key 就可以开始创作。",
 	WroteFileFmt:          "已写入 %s",
 	SetupComplete:         "设置完成。",
 	SetupCancelled:        "设置已取消。",
 	TryHintFmt:            "试试: %s",
-	NextHint:              "下一步：设置 API key（运行 `reasonix setup` 或 export DEEPSEEK_API_KEY=...），然后运行 `reasonix run \"你的任务\"`。",
+	NextHint:              "下一步：设置 API key（export DEEPSEEK_API_KEY=...），然后运行 `novel-agent` 开始创作。",
 	ConfirmReconfigureFmt: "%s 已存在。重新配置并覆盖？",
 	KeepingExisting:       "保留原配置不变。",
 	NotOverwritingFmt:     "%s 已存在，不覆盖",
@@ -287,14 +287,14 @@ var Chinese = Messages{
 	AnthropicSelectModelsLabel:     "选择要启用的 %s 模型",
 
 	UnknownCommandFmt:         "未知命令 %q",
-	UsageRunHint:              "用法：reasonix run [--model NAME] <task>",
+	UsageRunHint:              "用法：novel-agent run [--model NAME] <任务描述>",
 	ErrorPrefix:               "错误：",
 	ReconfigureOnUnknownModel: "配置的模型已不可用 —— 重新运行引导配置。",
 	WriteConfigErr:            "写入配置失败：",
 	WriteEnvErr:               "写入 .env 失败：",
 
 	ProviderErrBadRequest:          "请求格式错误 (HTTP 400)：请求体被拒绝，通常是程序缺陷。若持续出现请反馈。",
-	ProviderErrAuth:                "认证失败 (HTTP 401)：API key 缺失、错误或已过期。请检查 .env 中的密钥，或运行 `reasonix setup`。",
+	ProviderErrAuth:                "认证失败 (HTTP 401)：API key 缺失、错误或已过期。请检查 .env 中的密钥，或运行 `novel-agent` 重新配置。",
 	ProviderErrInsufficientBalance: "余额不足 (HTTP 402)：账户余额不足，请前往充值后重试。",
 	ProviderErrUnprocessable:       "参数错误 (HTTP 422)：某个请求参数被拒绝，通常是程序缺陷。若持续出现请反馈。",
 	ProviderErrRateLimited:         "请求速率达到上限 (HTTP 429)：请求过于频繁 (TPM/RPM)。已退避重试，请放慢速率或稍后再试。",
@@ -304,29 +304,29 @@ var Chinese = Messages{
 	SelectOneHint:  "(↑/↓ · Enter · q 取消)",
 	SelectManyHint: "(↑/↓ · Space · Enter · q)",
 
-	UsageBody: `reasonix — 由配置和插件驱动的 coding agent（多模型）
+	UsageBody: `novel-agent — 终端里的 AI 网文创作助手（多模型）
 
 用法：
-  reasonix chat [--model NAME] [-c|--continue] [--resume]   交互式会话（多轮；-c 恢复最近一次，--resume 选择一个）
-  reasonix run  [--model NAME] [--max-steps N] <task>   执行单次任务后退出
-  reasonix serve [--model NAME] [--addr HOST:PORT]      通过 HTTP+SSE 提供会话（浏览器客户端在 /）
-  reasonix setup [path]                                 交互式配置向导；生成 reasonix.toml（及 .env）
-  reasonix config auto-plan [off|on]                    配置自动计划模式
-  reasonix mcp <add|remove|list>                        管理 reasonix.toml 里的 MCP 服务器
-  reasonix doctor [--json]                              输出脱敏的本地诊断信息
-  reasonix version
-  reasonix help
+  novel-agent chat [--model NAME] [-c|--continue] [--resume]   交互式会话（多轮；-c 恢复最近一次，--resume 选择一个）
+  novel-agent run  [--model NAME] [--max-steps N] <task>   执行单次任务后退出
+  novel-agent serve [--model NAME] [--addr HOST:PORT]      通过 HTTP+SSE 提供会话（浏览器客户端在 /）
+  novel-agent setup [path]                                 交互式配置向导；生成配置文件
+  novel-agent config auto-plan [off|on]                    配置自动计划模式
+  novel-agent mcp <add|remove|list>                        管理 reasonix.toml 里的 MCP 服务器
+  novel-agent doctor [--json]                              输出脱敏的本地诊断信息
+  novel-agent version
+  novel-agent help
 
 示例：
-  reasonix chat
-  reasonix chat --continue
-  reasonix run "把 main.go 里的 TODO 实现掉"
-  reasonix run --model mimo-pro "给这个函数补单元测试"
-  echo "解释这段代码" | reasonix run
+  novel-agent
+  novel-agent --continue
+  novel-agent run "续写第3章，主角突破金丹期"
+  novel-agent run --model deepseek-pro "优化这段剧情的节奏"
+  echo "给主角加一个金手指" | novel-agent run
 
 配置：
   优先级：flag > ./reasonix.toml > ~/.config/reasonix/config.toml > 内置默认值
   密钥通过 api_key_env 从环境变量注入（如 DEEPSEEK_API_KEY）。
-  运行 'reasonix setup' 生成配置；详见 docs/SPEC.md。
+  初次运行自动进入配置向导；详见 README.md。
 `,
 }
