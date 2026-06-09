@@ -632,6 +632,7 @@ func Default() *Config {
 	return &Config{
 		ConfigVersion: 2,
 		DefaultModel:  "deepseek-flash",
+		Language:      "zh",   // novel-agent defaults to Simplified Chinese UI
 		UI:            UIConfig{Theme: "auto"},
 		Agent: AgentConfig{
 			SystemPrompt: DefaultSystemPrompt,
