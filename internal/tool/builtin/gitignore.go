@@ -12,7 +12,8 @@ import (
 // ignoreFrame is the cumulative ignore state at a directory: every applicable
 // .gitignore pattern from the repo root down to dir, re-anchored relative to the
 // repo root and compiled into one matcher. Combining them into a single matcher
-// is what lets a nested "!keep" re-include a file an ancestor ignored â€?// go-gitignore applies last-match-wins across the whole ordered list.
+// is what lets a nested "!keep" re-include a file an ancestor ignored â€”
+// go-gitignore applies last-match-wins across the whole ordered list.
 type ignoreFrame struct {
 	dir      string
 	patterns []string
@@ -21,7 +22,7 @@ type ignoreFrame struct {
 
 // walkIgnorer prunes a recursive grep walk to mirror ripgrep: it skips hidden
 // entries, the fixed vendorDirs, and anything matched by the repository's ignore
-// rules â€?every applicable .gitignore (root + ancestors + per-directory), plus
+// rules â€” every applicable .gitignore (root + ancestors + per-directory), plus
 // .git/info/exclude and the global core.excludesFile. The walk root is never
 // pruned, and pointing grep straight at a hidden or ignored path searches it in
 // full, matching ripgrep's handling of explicitly named paths.

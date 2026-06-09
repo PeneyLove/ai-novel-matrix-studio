@@ -12,7 +12,7 @@ import (
 
 // SlashEntry is one invocable slash command exposed to the model through the
 // slash_command tool. It is a uniform view over the two kinds the user can also
-// type at the prompt â€?custom commands and skills â€?so the tool need not know
+// type at the prompt â€” custom commands and skills â€” so the tool need not know
 // which is which. Render turns positional args into the prompt text the command
 // expands to (the same text typing "/name args" would send).
 type SlashEntry struct {
@@ -25,7 +25,7 @@ type SlashEntry struct {
 // slashCommandTool lets the model invoke a loaded slash command by name. Unlike a
 // tool that performs an action and returns a result, a slash command is a *prompt
 // template*: the tool returns the expanded prompt text, which the model then reads
-// and acts on within the same turn â€?mirroring what typing "/name" does for a
+// and acts on within the same turn â€” mirroring what typing "/name" does for a
 // human. Calling with no name (or "list") returns the available commands.
 type slashCommandTool struct {
 	entries map[string]SlashEntry
@@ -60,7 +60,7 @@ func (*slashCommandTool) ReadOnly() bool { return true }
 func (t *slashCommandTool) Description() string {
 	var b strings.Builder
 	b.WriteString("Invoke a project slash command (a reusable prompt template or skill) by name. " +
-		"Returns the command's expanded prompt text for you to act on in this turn â€?it does not run on its own. " +
+		"Returns the command's expanded prompt text for you to act on in this turn â€” it does not run on its own. " +
 		"Call with an empty command (or \"list\") to see what's available. ")
 	if len(t.names) == 0 {
 		b.WriteString("No slash commands are configured in this project.")
@@ -109,7 +109,7 @@ func (t *slashCommandTool) Execute(_ context.Context, raw json.RawMessage) (stri
 	expanded := e.Render(args)
 	// Frame the expansion so the model treats it as an instruction to follow now,
 	// not as data to echo back.
-	return fmt.Sprintf("Expanded /%s â€?follow these instructions now:\n\n%s", name, expanded), nil
+	return fmt.Sprintf("Expanded /%s â€” follow these instructions now:\n\n%s", name, expanded), nil
 }
 
 func (t *slashCommandTool) list() string {
@@ -125,7 +125,7 @@ func (t *slashCommandTool) list() string {
 			line += " " + e.ArgHint
 		}
 		if e.Description != "" {
-			line += " â€?" + e.Description
+			line += " â€” " + e.Description
 		}
 		b.WriteString(line + "\n")
 	}

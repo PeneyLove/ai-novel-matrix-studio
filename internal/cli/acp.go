@@ -27,7 +27,7 @@ import (
 // session/prompt, session/cancel). It keeps v2 wire-compatible with the many
 // tools that integrated with v1 over ACP.
 //
-// stdin/stdout are the JSON-RPC channel â€?nothing else may write to stdout, so
+// stdin/stdout are the JSON-RPC channel â€” nothing else may write to stdout, so
 // all diagnostics go to stderr. Each session is assembled by acpFactory, rooted
 // at the cwd the client opens.
 func acpCommand(args []string, version string) int {

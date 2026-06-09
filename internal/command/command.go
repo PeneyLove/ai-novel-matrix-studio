@@ -1,6 +1,6 @@
 // Package command loads custom slash commands from Markdown files. A command is
 // a prompt template: invoking /name substitutes the arguments into the body and
-// sends the result as a chat turn. Loading is pure and dependency-free â€?a small
+// sends the result as a chat turn. Loading is pure and dependency-free â€” a small
 // "key: value" frontmatter parser keeps Reasonix's single-(TOML)-dependency promise
 // rather than pulling in a YAML library.
 package command
@@ -130,7 +130,7 @@ func walkCommands(root, dir string, visited map[string]bool, fn func(path string
 
 // parseFile reads one command file and derives its name from the path relative
 // to root: drop the .md suffix and turn subdirectories into ":" namespaces
-// (git/commit.md â†?git:commit).
+// (git/commit.md â†’ git:commit).
 func parseFile(root, path string) (Command, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {

@@ -11,7 +11,7 @@ import (
 // Command returns the argv to run `command` through sh, wrapped in sandbox-exec
 // when the spec enforces and the tool is available. The second return is whether
 // wrapping happened; false means the command runs unconfined (sandbox off, or
-// sandbox-exec missing â€?a graceful fallback rather than a hard failure, since
+// sandbox-exec missing â€” a graceful fallback rather than a hard failure, since
 // the permission layer still gates the call).
 func Command(spec Spec, sh Shell, command string) ([]string, bool) {
 	if !spec.enforce() || !Available() {
@@ -29,8 +29,8 @@ func Available() bool {
 // seatbeltProfile builds an SBPL profile that allows everything, then denies
 // all file writes and re-allows them only under the write-roots (workspace +
 // temp + caches). Network is denied unless allowed. Reads are left open so the
-// toolchain (compilers reading GOROOT, git reading ~/.gitconfig, â€? keeps
-// working â€?the boundary this draws is "can't write outside the workspace, and
+// toolchain (compilers reading GOROOT, git reading ~/.gitconfig, â€¦) keeps
+// working â€” the boundary this draws is "can't write outside the workspace, and
 // optionally can't talk to the network", which is the Phase 0 blast-radius made
 // to also cover arbitrary shell commands.
 func seatbeltProfile(spec Spec) string {
@@ -54,7 +54,7 @@ func writeAllowDirs(roots []string) []string {
 	dirs := append([]string{}, roots...)
 	dirs = append(dirs, "/dev", "/tmp", "/private/tmp", "/private/var/folders", os.TempDir())
 	if home, err := os.UserHomeDir(); err == nil {
-		// go build/test â†?Library/Caches + go; pip/etc â†?.cache; npm/cargo too.
+		// go build/test â†’ Library/Caches + go; pip/etc â†’ .cache; npm/cargo too.
 		for _, sub := range []string{"Library/Caches", ".cache", ".npm", ".cargo", "go"} {
 			dirs = append(dirs, filepath.Join(home, sub))
 		}

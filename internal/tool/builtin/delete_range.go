@@ -21,7 +21,7 @@ type deleteRange struct {
 func (deleteRange) Name() string { return "delete_range" }
 
 func (deleteRange) Description() string {
-	return "Delete a contiguous text range from a file using exact start/end text anchors. Each anchor must match exactly one line. Returns unified diff on success. Use for large deletions â€?smaller changes should use edit_file."
+	return "Delete a contiguous text range from a file using exact start/end text anchors. Each anchor must match exactly one line. Returns unified diff on success. Use for large deletions â€” smaller changes should use edit_file."
 }
 
 func (deleteRange) Schema() json.RawMessage {
@@ -124,7 +124,7 @@ func (d deleteRange) preview(args json.RawMessage) (diff.Change, error) {
 	} else {
 		// Same line for both anchors: the kept prefix and suffix would overlap at
 		// that line and duplicate it. There is nothing strictly between a line and
-		// itself, so the exclusive deletion is contradictory â€?reject it.
+		// itself, so the exclusive deletion is contradictory â€” reject it.
 		if startLine == endLine {
 			return diff.Change{}, fmt.Errorf("start_anchor and end_anchor match the same line in %s; with inclusive=false there is nothing between them to delete", p.Path)
 		}

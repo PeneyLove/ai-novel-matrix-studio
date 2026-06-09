@@ -27,7 +27,7 @@ func AppendDoc(path, note string) error {
 		}
 	}
 
-	existing, _ := os.ReadFile(path) // missing â†?new file
+	existing, _ := os.ReadFile(path) // missing â†’ new file
 	body := string(existing)
 	bullet := "- " + note
 
@@ -59,7 +59,7 @@ func writeDocFile(path, body string) error {
 }
 
 // insertUnderHeading appends bullet to the end of the section started by heading
-// â€?just before the next "## "/"# " heading, or at end of file if none follows.
+// â€” just before the next "## "/"# " heading, or at end of file if none follows.
 func insertUnderHeading(body, heading, bullet string) string {
 	lines := strings.Split(body, "\n")
 	start := -1

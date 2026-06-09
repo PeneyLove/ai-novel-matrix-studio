@@ -27,11 +27,11 @@ func TestSanitizeDuplicateToolCallIDsKeepsEachResult(t *testing.T) {
 		t.Fatalf("want 2 tool results, got %d: %v", len(got), got)
 	}
 	if got[0] == got[1] {
-		t.Errorf("both tool results collapsed to the same content %q â€?one was lost", got[0])
+		t.Errorf("both tool results collapsed to the same content %q â€” one was lost", got[0])
 	}
 }
 
-// TestSanitizeEmptyToolCallIDs probes two calls with empty ids â€?same collapse
+// TestSanitizeEmptyToolCallIDs probes two calls with empty ids â€” same collapse
 // risk, and the placeholder/backfill path keys on "" too.
 func TestSanitizeEmptyToolCallIDsKeepsEachResult(t *testing.T) {
 	msgs := []Message{

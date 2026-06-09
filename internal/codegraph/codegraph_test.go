@@ -66,7 +66,7 @@ func TestEnsureInitRunsWhenAbsent(t *testing.T) {
 		t.Skip("fake launcher is a POSIX-sh script")
 	}
 	root := t.TempDir()
-	// A fake codegraph that creates .codegraph in its working directory â€?EnsureInit
+	// A fake codegraph that creates .codegraph in its working directory â€” EnsureInit
 	// runs it with cmd.Dir = root, so this is independent of the exact arguments.
 	bin := filepath.Join(t.TempDir(), "fakecg")
 	writeExec(t, bin, "#!/bin/sh\nmkdir -p .codegraph\n")

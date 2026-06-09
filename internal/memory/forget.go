@@ -20,7 +20,7 @@ func (forgetTool) Name() string { return "forget" }
 
 func (forgetTool) Description() string {
 	return "Delete a saved memory by name when it is wrong, stale, or superseded, so it stops loading into future sessions. " +
-		"Use the slug from the memory index â€?the \"<name>\" in \"[label](<name>.md)\". " +
+		"Use the slug from the memory index â€” the \"<name>\" in \"[label](<name>.md)\". " +
 		"Prefer updating a memory with `remember` (reuse its name) over forget-then-recreate; reach for forget only when the fact should no longer exist at all."
 }
 
@@ -48,7 +48,7 @@ func (t forgetTool) Execute(ctx context.Context, args json.RawMessage) (string, 
 		return "", err
 	}
 	if q, ok := QueueFromContext(ctx); ok {
-		q.QueueMemory("Deleted memory \"" + slug(in.Name) + "\" â€?disregard its line still shown in the saved-memories index until next session.")
+		q.QueueMemory("Deleted memory \"" + slug(in.Name) + "\" â€” disregard its line still shown in the saved-memories index until next session.")
 	}
 	return fmt.Sprintf("Forgot memory %q (it no longer applies and will not load in future sessions).", in.Name), nil
 }

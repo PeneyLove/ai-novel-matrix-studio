@@ -36,7 +36,7 @@ func TestLoad(t *testing.T) {
 	write(t, dir, "review.md", "---\ndescription: Review the diff\nargument-hint: [area]\n---\nReview, focus on $ARGUMENTS.")
 	write(t, dir, "plain.md", "No frontmatter, just $1.")
 	write(t, dir, "git/commit.md", "---\ndescription: Commit\n---\nWrite a commit message.")
-	write(t, dir, "notes.txt", "ignored â€?not markdown")
+	write(t, dir, "notes.txt", "ignored â€” not markdown")
 
 	cmds, err := Load(dir)
 	if err != nil {

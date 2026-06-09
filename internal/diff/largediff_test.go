@@ -11,7 +11,7 @@ import (
 // TestLargeRewriteBoundedCost proves a full rewrite of a large file no longer
 // pays O(NÂ²): the edit-distance cap skips the line-by-line render, so memory and
 // time stay bounded while the tallies and an omitted-diff marker still report the
-// change. Before the cap this allocated ~565 MB for 3000 lines (â‰? GB at 10k).
+// change. Before the cap this allocated ~565 MB for 3000 lines (â‰ˆ6 GB at 10k).
 func TestLargeRewriteBoundedCost(t *testing.T) {
 	var oldB, newB strings.Builder
 	const n = 6000
@@ -30,10 +30,10 @@ func TestLargeRewriteBoundedCost(t *testing.T) {
 	t.Logf("2Ã—%d-line rewrite: %v, %.1f MB, +%d/-%d", n, elapsed, allocMB, c.Added, c.Removed)
 
 	if allocMB > 150 {
-		t.Errorf("allocated %.1f MB â€?the edit-distance cap should bound this", allocMB)
+		t.Errorf("allocated %.1f MB â€” the edit-distance cap should bound this", allocMB)
 	}
 	if elapsed > time.Second {
-		t.Errorf("took %v â€?should be bounded", elapsed)
+		t.Errorf("took %v â€” should be bounded", elapsed)
 	}
 	if c.Added != n || c.Removed != n {
 		t.Errorf("tallies wrong: +%d/-%d, want +%d/-%d", c.Added, c.Removed, n, n)

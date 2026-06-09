@@ -1,6 +1,7 @@
 // Package control is the transport-agnostic session driver. A Controller owns
 // the agent run loop and session lifecycle, takes commands (Send/Cancel/Approve/
-// SetPlanMode/Compact/NewSession/â€?, and emits everything that happens â€?// reasoning, tool calls, approvals, turn completion â€?as a typed event stream to
+// SetPlanMode/Compact/NewSession/â€¦), and emits everything that happens â€”
+// reasoning, tool calls, approvals, turn completion â€” as a typed event stream to
 // a single event.Sink.
 //
 // The point is one orchestration layer behind every frontend: a terminal TUI, a
@@ -70,7 +71,7 @@ type Controller struct {
 
 	// balanceURL/balanceKey target the active provider's optional wallet-balance
 	// endpoint (empty when the provider declares none). Captured at build so a
-	// model/key switch â€?which rebuilds the controller â€?refreshes them.
+	// model/key switch â€” which rebuilds the controller â€” refreshes them.
 	balanceURL    string
 	balanceKey    string
 	balanceClient *http.Client
@@ -91,7 +92,7 @@ type Controller struct {
 	// the session path changes; cpRoot is the workspace root used to guard restore
 	// writes. cpTurn is the monotonic turn counter (decoupled from the store so it
 	// never collides after a restructure); cpBound[turn] records len(Session.Messages)
-	// at that turn's start â€?the truncation boundary for a conversation rewind/fork.
+	// at that turn's start â€” the truncation boundary for a conversation rewind/fork.
 	// Boundaries are persisted in each checkpoint and rebuilt from the store on
 	// resume (so a reopened session can still rewind conversation / fork), but
 	// dropped after a summarize restructures the log so those operations report
@@ -103,7 +104,7 @@ type Controller struct {
 
 	// promptMu serialises approval prompts so at most one is outstanding at a
 	// time (parallel read-only tool calls don't normally gate, writers run
-	// serially â€?but this keeps the contract explicit). Held across the blocking
+	// serially â€” but this keeps the contract explicit). Held across the blocking
 	// wait, so it must never be taken by the Approve command path.
 	promptMu sync.Mutex
 
@@ -130,13 +131,13 @@ type Controller struct {
 	// bypass is "YOLO" mode: while set, every approval prompt is auto-allowed for
 	// the rest of the session (writers and bash run without asking). It is a
 	// deliberate, session-scoped opt-in (the --dangerously-skip-permissions flag or
-	// a runtime toggle), never persisted. Deny rules are unaffected â€?they're
+	// a runtime toggle), never persisted. Deny rules are unaffected â€” they're
 	// resolved before the approver, so a denied tool is still blocked in YOLO mode.
 	bypass bool
 
 	// pendingMemory holds memory notes added mid-session (via "#" quick-add or a
 	// memory edit) that haven't yet been folded into a turn. Compose drains it
-	// onto the next outgoing turn â€?never into the cache-stable system prefix â€?so
+	// onto the next outgoing turn â€” never into the cache-stable system prefix â€” so
 	// a fresh memory takes effect this session without busting the prompt cache;
 	// it joins the prefix naturally on the next session.
 	pendingMemory []string
@@ -247,7 +248,7 @@ func New(opts Options) *Controller {
 }
 
 // ckptDir derives a session's checkpoint directory from its file path
-// (â€?<id>.jsonl â†?â€?<id>.ckpt). Empty path â†?empty (in-memory checkpoints).
+// (â€¦/<id>.jsonl â†’ â€¦/<id>.ckpt). Empty path â†’ empty (in-memory checkpoints).
 func ckptDir(sessionPath string) string {
 	if sessionPath == "" {
 		return ""
@@ -285,7 +286,7 @@ func (c *Controller) beginCheckpoint(input string) {
 	c.cp.Begin(turn, input, msgIndex)
 }
 
-// --- commands (frontend â†?controller) ---
+// --- commands (frontend â†’ controller) ---
 
 // runGuarded runs body on a background goroutine under a fresh cancellable
 // context, guarding against concurrent turns and emitting a TurnDone event when
@@ -333,12 +334,13 @@ func (c *Controller) SendWithRaw(input, raw string) {
 // desktop renders a plan card; the chat TUI a plan banner).
 const planApprovalTool = "exit_plan_mode"
 
-// planApprovedMessage is the follow-up turn sent once the user approves a plan â€?// the in-context nudge to execute and keep the (already-seeded) task list honest.
-const planApprovedMessage = "Plan approved â€?plan mode is off; you're cleared to make the changes without asking again. Implement the plan now. Keep the task list current with todo_write, preserving its two-level shape (phases at level 0, their sub-steps at level 1): mark the sub-step you start as in_progress, one in_progress at a time. Sign off each finished sub-step with complete_step, attaching the evidence it's done â€?the verification you ran, the diff/files you changed, or a manual check. Don't claim a step is done without evidence."
+// planApprovedMessage is the follow-up turn sent once the user approves a plan â€”
+// the in-context nudge to execute and keep the (already-seeded) task list honest.
+const planApprovedMessage = "Plan approved â€” plan mode is off; you're cleared to make the changes without asking again. Implement the plan now. Keep the task list current with todo_write, preserving its two-level shape (phases at level 0, their sub-steps at level 1): mark the sub-step you start as in_progress, one in_progress at a time. Sign off each finished sub-step with complete_step, attaching the evidence it's done â€” the verification you ran, the diff/files you changed, or a manual check. Don't claim a step is done without evidence."
 
 // runTurn runs one model turn, then applies the plan-approval gate. This is the
 // single, frontend-agnostic plan flow: in plan mode the model just researches
-// (writers are blocked) and writes its plan as a normal answer â€?no special tool.
+// (writers are blocked) and writes its plan as a normal answer â€” no special tool.
 // When the turn ends with a text proposal, the controller asks the user to
 // approve (reusing the ApprovalRequest channel both frontends already render);
 // on approval it exits plan mode, seeds the task list from the plan, and
@@ -385,7 +387,7 @@ func (c *Controller) runTurnWithRaw(ctx context.Context, input, raw string) erro
 		return nil // no substantive proposal to gate
 	}
 	// The plan is already visible as the assistant's answer, so the request
-	// carries no subject â€?it's purely the gate.
+	// carries no subject â€” it's purely the gate.
 	allow, _, err := c.requestApproval(ctx, planApprovalTool, "")
 	if err != nil {
 		return err
@@ -409,7 +411,7 @@ func (c *Controller) runTurnWithRaw(ctx context.Context, input, raw string) erro
 }
 
 // lastAssistantText returns the content of the most recent assistant message with
-// non-empty text â€?the model's final answer for the turn (its plan, in plan mode).
+// non-empty text â€” the model's final answer for the turn (its plan, in plan mode).
 func lastAssistantText(msgs []provider.Message) string {
 	for i := len(msgs) - 1; i >= 0; i-- {
 		if msgs[i].Role == provider.RoleAssistant && strings.TrimSpace(msgs[i].Content) != "" {
@@ -420,8 +422,8 @@ func lastAssistantText(msgs []provider.Message) string {
 }
 
 // Submit is the one-call entry for a simple frontend: it takes raw user input
-// and does everything â€?slash-command dispatch, @-reference expansion, plan-mode
-// composition â€?emitting all output as events. The HTTP/SSE server uses this so
+// and does everything â€” slash-command dispatch, @-reference expansion, plan-mode
+// composition â€” emitting all output as events. The HTTP/SSE server uses this so
 // a browser client only POSTs the typed line.
 //
 // Slash commands route to the matching primitive: /compact and /new run their
@@ -551,7 +553,7 @@ func (c *Controller) rememberProjectNote(note string) {
 	if path, err := c.QuickAdd(memory.ScopeProject, note); err != nil {
 		c.notice("memory: " + err.Error())
 	} else {
-		c.notice("remembered â†?" + path)
+		c.notice("remembered â†’ " + path)
 	}
 }
 
@@ -575,7 +577,7 @@ func (w *shellWriter) Write(p []byte) (int, error) {
 // RunShell executes a shell command directly (bypassing the model) and streams
 // the output as ToolDispatch/ToolProgress/ToolResult events. It uses the same
 // bash-tool infrastructure (shell resolution, timeout) and shares the runGuarded
-// lock with model turns â€?only one can run at a time. User-invoked "!" commands
+// lock with model turns â€” only one can run at a time. User-invoked "!" commands
 // run without the OS sandbox (the user typed the command explicitly).
 func (c *Controller) RunShell(command string) {
 	command = strings.TrimSpace(command)
@@ -666,7 +668,7 @@ func (c *Controller) notice(text string) {
 
 // Run executes a turn synchronously, returning the agent's error. Used by the
 // headless `reasonix run` path, where the Sink renders to stdout and the caller
-// just needs the exit status â€?no TurnDone event, no cancel bookkeeping.
+// just needs the exit status â€” no TurnDone event, no cancel bookkeeping.
 func (c *Controller) Run(ctx context.Context, input string) error {
 	c.maybeSessionStart(ctx)
 	startMessages := c.messageCount()
@@ -734,7 +736,7 @@ func (c *Controller) EnableInteractiveApproval() {
 }
 
 // Ask implements agent.Asker: it emits an AskRequest and blocks until
-// AnswerQuestion(ID, â€? answers or ctx is cancelled. promptMu serialises it
+// AnswerQuestion(ID, â€¦) answers or ctx is cancelled. promptMu serialises it
 // against tool-approval prompts so at most one user prompt is outstanding.
 func (c *Controller) Ask(ctx context.Context, questions []event.AskQuestion) ([]event.AskAnswer, error) {
 	if c.bypassEnabled() {
@@ -834,7 +836,7 @@ func (c *Controller) Compact(ctx context.Context, instructions string) error {
 }
 
 // maybeSessionStart fires the SessionStart hook exactly once per session, lazily
-// on the first turn â€?by then the sink/notify is wired, and a resumed session
+// on the first turn â€” by then the sink/notify is wired, and a resumed session
 // fires it too (its first post-resume turn).
 func (c *Controller) maybeSessionStart(ctx context.Context) {
 	c.mu.Lock()
@@ -890,7 +892,7 @@ func (c *Controller) Checkpoints() []checkpoint.Meta {
 }
 
 // rewindFail emits the error as a Warn notice (so a frontend that swallows the
-// returned error â€?e.g. the desktop bridge's .catch â€?still shows the user why
+// returned error â€” e.g. the desktop bridge's .catch â€” still shows the user why
 // the rewind did nothing) and returns it.
 func (c *Controller) rewindFail(err error) error {
 	c.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelWarn, Text: err.Error()})
@@ -921,7 +923,7 @@ func (c *Controller) Rewind(turn int, scope RewindScope) error {
 			return c.rewindFail(fmt.Errorf("rewind code: %w", err))
 		}
 		c.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-			Text: fmt.Sprintf("rewound code to turn %d â€?%d file(s) restored, %d removed", turn, len(written), len(deleted))})
+			Text: fmt.Sprintf("rewound code to turn %d â€” %d file(s) restored, %d removed", turn, len(written), len(deleted))})
 	}
 	if scope == RewindConversation || scope == RewindBoth {
 		if !hasBound {
@@ -1164,7 +1166,7 @@ func branchDisplayName(b agent.BranchInfo) string {
 
 // SummarizeFrom compresses the conversation from turn onward into one summary;
 // SummarizeUpTo compresses everything before it. Both are Claude Code's "summarize
-// from/up to here" â€?they restructure the message log (keeping code untouched), so
+// from/up to here" â€” they restructure the message log (keeping code untouched), so
 // afterwards the per-turn boundaries no longer map and conversation rewind/fork
 // report "unavailable" until new turns rebuild them (code rewind, file-based, is
 // unaffected). Refused while a turn runs; need the live boundary.
@@ -1200,7 +1202,7 @@ func (c *Controller) summarizeAt(ctx context.Context, turn int, from bool) error
 		return c.rewindFail(err)
 	}
 	// The log was restructured; existing boundaries no longer map. Drop them (keep
-	// cpTurn monotonic so new turns don't collide with the store) â€?conversation
+	// cpTurn monotonic so new turns don't collide with the store) â€” conversation
 	// rewind degrades to "unavailable" until fresh turns rebuild boundaries.
 	c.mu.Lock()
 	c.cpBound = map[int]int{}
@@ -1307,11 +1309,11 @@ func (c *Controller) History() []provider.Message {
 	if c.executor == nil {
 		return nil
 	}
-	return c.executor.Session().Snapshot() // copy â€?a turn may be appending concurrently
+	return c.executor.Session().Snapshot() // copy â€” a turn may be appending concurrently
 }
 
 // ContextSnapshot returns (promptTokens, contextWindow) from the most recent
-// turn. Both zero means no data yet â€?a gauge hides itself.
+// turn. Both zero means no data yet â€” a gauge hides itself.
 func (c *Controller) ContextSnapshot() (int, int) {
 	if c.executor == nil {
 		return 0, 0
@@ -1342,7 +1344,7 @@ func (c *Controller) LastUsage() *provider.Usage {
 }
 
 // SessionCache returns cumulative cache hit/miss prompt tokens for the session,
-// so a frontend can render the aggregate (session-wide) cache-hit rate â€?steadier
+// so a frontend can render the aggregate (session-wide) cache-hit rate â€” steadier
 // than the single-turn rate and unaffected by compaction.
 func (c *Controller) SessionCache() (hit, miss int) {
 	if c.executor == nil {
@@ -1352,7 +1354,7 @@ func (c *Controller) SessionCache() (hit, miss int) {
 }
 
 // Balance queries the active provider's wallet balance, or (nil, nil) when the
-// provider declares no balance_url â€?so a caller treats "not configured" and
+// provider declares no balance_url â€” so a caller treats "not configured" and
 // "fetched" the same and just omits the readout when nil.
 func (c *Controller) Balance(ctx context.Context) (*billing.Balance, error) {
 	if strings.TrimSpace(c.balanceURL) == "" {
@@ -1433,7 +1435,7 @@ func (c *Controller) HookRunner() *hook.Runner { return c.hooks }
 
 // AddMCPServer connects an MCP server live and persists it to the config file. Its
 // tools are registered immediately and become available on the next turn (the
-// agent reads the registry per turn). The raw entry â€?${VARS} intact â€?is what's
+// agent reads the registry per turn). The raw entry â€” ${VARS} intact â€” is what's
 // written to disk; the live connection uses the expanded form. Returns the number
 // of tools the server exposed. A save failure after a successful connect is
 // reported but non-fatal: the server still works this session.
@@ -1571,8 +1573,8 @@ func (c *Controller) connectCodegraphMCPServer(cfg *config.Config) (int, error) 
 	})
 }
 
-// RemoveMCPServer disconnects a live MCP server â€?its tools vanish from the next
-// turn â€?and removes it from the config file. It reports whether a live server was
+// RemoveMCPServer disconnects a live MCP server â€” its tools vanish from the next
+// turn â€” and removes it from the config file. It reports whether a live server was
 // disconnected; an error only when the name is neither connected nor in config (or
 // the config save fails). A server declared in .mcp.json disconnects for this
 // session but returns on the next start, since that file isn't ours to edit.
@@ -1605,7 +1607,7 @@ func (c *Controller) RemoveMCPServer(name string) (disconnected bool, err error)
 }
 
 // DisconnectMCPServer disconnects a live server for this session without touching
-// config â€?the connector toggle's "off". Its tools vanish next turn; it reconnects
+// config â€” the connector toggle's "off". Its tools vanish next turn; it reconnects
 // on the next session start, or now via ConnectConfiguredMCPServer (the "on").
 // Reports whether a live server was actually disconnected.
 func (c *Controller) DisconnectMCPServer(name string) bool {
@@ -1656,7 +1658,7 @@ func (c *Controller) Jobs() []jobs.View {
 
 // SetBypass turns YOLO/bypass mode on or off for the session: while on, every
 // approval prompt is auto-allowed (writers and bash run without asking). Deny
-// rules still block. Runtime-only â€?never written to config.
+// rules still block. Runtime-only â€” never written to config.
 func (c *Controller) SetBypass(on bool) {
 	var pending []chan approvalReply
 
@@ -1722,7 +1724,7 @@ func (c *Controller) Bypass() bool {
 // is disabled.
 
 // QuickAdd appends a one-line note to the doc-memory file for scope (project
-// REASONIX.md by default) â€?the write side of "#<note>". Returns the file written.
+// REASONIX.md by default) â€” the write side of "#<note>". Returns the file written.
 func (c *Controller) QuickAdd(scope memory.Scope, note string) (string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1741,7 +1743,7 @@ func (c *Controller) QuickAdd(scope memory.Scope, note string) (string, error) {
 	return path, nil
 }
 
-// SaveDoc overwrites a recognized memory doc with body â€?the save side of the
+// SaveDoc overwrites a recognized memory doc with body â€” the save side of the
 // desktop panel's in-place editor. Returns the file written.
 func (c *Controller) SaveDoc(path, body string) (string, error) {
 	c.mu.Lock()
@@ -1763,7 +1765,7 @@ func (c *Controller) SaveDoc(path, body string) (string, error) {
 	return written, nil
 }
 
-// ForgetMemory deletes a saved auto-memory by name â€?the panel/TUI delete action,
+// ForgetMemory deletes a saved auto-memory by name â€” the panel/TUI delete action,
 // the manual counterpart to the model's `forget` tool. It queues a turn-tail note
 // so the deletion applies this session (the cached prefix still lists the fact
 // until the next session re-folds the index).
@@ -1777,7 +1779,7 @@ func (c *Controller) ForgetMemory(name string) error {
 		return err
 	}
 	c.pendingMemory = append(c.pendingMemory,
-		"Deleted memory \""+name+"\" â€?disregard its line still shown in the saved-memories index until next session.")
+		"Deleted memory \""+name+"\" â€” disregard its line still shown in the saved-memories index until next session.")
 	c.refreshMemoryLocked()
 	return nil
 }
@@ -1795,7 +1797,7 @@ func (c *Controller) QueueMemory(note string) {
 
 // Memory returns the loaded memory snapshot (nil when memory is disabled), for
 // frontends that surface a memory panel or the /memory command. The returned
-// *Set is immutable â€?mutations go through QuickAdd / SaveDoc.
+// *Set is immutable â€” mutations go through QuickAdd / SaveDoc.
 func (c *Controller) Memory() *memory.Set {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1811,7 +1813,7 @@ func (c *Controller) refreshMemoryLocked() {
 	c.mem = memory.Load(memory.Options{CWD: c.mem.CWD, UserDir: c.mem.UserDir})
 }
 
-// --- approval bridge (agent gate â†?events) ---
+// --- approval bridge (agent gate â†’ events) ---
 
 // gateApprover adapts the Controller to permission.Approver. It is distinct
 // from the public Approve command (different signature, different direction).
@@ -1838,7 +1840,7 @@ type seedTodo struct {
 
 // seedPlanTodos turns an approved plan into a starter task list and emits it as a
 // synthetic todo_write event, so the live task panel populates the instant the
-// user approves â€?a structural guarantee, not a prompt the model might ignore.
+// user approves â€” a structural guarantee, not a prompt the model might ignore.
 // The model still flips item status as it works (only it knows its own
 // progress); this just makes the list exist. No-op when the plan has no list.
 func (c *Controller) seedPlanTodos(plan string) {
@@ -1872,7 +1874,7 @@ func PlanTodosJSON(plan string) string {
 // parsePlanTodos extracts a starter task list from an approved plan's markdown
 // list items (bulleted or numbered): the first is in_progress, the rest pending,
 // capped so a long plan can't flood the panel. It understands ONLY markdown lists
-// â€?an unambiguous, standard structure â€?and deliberately does not guess at prose,
+// â€” an unambiguous, standard structure â€” and deliberately does not guess at prose,
 // tables, or arrow sequences (those need brittle, language-specific heuristics).
 // The plan-mode marker steers the model to present its plan as a list, so this
 // catches the normal case; anything it misses is covered by the model's own
@@ -1898,7 +1900,7 @@ func parsePlanTodos(plan string) []seedTodo {
 
 // listItem parses a markdown list line ("- x", "* x", "1. x", "2) x") into its
 // task text and a nesting level derived from leading indentation (0 for a
-// top-level item, 1 for an indented sub-step â€?capped at 1 since the plan is
+// top-level item, 1 for an indented sub-step â€” capped at 1 since the plan is
 // two-level). ok is false when the line isn't a list item. Light inline-markdown
 // stripping keeps the checklist readable.
 func listItem(line string) (content string, level int, ok bool) {
@@ -1956,14 +1958,14 @@ func listItem(line string) (content string, level int, ok bool) {
 	return s, 0, true
 }
 
-// requestApproval emits an ApprovalRequest and blocks until Approve(ID, â€?
+// requestApproval emits an ApprovalRequest and blocks until Approve(ID, â€¦)
 // answers or ctx is cancelled. A prior session grant for the same tool+subject
 // short-circuits. promptMu serialises outstanding prompts.
 // parseRewind parses the arguments after "/rewind". The user may provide:
 //
-//	/rewind              â†?latest checkpoint, both
-//	/rewind <turn>       â†?that turn, both
-//	/rewind <turn> <scope> â†?that turn, code|conversation|both
+//	/rewind              â†’ latest checkpoint, both
+//	/rewind <turn>       â†’ that turn, both
+//	/rewind <turn> <scope> â†’ that turn, code|conversation|both
 //
 // If no turn is given, the latest checkpoint is used. If no scope is given, Both is assumed.
 func parseRewind(args string, cps []checkpoint.Meta) (int, RewindScope, error) {
@@ -2034,7 +2036,7 @@ func (c *Controller) requestApproval(ctx context.Context, tool, subject string) 
 
 	select {
 	case r := <-reply:
-		// Plan approvals are one-shot â€?never persist a session grant for them, or
+		// Plan approvals are one-shot â€” never persist a session grant for them, or
 		// every future plan would auto-approve.
 		if r.allow && r.session && tool != planApprovalTool {
 			c.mu.Lock()

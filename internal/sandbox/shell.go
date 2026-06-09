@@ -47,9 +47,9 @@ func ResolveShell() Shell {
 	return resolveShell(runtime.GOOS, exec.LookPath, fileExists, windowsBashCandidates(), probeBash, isWindowsWSLBash)
 }
 
-// resolveShell is ResolveShell with its environment lookups injected â€?including
+// resolveShell is ResolveShell with its environment lookups injected â€” including
 // the Git-for-Windows bash candidates, which derive from %ProgramFiles% and so
-// are empty off Windows â€?so the decision table is deterministically testable on
+// are empty off Windows â€” so the decision table is deterministically testable on
 // any host.
 func resolveShell(goos string, lookPath func(string) (string, error), exists func(string) bool, winBashCandidates []string, probe func(string) bool, isWSL func(string) bool) Shell {
 	if p, err := lookPath("bash"); err == nil && !isWSL(p) && probe(p) {
@@ -72,8 +72,8 @@ func resolveShell(goos string, lookPath func(string) (string, error), exists fun
 
 // isWindowsWSLBash reports whether a resolved bash path is the WSL launcher
 // Windows ships under %SystemRoot% (e.g. C:\Windows\System32\bash.exe). With WSL
-// installed it runs commands inside the Linux VM â€?where the Windows workspace is
-// a /mnt/<drive> path â€?so it must never be chosen for a native Windows workspace;
+// installed it runs commands inside the Linux VM â€” where the Windows workspace is
+// a /mnt/<drive> path â€” so it must never be chosen for a native Windows workspace;
 // the only bash.exe Microsoft places under the Windows dir is that launcher.
 func isWindowsWSLBash(path string) bool {
 	if runtime.GOOS != "windows" || path == "" {
@@ -145,7 +145,7 @@ func (s Shell) argv(command string) []string {
 }
 
 // SupportsChaining reports whether the shell parses '&&' / '||'. bash does;
-// Windows PowerShell 5.1 (powershell.exe) does not â€?only PowerShell 7+ (pwsh).
+// Windows PowerShell 5.1 (powershell.exe) does not â€” only PowerShell 7+ (pwsh).
 func (s Shell) SupportsChaining() bool {
 	if s.Kind != ShellPowerShell {
 		return true

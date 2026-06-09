@@ -252,7 +252,7 @@ func TestConfigureKeys(t *testing.T) {
 // TestConfigureKeysReusesExistingEnv covers the "user already typed the key
 // in the URL-fetch flow, don't ask again" path. When the env var is set
 // (either from .env or from a prior os.Setenv in the wizard), configureKeys
-// must NOT consume from the input stream â€?otherwise the user's next typed
+// must NOT consume from the input stream â€” otherwise the user's next typed
 // line bleeds into the next provider's prompt. It also must include the
 // existing value in envLines so the value is re-pinned into .env on
 // re-runs of setup.
@@ -280,7 +280,7 @@ func TestConfigureKeysReusesExistingEnv(t *testing.T) {
 
 // TestConfigureKeysAllSetSkipsInput ensures that when every env var is
 // already populated, configureKeys returns without reading anything from
-// the input â€?critical for the first-time-setup flow, where the URL-fetch
+// the input â€” critical for the first-time-setup flow, where the URL-fetch
 // step has already collected all keys and configureKeys is a no-op.
 func TestConfigureKeysAllSetSkipsInput(t *testing.T) {
 	t.Setenv("DEEPSEEK_API_KEY", "ds")
@@ -383,7 +383,7 @@ func TestFetchOrFallback(t *testing.T) {
 }
 
 // TestFamilyStaticModels proves the offline fallback unions every member of a
-// family (the flash + pro SKUs), not just the first â€?the regression that left
+// family (the flash + pro SKUs), not just the first â€” the regression that left
 // users with only flash when the live /models probe failed.
 func TestFamilyStaticModels(t *testing.T) {
 	providers := []config.ProviderEntry{
@@ -495,7 +495,7 @@ func TestBuildFamilyEntry(t *testing.T) {
 }
 
 // TestProviderSlug covers the host-derivation rules and the sha1 fallback
-// for unparseable URLs. The exact format isn't load-bearing â€?what matters
+// for unparseable URLs. The exact format isn't load-bearing â€” what matters
 // is that the slug (a) starts with the kind prefix, (b) is stable across
 // calls with the same URL, and (c) never produces the bare "custom" /
 // "anthropic" magic names that would collide with the wizard menu items.
@@ -524,7 +524,7 @@ func TestProviderSlug(t *testing.T) {
 			t.Errorf("not stable: %q vs %q", a, b)
 		}
 		if a == "custom" {
-			t.Error("slug degenerated to bare magic name â€?collision risk")
+			t.Error("slug degenerated to bare magic name â€” collision risk")
 		}
 	})
 
@@ -543,7 +543,7 @@ func TestProviderSlug(t *testing.T) {
 // TestFilterStaleCustomEntries covers the wizard's auto-cleanup of legacy
 // "custom" / "anthropic" magic-name entries that previous versions wrote
 // into reasonix.toml. These collide with the wizard's own menu items, so
-// they're dropped from the providers list before grouping â€?but the caller
+// they're dropped from the providers list before grouping â€” but the caller
 // still gets them back in the dropped slice to surface a warning.
 func TestFilterStaleCustomEntries(t *testing.T) {
 	in := []config.ProviderEntry{
@@ -567,7 +567,7 @@ func TestFilterStaleCustomEntries(t *testing.T) {
 
 	t.Run("non-magic names with kind anthropic are kept", func(t *testing.T) {
 		// An entry someone deliberately named "claude" (kind=anthropic) must
-		// not be touched by the filter â€?only the bare "anthropic" magic name.
+		// not be touched by the filter â€” only the bare "anthropic" magic name.
 		in := []config.ProviderEntry{
 			{Name: "claude", Kind: "anthropic", BaseURL: "https://api.anthropic.com"},
 		}
@@ -578,7 +578,7 @@ func TestFilterStaleCustomEntries(t *testing.T) {
 	})
 
 	t.Run("custom kind anthropic is kept", func(t *testing.T) {
-		// Name="custom" with kind=anthropic is ambiguous â€?keep it.
+		// Name="custom" with kind=anthropic is ambiguous â€” keep it.
 		in := []config.ProviderEntry{
 			{Name: "custom", Kind: "anthropic", BaseURL: "https://x"},
 		}

@@ -28,6 +28,6 @@ func TestDeleteRangeSameAnchorNonInclusiveNoDup(t *testing.T) {
 	_, err := deleteRange{}.Execute(context.Background(), args)
 	got, _ := os.ReadFile(path)
 	if strings.Count(string(got), "B") > 1 {
-		t.Fatalf("line B was duplicated â€?file corrupted: %q (err=%v)", string(got), err)
+		t.Fatalf("line B was duplicated â€” file corrupted: %q (err=%v)", string(got), err)
 	}
 }

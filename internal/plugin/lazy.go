@@ -1,6 +1,6 @@
 // Lazy-tier MCP placeholder tools. A "lazy" plugin registers cheap placeholder
-// entries in the tool registry at boot â€?using the on-disk schema cache when
-// it exists â€?and defers the actual subprocess spawn / handshake to the first
+// entries in the tool registry at boot â€” using the on-disk schema cache when
+// it exists â€” and defers the actual subprocess spawn / handshake to the first
 // model call. A "background" plugin is identical except it also kicks the
 // spawn off at boot so by the time the model calls, the swap is already done.
 //
@@ -28,8 +28,8 @@ func DefaultStartupBudget() time.Duration { return defaultStartTimeout }
 
 // spawnState is the lazy-spawn state machine. Transitions are:
 //
-//	idle â†?inFlight â†?ready
-//	idle â†?inFlight â†?failed
+//	idle â†’ inFlight â†’ ready
+//	idle â†’ inFlight â†’ failed
 //
 // All transitions are gated by lazySpawn.mu so only one goroutine runs the
 // handshake even when multiple Execute calls race on first use.
@@ -49,11 +49,11 @@ type lazySpawn struct {
 	spec Spec
 	host *Host
 	reg  *tool.Registry
-	ctx  context.Context // session-scoped â€?outlives any single turn
+	ctx  context.Context // session-scoped â€” outlives any single turn
 
 	mu       sync.Mutex
 	state    spawnState
-	real     map[string]tool.Tool // namespaced name â†?real tool, populated on success
+	real     map[string]tool.Tool // namespaced name â†’ real tool, populated on success
 	spawnErr error
 	swapped  bool
 	// removePrefix is set for cache-miss placeholders so trySwap drops the
@@ -120,8 +120,8 @@ type lazyTool struct {
 	desc     string
 	schema   json.RawMessage
 	readOnly bool
-	// hasCache true â†?schema is trusted, so Execute runs the handshake
-	// synchronously and forwards in one turn. false â†?schema is empty, so we
+	// hasCache true â†’ schema is trusted, so Execute runs the handshake
+	// synchronously and forwards in one turn. false â†’ schema is empty, so we
 	// can't honour the model's call; we kick the spawn async and ask for a
 	// retry on the next turn, when the swap will have installed the real
 	// tools with real schemas.
@@ -163,7 +163,7 @@ func (lt *lazyTool) Execute(ctx context.Context, args json.RawMessage) (string, 
 
 	case spawnInFlight:
 		sp.mu.Unlock()
-		return "", fmt.Errorf("MCP server %q is still initializing â€?call this tool again on the next turn", sp.spec.Name)
+		return "", fmt.Errorf("MCP server %q is still initializing â€” call this tool again on the next turn", sp.spec.Name)
 
 	case spawnIdle:
 		if !lt.hasCache {
@@ -174,7 +174,7 @@ func (lt *lazyTool) Execute(ctx context.Context, args json.RawMessage) (string, 
 			sp.state = spawnInFlight
 			go sp.run()
 			sp.mu.Unlock()
-			return "", fmt.Errorf("MCP server %q is initializing on first use â€?call again on the next turn for its real tools", sp.spec.Name)
+			return "", fmt.Errorf("MCP server %q is initializing on first use â€” call again on the next turn for its real tools", sp.spec.Name)
 		}
 		// Cache-hit: run the handshake synchronously so this one Execute can
 		// forward through.
@@ -219,7 +219,7 @@ func (lt *lazyTool) Execute(ctx context.Context, args json.RawMessage) (string, 
 //
 // host is the Host that receives the real Client. reg is the registry where
 // real tools land after a successful spawn. sessionCtx must outlive any
-// single Execute (use the controller's PluginCtx) â€?a turn-scoped ctx would
+// single Execute (use the controller's PluginCtx) â€” a turn-scoped ctx would
 // kill the stdio child between turns.
 func LazyToolset(spec Spec, cs *CachedSchema, host *Host, reg *tool.Registry, sessionCtx context.Context, kick bool) []tool.Tool {
 	shared := &lazySpawn{

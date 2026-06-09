@@ -32,7 +32,7 @@ type Location struct {
 func pathToURI(p string) string {
 	p = filepath.ToSlash(p)
 	if runtime.GOOS == "windows" && len(p) > 1 && p[1] == ':' {
-		p = "/" + p // C:/x â†?/C:/x so the URI becomes file:///C:/x
+		p = "/" + p // C:/x â†’ /C:/x so the URI becomes file:///C:/x
 	}
 	u := url.URL{Scheme: "file", Path: p}
 	return u.String()

@@ -27,7 +27,7 @@ func TestEffortNormalization(t *testing.T) {
 	tests := []struct {
 		base, effort, want string
 	}{
-		{mimo, "max", "high"}, // DeepSeek-ism clamped to the OpenAI ceiling â€?MiMo 400s on "max"
+		{mimo, "max", "high"}, // DeepSeek-ism clamped to the OpenAI ceiling â€” MiMo 400s on "max"
 		{mimo, "high", "high"},
 		{mimo, "medium", "medium"},
 		{mimo, "low", "low"},

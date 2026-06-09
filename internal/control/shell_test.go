@@ -108,7 +108,7 @@ func TestSubmit_BangEmpty(t *testing.T) {
 
 func TestSubmit_BangNotFirstChar(t *testing.T) {
 	// "! " not at position 0 should NOT trigger shell. Submit routes to
-	// runRefTurn for normal text, which needs a runner â€?so we test the
+	// runRefTurn for normal text, which needs a runner â€” so we test the
 	// prefix-check condition directly.
 	input := "tell me about !important"
 	trimmed := strings.TrimSpace(input)

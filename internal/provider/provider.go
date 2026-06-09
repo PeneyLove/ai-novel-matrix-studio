@@ -61,7 +61,7 @@ type Request struct {
 	MaxTokens   int
 }
 
-// interruptedToolResult stands in for a tool result that never landed â€?an
+// interruptedToolResult stands in for a tool result that never landed â€” an
 // assistant tool_calls turn whose execution was cut short (interrupt, crash) and
 // later resumed. Sending such a turn unanswered trips the OpenAI/DeepSeek 400
 // "An assistant message with 'tool_calls' must be followed by tool messages
@@ -90,7 +90,7 @@ func SanitizeToolPairing(msgs []Message) []Message {
 			continue
 		}
 		if m.Role == RoleTool {
-			i++ // orphan tool message (no preceding assistant tool_calls) â€?drop
+			i++ // orphan tool message (no preceding assistant tool_calls) â€” drop
 			continue
 		}
 		out = append(out, m)
@@ -102,7 +102,7 @@ func SanitizeToolPairing(msgs []Message) []Message {
 // pairToolResults answers each tool_call with its result, backfilling a
 // placeholder for any unanswered one. Distinct non-empty ids pair by id (so
 // reordered results re-sort to call order); empty or duplicate ids pair by
-// position instead â€?some gateways stream tool calls by index with no id, and a
+// position instead â€” some gateways stream tool calls by index with no id, and a
 // map keyed on id would collapse those results into one (call order is preserved
 // because the loop appends results in call order).
 func pairToolResults(calls []ToolCall, avail []Message) []Message {
@@ -134,7 +134,7 @@ func pairToolResults(calls []ToolCall, avail []Message) []Message {
 }
 
 // idDistinct reports whether every call carries a non-empty id unique within the
-// batch â€?the condition under which id-keyed pairing is safe.
+// batch â€” the condition under which id-keyed pairing is safe.
 func idDistinct(calls []ToolCall) bool {
 	seen := make(map[string]struct{}, len(calls))
 	for _, tc := range calls {
@@ -164,7 +164,7 @@ const (
 
 // Usage reports token accounting for a completion. Cache hit/miss come from
 // either DeepSeek's top-level prompt_cache_{hit,miss}_tokens or the OpenAI/MiMo
-// standard prompt_tokens_details.cached_tokens â€?the openai provider normalises
+// standard prompt_tokens_details.cached_tokens â€” the openai provider normalises
 // both shapes into these fields. ReasoningTokens is the thinking-mode subset of
 // CompletionTokens reported by thinking-capable models. FinishReason carries
 // the model's last reported choices[0].finish_reason so the agent can surface
@@ -176,7 +176,8 @@ type Usage struct {
 	CacheHitTokens   int    // prompt tokens served from cache
 	CacheMissTokens  int    // prompt tokens not cached
 	ReasoningTokens  int    // subset of CompletionTokens spent on chain-of-thought
-	FinishReason     string // "stop", "tool_calls", "length", "content_filter", "repetition_truncation", â€?}
+	FinishReason     string // "stop", "tool_calls", "length", "content_filter", "repetition_truncation", â€¦
+}
 
 // Pricing is a provider's per-1M-token rates, used to estimate spend. Currency
 // is just a display symbol (default "Â¥"). toml tags let config decode it.
@@ -235,8 +236,8 @@ type Config struct {
 }
 
 // AuthError reports that a provider rejected the API key (HTTP 401/403). Its
-// message is already user-facing and actionable â€?it names the provider and,
-// when known, the environment variable the key comes from â€?so the CLI can
+// message is already user-facing and actionable â€” it names the provider and,
+// when known, the environment variable the key comes from â€” so the CLI can
 // surface it verbatim instead of dumping a raw status body. Providers should
 // return this (rather than a generic status error) for auth failures.
 type AuthError struct {
@@ -250,7 +251,7 @@ func (e *AuthError) Error() string {
 	if e.KeyEnv != "" {
 		key = e.KeyEnv
 	}
-	return fmt.Sprintf("authentication failed for provider %q (HTTP %d): %s is invalid or expired â€?update it (in .env or your environment) and retry, or run `reasonix setup`",
+	return fmt.Sprintf("authentication failed for provider %q (HTTP %d): %s is invalid or expired â€” update it (in .env or your environment) and retry, or run `reasonix setup`",
 		e.Provider, e.Status, key)
 }
 

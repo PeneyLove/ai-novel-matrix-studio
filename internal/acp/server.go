@@ -21,7 +21,7 @@ const maxMessageBytes = 32 << 20 // 32 MiB
 type RequestHandler func(ctx context.Context, params json.RawMessage) (any, error)
 
 // NotificationHandler reacts to an inbound notification. It cannot reply, so it
-// returns nothing â€?errors have nowhere to go on the wire (stderr would corrupt
+// returns nothing â€” errors have nowhere to go on the wire (stderr would corrupt
 // stdout, which is the JSON-RPC channel).
 type NotificationHandler func(ctx context.Context, params json.RawMessage)
 
@@ -120,7 +120,8 @@ func (c *Conn) HandleNotify(method string, h NotificationHandler) { c.notH[metho
 // Serve reads inbound frames until the reader ends or ctx is cancelled. Each
 // inbound request/notification runs on its own goroutine so a long-running prompt
 // does not block cancellation or permission replies. When the read loop ends it
-// cancels in-flight handlers (so prompts abort) and waits for them to return â€?// flushing fast responses and unwinding aborted ones â€?before failing any
+// cancels in-flight handlers (so prompts abort) and waits for them to return â€”
+// flushing fast responses and unwinding aborted ones â€” before failing any
 // outstanding outbound requests. Returns nil on clean EOF.
 func (c *Conn) Serve(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)

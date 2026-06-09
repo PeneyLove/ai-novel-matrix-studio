@@ -160,7 +160,7 @@ func baseProxyFunc(spec ProxySpec) (func(*http.Request) (*url.URL, error), error
 }
 
 // withDirectHosts makes the listed hosts (and their subdomains) bypass the proxy
-// in every mode. The caller decides which hosts are direct â€?netclient stays
+// in every mode. The caller decides which hosts are direct â€” netclient stays
 // provider-agnostic. A China-only endpoint reached through a foreign-exit proxy
 // resets the TLS handshake (SSL_ERROR_SYSCALL, #2803), so its provider marks it.
 func withDirectHosts(pf func(*http.Request) (*url.URL, error), hosts []string) func(*http.Request) (*url.URL, error) {

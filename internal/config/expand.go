@@ -32,7 +32,7 @@ func ExpandVars(s string) string {
 }
 
 // ExpandedPlugin returns a copy of e with ${VAR} references expanded across the
-// command, args, env values, url, and header values â€?the fields Claude Code
+// command, args, env values, url, and header values â€” the fields Claude Code
 // also expands. The entry itself is left untouched.
 func (e PluginEntry) ExpandedPlugin() PluginEntry {
 	out := e

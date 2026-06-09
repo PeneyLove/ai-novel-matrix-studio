@@ -11,7 +11,7 @@ import (
 
 // TestTaskToolReturnsSubAgentFinalAnswer runs a task against a mock provider
 // that emits a single text turn, and verifies the tool returns exactly that
-// text â€?sub-agent intermediate state isn't supposed to leak.
+// text â€” sub-agent intermediate state isn't supposed to leak.
 func TestTaskToolReturnsSubAgentFinalAnswer(t *testing.T) {
 	sub := &mockProvider{name: "sub", chunks: []provider.Chunk{
 		{Type: provider.ChunkText, Text: "found 3 callers of Foo"},
@@ -29,7 +29,7 @@ func TestTaskToolReturnsSubAgentFinalAnswer(t *testing.T) {
 	}
 
 	// The sub-agent must have received the prompt as its user message and
-	// the configured system prompt at the top â€?proving the session was
+	// the configured system prompt at the top â€” proving the session was
 	// fresh, not the parent's.
 	if sys := sub.lastReq.Messages[0]; sys.Role != provider.RoleSystem || sys.Content != "test-sys-prompt" {
 		t.Errorf("first message = %+v, want system 'test-sys-prompt'", sys)

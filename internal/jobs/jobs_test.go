@@ -99,7 +99,7 @@ func TestKill(t *testing.T) {
 }
 
 // Killed status is observable as soon as Kill returns, before the run goroutine
-// unwinds â€?otherwise a slow cancelled process tree (Windows taskkill + WaitDelay
+// unwinds â€” otherwise a slow cancelled process tree (Windows taskkill + WaitDelay
 // drain) leaves Wait reporting Running until the goroutine finally returns, which
 // is the TestBackgroundKill flake. The job here stays blocked past ctx.Done.
 func TestKillStatusObservableBeforeGoroutineReturns(t *testing.T) {

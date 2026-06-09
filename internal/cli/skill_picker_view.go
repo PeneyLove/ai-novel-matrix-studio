@@ -142,11 +142,11 @@ func renderSkillSearchBox(query string, active bool, w int) string {
 	}
 	text = padRight(viewCompactText(text, innerWidth), innerWidth)
 	var b strings.Builder
-	b.WriteString(dim("  â•? + strings.Repeat("â”€", boxWidth-2) + "â•?))
+	b.WriteString(dim("  â•­" + strings.Repeat("â”€", boxWidth-2) + "â•®"))
 	b.WriteByte('\n')
-	b.WriteString(dim("  â”?" + text + " â”?))
+	b.WriteString(dim("  â”‚ " + text + " â”‚"))
 	b.WriteByte('\n')
-	b.WriteString(dim("  â•? + strings.Repeat("â”€", boxWidth-2) + "â•?))
+	b.WriteString(dim("  â•°" + strings.Repeat("â”€", boxWidth-2) + "â•¯"))
 	b.WriteByte('\n')
 	return b.String()
 }
@@ -255,7 +255,7 @@ func (m chatTUI) renderSkillPickerConfirmDelete() string {
 func renderSkillRow(num int, selected bool, s skill.Skill, enabled bool, w int) string {
 	prefix := "    "
 	if selected {
-		prefix = accent("  â€?")
+		prefix = accent("  â€º ")
 	}
 	nameWidth := min(30, max(14, w/3))
 	name := compactMiddle(s.Name, nameWidth)
@@ -263,11 +263,11 @@ func renderSkillRow(num int, selected bool, s skill.Skill, enabled bool, w int) 
 		name = bold(name)
 	}
 	name = padRight(name, nameWidth)
-	status := "âœ?" + i18n.M.SkillPickerAvailableLabel
+	status := "âœ“ " + i18n.M.SkillPickerAvailableLabel
 	if enabled {
 		status = viewStatus(status)
 	} else {
-		status = viewMeta("â—?" + i18n.M.SkillPickerDisabledLabel)
+		status = viewMeta("â—‹ " + i18n.M.SkillPickerDisabledLabel)
 	}
 	meta := skillRowMeta(s)
 	number := fmt.Sprintf("%2d. ", num)

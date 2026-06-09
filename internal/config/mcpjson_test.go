@@ -330,7 +330,7 @@ func TestLoadLegacyMCP(t *testing.T) {
 		t.Errorf("remote mapped wrong: %+v", got[1])
 	}
 
-	// Absent, malformed, and empty paths must not error â€?just yield nil, so a
+	// Absent, malformed, and empty paths must not error â€” just yield nil, so a
 	// stale legacy file can never block startup.
 	if got := loadLegacyMCP(filepath.Join(dir, "nope.json")); got != nil {
 		t.Errorf("absent file: got %+v, want nil", got)

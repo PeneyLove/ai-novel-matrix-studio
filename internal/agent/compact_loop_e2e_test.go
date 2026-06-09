@@ -28,7 +28,7 @@ func (f fatTool) Execute(context.Context, json.RawMessage) (string, error) {
 
 // loopMock emits exactly one tool call per user turn (a tool call when the last
 // message is the user's, a final answer when it is the tool result), so each Run
-// does one tool round â€?the step that triggers maybeCompact.
+// does one tool round â€” the step that triggers maybeCompact.
 type loopMock struct {
 	t      *testing.T
 	rounds int
@@ -126,8 +126,8 @@ func consecutiveCompactingTurns(perTurn []int) int {
 
 // TestCompactionPausesWhenWindowTooSmall covers the user report: a tool output
 // that alone exceeds the trigger used to make every "continue" turn re-compact
-// forever. The stuck guard now caps it â€?at most two compactions, then a paused
-// notice â€?instead of looping turn after turn.
+// forever. The stuck guard now caps it â€” at most two compactions, then a paused
+// notice â€” instead of looping turn after turn.
 func TestCompactionPausesWhenWindowTooSmall(t *testing.T) {
 	// One fat_read result (~1750 tok) exceeds the 0.8Ã—1600 trigger on its own.
 	perTurn, paused := compactionsPerTurn(t, 1600, strings.Repeat("LARGE FILE CONTENTS. ", 350), 8)
@@ -139,7 +139,7 @@ func TestCompactionPausesWhenWindowTooSmall(t *testing.T) {
 	t.Logf("compactions per turn: %v (total %d), paused=%v", perTurn, total, paused)
 
 	if total > 2 {
-		t.Errorf("compacted %d times; the stuck guard should cap it at â‰?, not loop", total)
+		t.Errorf("compacted %d times; the stuck guard should cap it at â‰¤2, not loop", total)
 	}
 	if !paused {
 		t.Errorf("expected an auto-compaction-paused notice")

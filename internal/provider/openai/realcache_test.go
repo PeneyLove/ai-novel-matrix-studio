@@ -31,7 +31,7 @@ type probeResult struct {
 func TestRealDeepSeekCacheProbe(t *testing.T) {
 	key := os.Getenv("DEEPSEEK_API_KEY")
 	if key == "" {
-		t.Skip("DEEPSEEK_API_KEY not set â€?skipping live probe")
+		t.Skip("DEEPSEEK_API_KEY not set â€” skipping live probe")
 	}
 
 	p, err := New(provider.Config{
@@ -108,7 +108,7 @@ func TestRealDeepSeekCacheProbe(t *testing.T) {
 	t.Logf("call 1 (cold): prompt=%d hit=%d miss=%d  rate=%s", p1a.prompt, p1a.hit, p1a.miss, rate(p1a))
 	t.Logf("call 2 (warm): prompt=%d hit=%d miss=%d  rate=%s", p1b.prompt, p1b.hit, p1b.miss, rate(p1b))
 	if p1b.hit == 0 {
-		t.Logf("WARNING: warm call still shows 0 cache hit â€?either caching is off for this account/model, " +
+		t.Logf("WARNING: warm call still shows 0 cache hit â€” either caching is off for this account/model, " +
 			"or the prefix is below the cacheable size")
 	}
 
@@ -117,7 +117,7 @@ func TestRealDeepSeekCacheProbe(t *testing.T) {
 	t.Logf("saw reasoning chunks: %v   reasoning_tokens reported: %d   reasoning_text_len: %d",
 		p1a.sawReasoning, p1a.reasoning, len(p1a.reasoningText))
 	if !p1a.sawReasoning && p1a.reasoning == 0 {
-		t.Logf("â†?v4-flash does NOT produce reasoning_content, so the reasoning round-trip " +
+		t.Logf("â†’ v4-flash does NOT produce reasoning_content, so the reasoning round-trip " +
 			"amplifier does not apply to your active model (it only bites deepseek-reasoner).")
 	}
 
@@ -150,7 +150,7 @@ func TestRealDeepSeekCacheProbe(t *testing.T) {
 	if _, err := send(withR); err != nil {
 		t.Logf("==== Probe 2 ====")
 		t.Logf("DeepSeek REJECTED a request carrying reasoning_content in history: %v", err)
-		t.Logf("â†?round-tripping reasoning_content is not just a cache concern; the API refuses it.")
+		t.Logf("â†’ round-tripping reasoning_content is not just a cache concern; the API refuses it.")
 	} else {
 		if _, err := send(noR); err != nil {
 			t.Fatalf("probe2 no-reasoning warm: %v", err)

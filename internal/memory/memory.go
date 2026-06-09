@@ -29,8 +29,8 @@ type Options struct {
 }
 
 // Load discovers all memory for a session: the hierarchical docs and the
-// auto-memory index. It is best-effort and never errors â€?missing files just
-// mean less memory â€?so boot can call it unconditionally.
+// auto-memory index. It is best-effort and never errors â€” missing files just
+// mean less memory â€” so boot can call it unconditionally.
 func Load(opts Options) *Set {
 	cwd := opts.CWD
 	if cwd == "" {
@@ -49,7 +49,8 @@ func Load(opts Options) *Set {
 // DocPath returns the doc-memory file a given scope writes to. To avoid splitting
 // a project's memory across conventions, it prefers a file that already exists
 // (REASONIX.md / AGENTS.md / CLAUDE.md, in that order); when none exists it
-// creates the universal default (AGENTS.md / AGENTS.local.md). ScopeUser â†?// <userDir>, ScopeLocal â†?<cwd> with the *.local.md names, anything else â†?<cwd>.
+// creates the universal default (AGENTS.md / AGENTS.local.md). ScopeUser â†’
+// <userDir>, ScopeLocal â†’ <cwd> with the *.local.md names, anything else â†’ <cwd>.
 // Returns "" for ScopeUser when no user dir is configured.
 func (s *Set) DocPath(scope Scope) string {
 	dir := s.CWD
@@ -80,7 +81,7 @@ func (s *Set) Empty() bool {
 }
 
 // docScopes are the scopes the panel can target for a quick-add or a new doc.
-// Ordered broad â†?specific for display.
+// Ordered broad â†’ specific for display.
 var docScopes = []Scope{ScopeUser, ScopeProject, ScopeLocal}
 
 // allowedDocPaths is the closed set of files WriteDoc / AppendDoc may touch: the
@@ -104,7 +105,7 @@ func (s *Set) allowedDocPaths() map[string]bool {
 // WriteDoc overwrites a doc-memory file with body, after checking path is a
 // recognized memory file (see allowedDocPaths). It is the save side of the
 // desktop panel's in-place editor. The write lands on disk immediately but does
-// NOT mutate the cache-stable system prefix â€?the edit folds into the prefix on
+// NOT mutate the cache-stable system prefix â€” the edit folds into the prefix on
 // the next session; to make it apply this session, the controller separately
 // queues a turn-tail note. Returns the path written.
 func (s *Set) WriteDoc(path, body string) (string, error) {
@@ -137,7 +138,7 @@ func (s *Set) Block() string {
 
 	if idx := strings.TrimSpace(s.Index); idx != "" {
 		b.WriteString("\n## Saved memories\n\n")
-		b.WriteString("Facts you saved in earlier sessions. They reflect what was true when written and may now be stale â€?treat them as background, not standing instructions. " +
+		b.WriteString("Facts you saved in earlier sessions. They reflect what was true when written and may now be stale â€” treat them as background, not standing instructions. " +
 			"Read the linked file with read_file when one looks relevant, and before acting on one that names a file, function, or flag, verify it still exists. " +
 			"Save new durable facts with the `remember` tool; delete ones that turn out wrong with `forget`.\n\n")
 		b.WriteString(idx)

@@ -119,9 +119,9 @@ func TestResolveShellDecisionTable(t *testing.T) {
 		{"no bash anywhere, pwsh", "windows", onPath("pwsh", "powershell"), gitBash, never, never, never, ShellPowerShell, ""},
 		{"no bash, only powershell", "windows", onPath("powershell"), gitBash, never, never, never, ShellPowerShell, ""},
 		{"windows, nothing found", "windows", onPath(), nil, never, never, never, ShellBash, ""},
-		{"linux, no bash â†?no PS fallback", "linux", onPath("powershell"), gitBash, always, always, never, ShellBash, ""},
+		{"linux, no bash â†’ no PS fallback", "linux", onPath("powershell"), gitBash, always, always, never, ShellBash, ""},
 		{"wsl bash on PATH skipped for git-bash", "windows", onPath("bash", "powershell"), gitBash, always, always, wslIsPathBash, ShellBash, `C:\fake\Git\bin\bash.exe`},
-		{"wsl bash on PATH, no git â†?powershell not wsl", "windows", onPath("bash", "powershell"), gitBash, never, always, wslIsPathBash, ShellPowerShell, ""},
+		{"wsl bash on PATH, no git â†’ powershell not wsl", "windows", onPath("bash", "powershell"), gitBash, never, always, wslIsPathBash, ShellPowerShell, ""},
 	}
 	for _, c := range cases {
 		got := resolveShell(c.goos, c.lookPath, c.exists, c.candidates, c.probe, c.isWSL)

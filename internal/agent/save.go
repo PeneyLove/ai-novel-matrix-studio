@@ -15,8 +15,8 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/provider"
 )
 
-// Save writes the session's messages to path in JSONL â€?one provider.Message
-// per line â€?so a user can resume the conversation later. The file is
+// Save writes the session's messages to path in JSONL â€” one provider.Message
+// per line â€” so a user can resume the conversation later. The file is
 // rewritten in full on every save: chat sessions are small (kilobytes), and
 // append-only would have to be reconciled with the compaction pass that
 // mutates the middle of session.Messages.
@@ -35,7 +35,7 @@ func (s *Session) Save(path string) error {
 	}
 	tmpPath := tmp.Name()
 	enc := json.NewEncoder(tmp)
-	for _, m := range s.Snapshot() { // copy under the lock â€?a turn may be appending
+	for _, m := range s.Snapshot() { // copy under the lock â€” a turn may be appending
 		if err := enc.Encode(m); err != nil {
 			tmp.Close()
 			os.Remove(tmpPath)
@@ -62,7 +62,7 @@ func LoadSession(path string) (*Session, error) {
 	s := &Session{}
 	// Decode a stream of JSON values rather than scanning lines: a single
 	// message (e.g. a multi-MiB bash output) can exceed any line-buffer cap, and
-	// Save's json.Encoder has no such limit â€?a Scanner here made sessions that
+	// Save's json.Encoder has no such limit â€” a Scanner here made sessions that
 	// saved fine fail to reload.
 	dec := json.NewDecoder(f)
 	for {
@@ -96,7 +96,7 @@ type SessionInfo struct {
 
 // ListSessions returns every *.jsonl session under dir, most-recently-active
 // first, each with a preview line so the picker can show something the user
-// recognises. A missing directory is not an error â€?it just means there's
+// recognises. A missing directory is not an error â€” it just means there's
 // nothing to resume yet.
 func ListSessions(dir string) ([]SessionInfo, error) {
 	entries, err := os.ReadDir(dir)
@@ -118,7 +118,7 @@ func ListSessions(dir string) ([]SessionInfo, error) {
 		full := filepath.Join(dir, e.Name())
 		preview, turns := previewSession(full)
 		if turns == 0 {
-			// Skip sessions that have never had user interaction â€?they are
+			// Skip sessions that have never had user interaction â€” they are
 			// empty conversations that should not appear in the history panel
 			// or the resume picker.
 			continue
@@ -164,8 +164,8 @@ func ListSessions(dir string) ([]SessionInfo, error) {
 }
 
 // previewSession returns the first user message (truncated) and the number of
-// user-role messages so the picker can show "5 turns Â· 'help me debug theâ€?".
-// Errors are swallowed â€?a malformed file just shows up with an empty preview.
+// user-role messages so the picker can show "5 turns Â· 'help me debug theâ€¦'".
+// Errors are swallowed â€” a malformed file just shows up with an empty preview.
 func previewSession(path string) (string, int) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -178,14 +178,14 @@ func previewSession(path string) (string, int) {
 	for {
 		var m provider.Message
 		if err := dec.Decode(&m); err != nil {
-			break // EOF or a malformed tail â€?return the preview gathered so far
+			break // EOF or a malformed tail â€” return the preview gathered so far
 		}
 		if m.Role == provider.RoleUser {
 			turns++
 			if first == "" {
 				s := strings.TrimSpace(m.Content)
 				if r := []rune(s); len(r) > 80 {
-					s = string(r[:77]) + "â€?
+					s = string(r[:77]) + "â€¦"
 				}
 				first = s
 			}

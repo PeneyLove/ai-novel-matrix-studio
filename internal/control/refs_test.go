@@ -69,8 +69,8 @@ func TestClassifyRef(t *testing.T) {
 		{"README.md", true, refFile},            // existing file
 		{".reasonix/attachments/clipboard-20260601-010203.000000.png", true, refImage},
 		{"ghost:issue://1", false, 0}, // unknown server, no such file
-		{"missing.go", false, 0},      // nonexistent path â†?not a ref
-		{"docs:", false, 0},           // empty uri â†?not a resource, no file
+		{"missing.go", false, 0},      // nonexistent path â†’ not a ref
+		{"docs:", false, 0},           // empty uri â†’ not a resource, no file
 	}
 	for _, c := range cases {
 		r, ok := classifyRef(c.token, known, exists)

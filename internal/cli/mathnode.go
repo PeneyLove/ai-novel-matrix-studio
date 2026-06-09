@@ -51,7 +51,7 @@ func (p *mathParser) Parse(parent ast.Node, block text.Reader, pc parser.Context
 
 	// Currency guard (markdown-it-texmath rule): a single-$ span only counts as
 	// math when the open isn't followed by space, the close isn't preceded by
-	// space, and the char after the close isn't a digit â€?so "$5 and $10" stays
+	// space, and the char after the close isn't a digit â€” so "$5 and $10" stays
 	// prose. Display $$ is unambiguous and skips the check.
 	if !display {
 		after := closeAt + 1

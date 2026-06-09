@@ -45,7 +45,7 @@ type MigrationResult struct {
 
 func (r *MigrationResult) Notice() string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "migrated your previous configuration: %s â†?%s", r.From, r.To)
+	fmt.Fprintf(&b, "migrated your previous configuration: %s â†’ %s", r.From, r.To)
 	if r.Plugins > 0 {
 		fmt.Fprintf(&b, " (%d MCP server(s))", r.Plugins)
 	}
@@ -106,7 +106,7 @@ func MigrateLegacyIfNeeded() (*MigrationResult, error) {
 		res.KeyToEnv = true
 		if base := strings.TrimSpace(legacy.BaseURL); base != "" && !strings.Contains(base, "deepseek.com") {
 			res.Warnings = append(res.Warnings, "your previous base_url was "+base+
-				" â€?it was applied to the built-in DeepSeek providers; verify models if this endpoint is not DeepSeek-compatible")
+				" â€” it was applied to the built-in DeepSeek providers; verify models if this endpoint is not DeepSeek-compatible")
 		}
 	}
 
@@ -245,7 +245,7 @@ func mergeEnv(base, overlay map[string]string) map[string]string {
 // file (UserCredentialsPath, e.g. %AppData%\reasonix\credentials), replacing any
 // existing assignment of the same key, and pins them into the current process env
 // so the just-built session resolves the key without a restart. Falls back to
-// ~/.env only when the user config dir can't be resolved â€?never a project .env,
+// ~/.env only when the user config dir can't be resolved â€” never a project .env,
 // so a migration keeps secrets out of the user's project tree.
 func writeCredentialsEnv(home string, lines []string) error {
 	path := UserCredentialsPath()

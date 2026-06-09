@@ -71,7 +71,7 @@ func (bash) Name() string { return "bash" }
 func (b bash) Description() string {
 	if b.resolved().Kind == sandbox.ShellPowerShell {
 		return "Execute a command in the shell and return combined stdout/stderr. " +
-			"NOTE: bash is not available on this host â€?commands run under Windows PowerShell, so write PowerShell, not bash:\n" +
+			"NOTE: bash is not available on this host â€” commands run under Windows PowerShell, so write PowerShell, not bash:\n" +
 			"  - chaining: ';' runs both regardless; 'if ($?) { ... }' is conditional. '&&' and '||' are NOT parsed.\n" +
 			"  - redirect/vars: $null not /dev/null; $env:VAR not $VAR; '2>$null' drops stderr.\n" +
 			"  - file ops: Get-ChildItem (ls), Get-Content (cat), Remove-Item -Recurse -Force (rm -rf), Copy-Item (cp), Select-String (grep).\n" +
@@ -85,7 +85,7 @@ func (b bash) Description() string {
 // bashToolSteer points the model at the cross-platform built-in tools instead of
 // shell utilities, so it doesn't reach for grep/cat/ls/find (absent or different
 // on native Windows) when a native tool already does the job everywhere.
-const bashToolSteer = " Use for builds, tests, git, package managers, etc. To search/read/list/edit files, prefer the dedicated tools (grep, read_file, ls, glob, edit_file) over shell grep/cat/ls/find/sed â€?they behave identically on every OS."
+const bashToolSteer = " Use for builds, tests, git, package managers, etc. To search/read/list/edit files, prefer the dedicated tools (grep, read_file, ls, glob, edit_file) over shell grep/cat/ls/find/sed â€” they behave identically on every OS."
 
 // resolved returns the bound shell, resolving lazily for the zero-value instance
 // (e.g. a registry that never went through ConfineBash).
@@ -102,7 +102,7 @@ func (bash) Schema() json.RawMessage {
 
 // ReadOnly is false: bash's effect cannot be inferred from args (rm, curl,
 // git commit, etc. are all reachable). Conservative even when a particular
-// command happens to be read-only â€?the agent batch decision can't tell.
+// command happens to be read-only â€” the agent batch decision can't tell.
 func (bash) ReadOnly() bool { return false }
 
 func (b bash) Execute(ctx context.Context, args json.RawMessage) (string, error) {
@@ -219,7 +219,7 @@ func commandPreview(cmd string) string {
 	const max = 48
 	r := []rune(cmd)
 	if len(r) > max {
-		return string(r[:max]) + "â€?
+		return string(r[:max]) + "â€¦"
 	}
 	return cmd
 }

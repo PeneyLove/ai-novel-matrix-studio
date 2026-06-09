@@ -146,7 +146,7 @@ func TestPreviewKindAndTally(t *testing.T) {
 }
 
 // TestPreviewMirrorsErrors confirms an unworkable call fails in Preview the
-// same way it would in Execute â€?so a UI never previews an impossible change.
+// same way it would in Execute â€” so a UI never previews an impossible change.
 func TestPreviewMirrorsErrors(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "x.txt")
 	os.WriteFile(f, []byte("x x x"), 0o644)

@@ -38,7 +38,7 @@ const (
 // When several distinct files exist in one directory, all load (each labeled with
 // its source path), so a repo already carrying an AGENTS.md / CLAUDE.md is picked
 // up without renaming. New docs are created as AGENTS.md (the universal
-// convention) â€?see defaultDocName / Set.DocPath.
+// convention) â€” see defaultDocName / Set.DocPath.
 var docNames = []string{"REASONIX.md", "AGENTS.md", "CLAUDE.md"}
 
 // localNames are the personal, git-ignored overrides, highest precedence.
@@ -76,7 +76,7 @@ func discoverDocs(cwd, userDir string) []Source {
 		out = append(out, loadFrom(userDir, docNames, ScopeUser, &seen)...)
 	}
 
-	// 2. Ancestor chain, outermost â†?project root. The project root (cwd) is
+	// 2. Ancestor chain, outermost â†’ project root. The project root (cwd) is
 	//    tagged ScopeProject; everything above it ScopeAncestor.
 	for _, dir := range ancestorsToRoot(cwd) {
 		scope := ScopeAncestor

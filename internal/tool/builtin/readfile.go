@@ -37,7 +37,7 @@ const (
 func (readFile) Name() string { return "read_file" }
 
 func (readFile) Description() string {
-	return "Read a text file with optional line offset/limit. Output prefixes each line with its 1-based number (e.g. `   42â†?..`) so subsequent edit_file calls can target exact lines. Use `offset` and `limit` to page through large files; the tool reports total length and pagination hints in a trailer."
+	return "Read a text file with optional line offset/limit. Output prefixes each line with its 1-based number (e.g. `   42â†’...`) so subsequent edit_file calls can target exact lines. Use `offset` and `limit` to page through large files; the tool reports total length and pagination hints in a trailer."
 }
 
 func (readFile) Schema() json.RawMessage {
@@ -74,11 +74,11 @@ func (r readFile) Execute(ctx context.Context, args json.RawMessage) (string, er
 		p.Limit = readFileDefaultLimit
 	}
 
-	// A directory can be os.Open'd but not read as text â€?catch it up front with
+	// A directory can be os.Open'd but not read as text â€” catch it up front with
 	// an actionable message (and avoid the doubled "read X: read X:" the scanner's
 	// error would otherwise produce) so the model switches to the ls tool.
 	if info, err := os.Stat(p.Path); err == nil && info.IsDir() {
-		return "", fmt.Errorf("%s is a directory, not a file â€?use the ls tool to list it, or read a specific file inside it", p.Path)
+		return "", fmt.Errorf("%s is a directory, not a file â€” use the ls tool to list it, or read a specific file inside it", p.Path)
 	}
 
 	f, err := os.Open(p.Path)
@@ -88,7 +88,7 @@ func (r readFile) Execute(ctx context.Context, args json.RawMessage) (string, er
 	defer f.Close()
 
 	// Peek the first 8 KiB to reject binary files cheaply (a NUL byte) before
-	// reading further â€?keeps a multi-GB archive from being slurped just to be
+	// reading further â€” keeps a multi-GB archive from being slurped just to be
 	// discarded.
 	peek := make([]byte, readFileBinaryPeek)
 	pn, perr := io.ReadFull(f, peek)
@@ -133,7 +133,8 @@ func (r readFile) Execute(ctx context.Context, args json.RawMessage) (string, er
 		return "", fmt.Errorf("binary file %s (NUL byte detected); use `bash hexdump` or another tool", p.Path)
 	}
 
-	// Read up to a bounded sample for encoding detection, then stream the rest â€?	// so a large text file isn't slurped whole just to return a few lines.
+	// Read up to a bounded sample for encoding detection, then stream the rest â€”
+	// so a large text file isn't slurped whole just to return a few lines.
 	head := peek
 	if !peekEOF {
 		more := make([]byte, readFileDetectSample-len(peek))
@@ -177,7 +178,7 @@ func (r readFile) scan(src io.Reader, offset, limit int) (string, error) {
 			collected = append(collected, scanner.Text())
 			continue
 		}
-		// A line past the requested window exists â€?stop here rather than reading
+		// A line past the requested window exists â€” stop here rather than reading
 		// the rest of the file just to count the remainder.
 		hasMore = true
 		break
@@ -190,7 +191,7 @@ func (r readFile) scan(src io.Reader, offset, limit int) (string, error) {
 		return "(empty file)", nil
 	}
 	if len(collected) == 0 {
-		return fmt.Sprintf("(offset %d is past EOF â€?file has %d lines)", offset, lineNo), nil
+		return fmt.Sprintf("(offset %d is past EOF â€” file has %d lines)", offset, lineNo), nil
 	}
 
 	maxShown := offset + len(collected)
@@ -198,7 +199,7 @@ func (r readFile) scan(src io.Reader, offset, limit int) (string, error) {
 
 	var b strings.Builder
 	for i, line := range collected {
-		fmt.Fprintf(&b, "%*dâ†?s\n", w, offset+i+1, line)
+		fmt.Fprintf(&b, "%*dâ†’%s\n", w, offset+i+1, line)
 	}
 	if hasMore {
 		fmt.Fprintf(&b, "\n[more lines below; pass offset=%d to continue]\n", offset+len(collected))

@@ -35,12 +35,12 @@ const initTimeout = 30 * time.Second
 const BundleDirName = "codegraph"
 
 // Resolve returns the absolute path to the CodeGraph launcher. Search order:
-//  1. override â€?an explicit [codegraph].path from config (~ and ${VAR} expanded);
+//  1. override â€” an explicit [codegraph].path from config (~ and ${VAR} expanded);
 //  2. the per-version cache populated by Install (the normal case);
 //  3. a system-installed `codegraph` on PATH;
 //  4. a bundle placed beside the reasonix executable (fallback for manual setups).
 //
-// ok is false when none resolves â€?the caller then triggers Install (or skips the
+// ok is false when none resolves â€” the caller then triggers Install (or skips the
 // feature), so the codegraph_* tools come online once the cache is populated.
 func Resolve(override string) (string, bool) {
 	if override != "" {
@@ -98,13 +98,13 @@ func launcherNames() []string {
 
 // EnsureInit initialises CodeGraph for root when it has not been already, by
 // running a bare `codegraph init` (no -i). That only creates the .codegraph/
-// structure â€?fast and independent of repo size (~100ms) â€?because the actual
+// structure â€” fast and independent of repo size (~100ms) â€” because the actual
 // indexing is done by `serve --mcp`'s daemon in the background once connected: the
 // MCP handshake returns in a few hundred ms and symbols fill in shortly after,
 // with CodeGraph flagging partial results as stale meanwhile. So startup never
 // blocks on indexing, even for a huge monorepo.
 //
-// An existing .codegraph/ is left untouched â€?serve re-syncs it on connect and the
+// An existing .codegraph/ is left untouched â€” serve re-syncs it on connect and the
 // file-watcher keeps it fresh thereafter. The init step is required because serve
 // does NOT auto-create .codegraph/: without it, it runs in a degraded, no-index
 // mode rather than building one.
@@ -113,7 +113,7 @@ func EnsureInit(ctx context.Context, bin, root string) error {
 		return nil
 	}
 	if Initialized(root) {
-		return nil // already initialised â€?serve re-syncs and the watcher keeps it fresh
+		return nil // already initialised â€” serve re-syncs and the watcher keeps it fresh
 	}
 	ctx, cancel := context.WithTimeout(ctx, initTimeout)
 	defer cancel()

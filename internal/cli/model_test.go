@@ -9,8 +9,8 @@ import (
 // provider/model refs (built-in defaults when no reasonix.toml is present), and
 // only those whose provider API key is set.
 func TestModelRefsFromConfig(t *testing.T) {
-	t.Chdir(t.TempDir()) // no reasonix.toml â†?built-in default providers
-	// Only DeepSeek keyed â†?MiMo refs must be filtered out.
+	t.Chdir(t.TempDir()) // no reasonix.toml â†’ built-in default providers
+	// Only DeepSeek keyed â†’ MiMo refs must be filtered out.
 	t.Setenv("DEEPSEEK_API_KEY", "test-key")
 	t.Setenv("MIMO_API_KEY", "")
 	refs := modelRefs()
@@ -34,7 +34,7 @@ func TestModelRefsSkipsUnconfigured(t *testing.T) {
 	t.Setenv("DEEPSEEK_API_KEY", "")
 	t.Setenv("MIMO_API_KEY", "")
 	if refs := modelRefs(); len(refs) != 0 {
-		t.Errorf("no keys set â†?no refs, got %v", refs)
+		t.Errorf("no keys set â†’ no refs, got %v", refs)
 	}
 }
 

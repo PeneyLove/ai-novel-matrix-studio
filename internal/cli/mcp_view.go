@@ -64,7 +64,7 @@ func writeMCPServer(b *strings.Builder, width int, s plugin.ServerStatus, prompt
 	}
 	meta := fmt.Sprintf("(%s)  %s Â· %s Â· %s", transport, countText(s.Tools, "tool"), countText(len(prompts), "prompt"), countText(len(resources), "resource"))
 	name := viewCompactText(s.Name, viewBudget(width, 4+2+1+visibleWidth(meta)))
-	fmt.Fprintf(b, "    %s %s %s\n", accent("âœ?), bold(name), viewMeta(meta))
+	fmt.Fprintf(b, "    %s %s %s\n", accent("âœ“"), bold(name), viewMeta(meta))
 	if len(prompts) > 0 {
 		writeMCPPromptList(b, width, prompts)
 	}
@@ -161,7 +161,7 @@ func compactEnd(s string, maxWidth int) string {
 		return s
 	}
 	if maxWidth <= 1 {
-		return "â€?
+		return "â€¦"
 	}
 	var out strings.Builder
 	for _, r := range s {
@@ -171,7 +171,7 @@ func compactEnd(s string, maxWidth int) string {
 		}
 		out.WriteRune(r)
 	}
-	return out.String() + "â€?
+	return out.String() + "â€¦"
 }
 
 func compactMiddle(s string, maxWidth int) string {
@@ -186,7 +186,7 @@ func compactMiddle(s string, maxWidth int) string {
 	rightWidth := keep - leftWidth
 	left := takeLeftWidth(s, leftWidth)
 	right := takeRightWidth(s, rightWidth)
-	return left + "â€? + right
+	return left + "â€¦" + right
 }
 
 func takeLeftWidth(s string, maxWidth int) string {

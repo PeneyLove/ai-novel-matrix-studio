@@ -10,7 +10,7 @@ import (
 // PlanModeMarker is prepended to every user turn while plan mode is on. It rides
 // in the user message (not the system prompt or tools), so the cache-stable
 // prompt prefix is left untouched and the toggle costs nothing in cache hits.
-const PlanModeMarker = "[Plan mode â€?read-only. Explore the codebase first (read_file, ls, grep, glob, web_fetch, task are available; writers are refused by the harness), then present a LAYERED plan as your reply and stop â€?do not write files, edit, or run side-effecting bash. Structure the plan as a two-level markdown list so it becomes a layered task list: each PHASE is a top-level numbered list item (a coherent milestone, e.g. \"1. Add the config loader\"), and each phase's concrete, verifiable sub-steps are bullets indented beneath it (e.g. \"   - parse the TOML into Config\"). Use plain numbered list items for phases â€?do NOT write phases as markdown headings (##, ###) â€?so both levels parse. Keep phases few (about 2-6). The user will be asked to approve before any changes are made.]"
+const PlanModeMarker = "[Plan mode â€” read-only. Explore the codebase first (read_file, ls, grep, glob, web_fetch, task are available; writers are refused by the harness), then present a LAYERED plan as your reply and stop â€” do not write files, edit, or run side-effecting bash. Structure the plan as a two-level markdown list so it becomes a layered task list: each PHASE is a top-level numbered list item (a coherent milestone, e.g. \"1. Add the config loader\"), and each phase's concrete, verifiable sub-steps are bullets indented beneath it (e.g. \"   - parse the TOML into Config\"). Use plain numbered list items for phases â€” do NOT write phases as markdown headings (##, ###) â€” so both levels parse. Keep phases few (about 2-6). The user will be asked to approve before any changes are made.]"
 
 // Compose applies the plan-mode marker to a turn's text when plan mode is on,
 // returning the message to actually send to the model. The frontend keeps
@@ -75,9 +75,9 @@ func RememberCommandNote(input string) (note string, ok bool) {
 	}
 }
 
-// CustomCommand resolves a "/name argsâ€? line against the loaded custom slash
+// CustomCommand resolves a "/name argsâ€¦" line against the loaded custom slash
 // commands, returning the rendered prompt to send (found=false when no command
-// matches). It does not apply the plan-mode marker â€?call Compose for that.
+// matches). It does not apply the plan-mode marker â€” call Compose for that.
 func (c *Controller) CustomCommand(input string) (sent string, found bool) {
 	fields := strings.Fields(input)
 	if len(fields) == 0 {
@@ -92,9 +92,9 @@ func (c *Controller) CustomCommand(input string) (sent string, found bool) {
 	return "", false
 }
 
-// RunSkill resolves a "/<name> argsâ€? line against the loaded skills, returning
+// RunSkill resolves a "/<name> argsâ€¦" line against the loaded skills, returning
 // the skill's rendered body to send as a turn (found=false when no skill
-// matches). Invoking a skill by slash always inlines its body â€?the model reads
+// matches). Invoking a skill by slash always inlines its body â€” the model reads
 // and follows the playbook in the main loop; a subagent skill's isolation is
 // only engaged when the model calls it via run_skill / the dedicated tool. The
 // caller applies Compose for plan-mode/memory framing.
@@ -112,7 +112,7 @@ func (c *Controller) RunSkill(input string) (sent string, found bool) {
 	return "", false
 }
 
-// MCPPrompt resolves a "/mcp__server__prompt argsâ€? line: it maps the positional
+// MCPPrompt resolves a "/mcp__server__prompt argsâ€¦" line: it maps the positional
 // args onto the prompt's declared arguments and fetches the rendered prompt from
 // the MCP server (an async prompts/get). found is false when no such prompt
 // exists; err carries a fetch failure. Honours ctx.

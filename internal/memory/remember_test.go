@@ -7,7 +7,8 @@ import (
 	"testing"
 )
 
-// TestRememberToolSaves drives the tool the way the agent does â€?raw JSON args â€?// and verifies the fact lands in the store and the index.
+// TestRememberToolSaves drives the tool the way the agent does â€” raw JSON args â€”
+// and verifies the fact lands in the store and the index.
 func TestRememberToolSaves(t *testing.T) {
 	store := Store{Dir: t.TempDir()}
 	tl := NewRememberTool(store)

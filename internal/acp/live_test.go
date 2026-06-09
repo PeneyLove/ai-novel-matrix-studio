@@ -6,7 +6,8 @@
 //	set -a; . /path/to/.env; set +a
 //	go test -tags live -run Live ./internal/acp/ -v
 //
-// It drives the full ACP stack â€?acp.Serve â†?control.Controller â†?agent.Agent â†?// the real OpenAI-compatible provider â€?over a tiny prompt, proving the live
+// It drives the full ACP stack â€” acp.Serve â†’ control.Controller â†’ agent.Agent â†’
+// the real OpenAI-compatible provider â€” over a tiny prompt, proving the live
 // model path the hermetic tests stub out.
 package acp
 

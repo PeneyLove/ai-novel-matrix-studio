@@ -8,7 +8,7 @@ import (
 )
 
 // setKillTree makes a cancelled command kill its whole process group, not just
-// the shell leader â€?otherwise `go test ./...` and the test binaries it spawns
+// the shell leader â€” otherwise `go test ./...` and the test binaries it spawns
 // outlive an Esc. The child gets its own group (Setpgid) so the negative-pid
 // signal reaches every descendant.
 func setKillTree(cmd *exec.Cmd) {

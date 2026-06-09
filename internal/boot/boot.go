@@ -1,8 +1,9 @@
 // Package boot assembles a ready-to-drive control.Controller from configuration:
 // it loads config, resolves the model(s), builds the tool registry (built-ins +
-// plugins), wires the permission gate, and constructs the executor â€?optionally
+// plugins), wires the permission gate, and constructs the executor â€” optionally
 // wrapping it in a two-model Coordinator. It is the one place that turns "what the
-// user configured" into "a Controller a frontend can drive", so every frontend â€?// the terminal TUI, the HTTP/SSE server, the desktop webview â€?shares the exact
+// user configured" into "a Controller a frontend can drive", so every frontend â€”
+// the terminal TUI, the HTTP/SSE server, the desktop webview â€” shares the exact
 // same assembly instead of each re-deriving it. Frontends pass only a sink and a
 // couple of run knobs; everything else comes from config.
 package boot
@@ -40,7 +41,7 @@ import (
 )
 
 // ErrUnknownModel is returned by Build when the configured model can't be
-// resolved to a provider â€?e.g. a default_model left over from a renamed or
+// resolved to a provider â€” e.g. a default_model left over from a renamed or
 // removed provider. Callers can detect it (errors.Is) to re-run setup.
 var ErrUnknownModel = errors.New("unknown model")
 
@@ -67,7 +68,7 @@ type Options struct {
 	// commands, hooks, and tool confinement. When empty, the current working
 	// directory is used (CLI default). Desktop tabs pass their project root here
 	// so each tab loads its own config/skills/hooks without changing the process
-	// cwd â€?enabling concurrent multi-project sessions.
+	// cwd â€” enabling concurrent multi-project sessions.
 	WorkspaceRoot string
 }
 
@@ -86,7 +87,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 			root = wd
 		}
 	}
-	// One-time import of v1/v0.5 legacy config â€?runs before Load so the freshly
+	// One-time import of v1/v0.5 legacy config â€” runs before Load so the freshly
 	// written config + ~/.env are picked up this same boot. CLI Run also calls this
 	// before config-only commands; this call stays as the shared frontend fallback.
 	migrated, migErr := config.MigrateLegacyIfNeeded()
@@ -118,7 +119,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 
 	// Serialize the frontend's sink once: background jobs (below) emit from their
 	// own goroutines, which can overlap a running turn's emission, so every emitter
-	// shares this synchronized sink. The job manager is session-scoped â€?its jobs
+	// shares this synchronized sink. The job manager is session-scoped â€” its jobs
 	// outlive a turn and are cancelled by Controller.Close.
 	sink := event.Sync(opts.Sink)
 
@@ -134,7 +135,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	// once and is a cheap no-op afterwards.
 	if home, herr := os.UserHomeDir(); herr == nil {
 		if n, serr := agent.MigrateLegacySessions(filepath.Join(home, ".reasonix", "sessions"), config.SessionDir()); serr == nil && n > 0 {
-			sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: fmt.Sprintf("imported %d past session(s) from ~/.reasonix/sessions â€?resume them with --resume or the history panel", n)})
+			sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: fmt.Sprintf("imported %d past session(s) from ~/.reasonix/sessions â€” resume them with --resume or the history panel", n)})
 		}
 	}
 
@@ -142,7 +143,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	// (RequireKey is false so the UI stays reachable) and then fail silently on the
 	// first request, showing as an empty/dead model. Surface the cause up front.
 	if !opts.RequireKey && entry.APIKeyEnv != "" && entry.APIKey() == "" {
-		sink.Emit(event.Event{Kind: event.Notice, Text: fmt.Sprintf("model %q is selected but its API key %s is not set â€?requests will fail until you set it", modelName, entry.APIKeyEnv)})
+		sink.Emit(event.Event{Kind: event.Notice, Text: fmt.Sprintf("model %q is selected but its API key %s is not set â€” requests will fail until you set it", modelName, entry.APIKeyEnv)})
 	}
 	jm := jobs.NewManager(sink)
 
@@ -175,14 +176,14 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	// Persistent memory (REASONIX.md / AGENTS.md hierarchy + auto-memory index)
 	// folds into the system prompt exactly here, once: it becomes part of the
 	// durable, cache-stable prefix every turn reuses, so memory costs nothing per
-	// turn. Mid-session changes never touch this prefix â€?they ride the
+	// turn. Mid-session changes never touch this prefix â€” they ride the
 	// controller's transient turn-injection and fold in on the next session.
 	mem := memory.Load(memory.Options{CWD: root, UserDir: config.MemoryUserDir()})
 	projectChecks := instruction.ExtractHostChecks(mem.Docs)
 	sysPrompt = memory.Compose(sysPrompt, mem)
 
 	// Skills: discover playbooks (built-in + project/custom/global) and fold their
-	// one-liner index into the same cache-stable prefix â€?names + descriptions
+	// one-liner index into the same cache-stable prefix â€” names + descriptions
 	// only; bodies load on demand via run_skill or "/<name>". Bodies never enter
 	// the prefix, so the index costs a fixed, small amount per turn.
 	skillStore := skill.New(skill.Options{
@@ -210,7 +211,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	pluginHost := plugin.NewHost()
 
 	// Partition configured plugins by tier so eager/lazy/background can each
-	// take the path that fits them. User entries default to lazy â€?they don't
+	// take the path that fits them. User entries default to lazy â€” they don't
 	// slow the next launch unless the user explicitly opts in to eager.
 	eagerEntries, lazyEntries, bgEntries := partitionByTier(cfg.AutoStartPlugins())
 
@@ -241,14 +242,14 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	// cwd-aware); EnsureInit only creates .codegraph/ (fast, size-independent),
 	// serve's daemon then indexes in the background, so startup never blocks even
 	// on a large repo. When it is not yet installed, fetch it in the background
-	// (one-time, ~45MB) if auto_install is on â€?startup still never blocks, the
-	// tools come online next session â€?otherwise point the user at the explicit
+	// (one-time, ~45MB) if auto_install is on â€” startup still never blocks, the
+	// tools come online next session â€” otherwise point the user at the explicit
 	// install command. A failed init or fetch is a notice, not fatal.
 	//
 	// CodeGraph follows the same user-selectable tier model as ordinary MCP
 	// servers when a tier is set. EnsureInit only creates .codegraph/ (fast,
-	// size-independent). With no explicit tier â€?an upgraded config that predates
-	// the setting â€?it keeps the historical startup: warm projects eager so
+	// size-independent). With no explicit tier â€” an upgraded config that predates
+	// the setting â€” it keeps the historical startup: warm projects eager so
 	// symbol tools are ready on the first turn, cold projects in the background.
 	if cfg.Codegraph.Enabled {
 		bin, ok := codegraph.Resolve(cfg.Codegraph.Path)
@@ -264,13 +265,13 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 			warm := codegraph.Initialized(root)
 			if err := codegraph.EnsureInit(ctx, bin, root); err != nil {
 				sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelWarn,
-					Text: "codegraph: init failed (" + err.Error() + ") â€?symbol-graph tools disabled this session"})
+					Text: "codegraph: init failed (" + err.Error() + ") â€” symbol-graph tools disabled this session"})
 				break
 			}
 			bgNotice := func() {
 				if !warm {
 					sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-						Text: "codegraph: preparing code-intelligence tools in the background â€?tools will appear when ready"})
+						Text: "codegraph: preparing code-intelligence tools in the background â€” tools will appear when ready"})
 				}
 			}
 			if strings.TrimSpace(cfg.Codegraph.Tier) == "" {
@@ -293,22 +294,22 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 			}
 		case cfg.Codegraph.AutoInstall:
 			notify := func(msg string) { sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: msg}) }
-			notify("codegraph: fetching code-intelligence runtime in the background (one-time) â€?symbol-graph tools available next session")
+			notify("codegraph: fetching code-intelligence runtime in the background (one-time) â€” symbol-graph tools available next session")
 			codegraphClient, err := netclient.NewHTTPClient(proxySpec, netclient.TransportOptions{})
 			if err != nil {
 				notify("codegraph: install skipped (" + err.Error() + ")")
 			} else {
 				go func() {
 					if _, err := codegraph.InstallWithClient(context.WithoutCancel(ctx), codegraphClient, nil); err != nil {
-						notify("codegraph: install failed (" + err.Error() + ") â€?using grep/glob; retries next session")
+						notify("codegraph: install failed (" + err.Error() + ") â€” using grep/glob; retries next session")
 					} else {
-						notify("codegraph: installed â€?symbol-graph tools available next session")
+						notify("codegraph: installed â€” symbol-graph tools available next session")
 					}
 				}()
 			}
 		default:
 			sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-				Text: "codegraph: not installed â€?run `reasonix codegraph install` to enable symbol-graph tools"})
+				Text: "codegraph: not installed â€” run `reasonix codegraph install` to enable symbol-graph tools"})
 		}
 	}
 
@@ -332,8 +333,8 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 		for _, t := range ptools {
 			reg.Add(t)
 		}
-		// PhaseB (prompts + resources) runs on the boot ctx â€?which is the
-		// controller's session-scoped PluginCtx â€?so the auxiliary surfaces
+		// PhaseB (prompts + resources) runs on the boot ctx â€” which is the
+		// controller's session-scoped PluginCtx â€” so the auxiliary surfaces
 		// keep streaming in after Start returns without holding up the agent.
 		go host.StartPhaseB(ctx, sink)
 		if text, ok := MCPStartupNotice(host.Failures()); ok {
@@ -381,7 +382,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	}
 
 	// Permission policy gates every tool call. The headless gate (no Approver)
-	// resolves "ask" to allow â€?preserving `reasonix run` autonomy â€?while deny
+	// resolves "ask" to allow â€” preserving `reasonix run` autonomy â€” while deny
 	// rules hard-block in every mode. Interactive frontends (chat, desktop) swap
 	// in an interactive gate later via Controller.EnableInteractiveApproval.
 	// Sub-agents always run headless: they have no UI to answer a prompt, so they
@@ -389,7 +390,8 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	policy := permission.New(cfg.Permissions.Mode, cfg.Permissions.Allow, cfg.Permissions.Ask, cfg.Permissions.Deny)
 	headlessGate := permission.NewGate(policy, nil)
 
-	// Hooks: load the global settings.json plus the project's (only when trusted â€?	// project hooks run arbitrary shell commands, so cloning a repo must not
+	// Hooks: load the global settings.json plus the project's (only when trusted â€”
+	// project hooks run arbitrary shell commands, so cloning a repo must not
 	// silently execute them). Non-blocking hook output is surfaced to the user as
 	// a Notice through the shared sink. The runner fires PreToolUse/PostToolUse in
 	// the agent loop and UserPromptSubmit/Stop at the controller's turn boundary.
@@ -401,7 +403,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	)
 	if hook.ProjectDefinesHooks(root) && !hooksTrusted {
 		sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-			Text: "this project defines hooks but they are not trusted â€?run /hooks trust to enable them"})
+			Text: "this project defines hooks but they are not trusted â€” run /hooks trust to enable them"})
 	}
 
 	// The `task` tool spawns sub-agents that reuse the parent's provider and
@@ -427,7 +429,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 
 	// Skill tools: run_skill / install_skill plus the dedicated subagent wrappers
 	// (explore / research / review / security_review). A subagent skill reuses the
-	// sub-agent machinery via this runner â€?an isolated loop with the skill body
+	// sub-agent machinery via this runner â€” an isolated loop with the skill body
 	// as system prompt, a tool set scoped to the skill's allowed-tools (minus the
 	// task/skill meta-tools, to bar recursion), and an optional per-skill model.
 	// Its tool activity nests under the invoking call, like `task`.
@@ -485,7 +487,7 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	// Expose the loaded slash commands (skills + custom commands) to the model via
 	// the slash_command tool, so it can invoke a project playbook by name the way a
 	// user types "/name". Skills are added first, then commands, so a command wins
-	// a name clash â€?matching the prompt's command-over-skill precedence.
+	// a name clash â€” matching the prompt's command-over-skill precedence.
 	var slashEntries []command.SlashEntry
 	for _, sk := range skills {
 		sk := sk
@@ -711,7 +713,7 @@ func addBuiltins(reg *tool.Registry, enabled, writeRoots []string, bashSpec sand
 }
 
 // partitionByTier splits configured plugin entries into the three startup
-// buckets â€?eager (block boot until ready), lazy (placeholder until first
+// buckets â€” eager (block boot until ready), lazy (placeholder until first
 // model use), background (placeholder + start spawn now). Entries with an
 // unrecognised or empty tier land in lazy (the default).
 func partitionByTier(entries []config.PluginEntry) (eager, lazy, bg []config.PluginEntry) {
@@ -765,11 +767,11 @@ func MCPStartupNotice(failures []plugin.Failure) (text string, ok bool) {
 	if len(failures) > len(names) {
 		more = fmt.Sprintf(" (+%d more)", len(failures)-len(names))
 	}
-	return fmt.Sprintf("%d MCP server(s) failed to start: %s%s â€?run /mcp for details",
+	return fmt.Sprintf("%d MCP server(s) failed to start: %s%s â€” run /mcp for details",
 		len(failures), strings.Join(names, ", "), more), true
 }
 
-// LSPSpecs returns the language â†?server map: the built-in defaults overlaid with
+// LSPSpecs returns the language â†’ server map: the built-in defaults overlaid with
 // any user overrides. A user entry may set only the fields it wants to change;
 // empty fields keep the default for that language.
 func LSPSpecs(cfg config.LSPConfig) map[string]lsp.ServerSpec {

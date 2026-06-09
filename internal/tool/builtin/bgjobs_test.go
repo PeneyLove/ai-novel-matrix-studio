@@ -11,7 +11,7 @@ import (
 
 // End-to-end through the actual tools: a background bash job runs under a manager
 // injected on the context, the wait tool collects its output, and bash_output
-// reads it â€?the same path the agent drives.
+// reads it â€” the same path the agent drives.
 func TestBackgroundBashWaitAndOutput(t *testing.T) {
 	m := jobs.NewManager(event.Discard)
 	defer m.Close()

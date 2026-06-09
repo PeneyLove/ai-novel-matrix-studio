@@ -270,8 +270,8 @@ func TestPreviewSessionLongMessage(t *testing.T) {
 	if len([]rune(preview)) > 80 {
 		t.Errorf("preview should be capped at 80 runes, got %d", len([]rune(preview)))
 	}
-	if !strings.HasSuffix(preview, "â€?) {
-		t.Errorf("truncated preview should end with â€? got %q", preview)
+	if !strings.HasSuffix(preview, "â€¦") {
+		t.Errorf("truncated preview should end with â€¦, got %q", preview)
 	}
 }
 

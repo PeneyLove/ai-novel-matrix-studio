@@ -48,7 +48,7 @@ func (c *Client) listResources(ctx context.Context) ([]Resource, error) {
 }
 
 // readResource fetches a resource by uri and flattens its text contents. Binary
-// (blob) contents are noted but not decoded â€?a coding agent consumes text.
+// (blob) contents are noted but not decoded â€” a coding agent consumes text.
 func (c *Client) readResource(ctx context.Context, uri string) (string, error) {
 	res, err := c.call(ctx, "resources/read", map[string]any{"uri": uri})
 	if err != nil {
@@ -74,7 +74,7 @@ func (c *Client) readResource(ctx context.Context, uri string) (string, error) {
 		case ct.Text != "":
 			sb.WriteString(ct.Text)
 		case ct.Blob != "":
-			fmt.Fprintf(&sb, "[binary resource %s, %s â€?%d base64 bytes omitted]", ct.URI, ct.MimeType, len(ct.Blob))
+			fmt.Fprintf(&sb, "[binary resource %s, %s â€” %d base64 bytes omitted]", ct.URI, ct.MimeType, len(ct.Blob))
 		}
 	}
 	return sb.String(), nil

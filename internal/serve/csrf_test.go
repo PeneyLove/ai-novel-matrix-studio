@@ -37,7 +37,7 @@ func TestServeRejectsNonJSONPost(t *testing.T) {
 
 	select {
 	case in := <-got:
-		t.Fatalf("a non-JSON POST reached the runner with %q â€?CSRF guard bypassed", in)
+		t.Fatalf("a non-JSON POST reached the runner with %q â€” CSRF guard bypassed", in)
 	default:
 	}
 }

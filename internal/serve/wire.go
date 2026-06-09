@@ -4,8 +4,8 @@ import "github.com/PeneyLove/ai-novel-matrix-studio/internal/event"
 
 // wireEvent is the JSON shape an event.Event takes on the SSE stream. It uses
 // explicit lowercase tags (a clean contract for a JS client) and flattens the
-// few non-JSON-friendly bits â€?the Kind enum becomes a string, the TurnDone
-// error becomes a message â€?so a browser frontend renders the same typed stream
+// few non-JSON-friendly bits â€” the Kind enum becomes a string, the TurnDone
+// error becomes a message â€” so a browser frontend renders the same typed stream
 // the TUI does.
 type wireEvent struct {
 	Kind       string          `json:"kind"`
@@ -68,7 +68,7 @@ type wireUsage struct {
 	CacheMissTokens  int                   `json:"cacheMissTokens"`
 	ReasoningTokens  int                   `json:"reasoningTokens,omitempty"`
 	CacheDiagnostics *wireCacheDiagnostics `json:"cacheDiagnostics,omitempty"`
-	// Session-cumulative cache tokens â€?the status line shows the aggregate
+	// Session-cumulative cache tokens â€” the status line shows the aggregate
 	// hit-rate Î£hit/Î£(hit+miss), steadier than the single-turn CacheHitTokens.
 	SessionCacheHitTokens  int     `json:"sessionCacheHitTokens"`
 	SessionCacheMissTokens int     `json:"sessionCacheMissTokens"`

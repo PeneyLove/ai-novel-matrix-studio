@@ -57,7 +57,7 @@ func waitForCLIEvent(t *testing.T, ch <-chan event.Event, kind event.Kind) {
 // TestEscCancelsRunningTurnWithCompletionOpen reproduces the report that Esc
 // (unlike Ctrl+C) did not stop a running turn: an active completion menu
 // captured Esc to close itself and returned before reaching the running-turn
-// cancel branch, while Ctrl+C �?not in the completion switch �?fell through.
+// cancel branch, while Ctrl+C — not in the completion switch — fell through.
 func TestEscCancelsRunningTurnWithCompletionOpen(t *testing.T) {
 	r := &blockingTurnRunner{started: make(chan struct{})}
 	ctrl := control.New(control.Options{Runner: r, Sink: event.Discard, SessionDir: t.TempDir(), Label: "test"})
@@ -156,7 +156,7 @@ func TestMainManagerFollowsTranscriptWithoutTopPadding(t *testing.T) {
 	m := newChatTUI(ctrl, "", make(chan event.Event, 1), 80)
 	m0, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 20})
 	m = m0.(chatTUI)
-	m.wrappedLines = []string{"reasonix chat", "�?/mcp"}
+	m.wrappedLines = []string{"reasonix chat", "› /mcp"}
 
 	out := ansi.Strip(m.renderTranscriptWithMainManager("Manage MCP servers\n1 servers"))
 	lines := strings.Split(out, "\n")
@@ -326,11 +326,11 @@ func TestIngestEventRoutesByKind(t *testing.T) {
 		ev   event.Event
 		want string
 	}{
-		{"dispatch", event.Event{Kind: event.ToolDispatch, Tool: event.Tool{Name: "read_file", Args: `{"path":"x"}`}}, "�?Read(x)"},
-		{"blocked", event.Event{Kind: event.ToolResult, Tool: event.Tool{Name: "bash", Err: "blocked by permission policy"}}, "�?Bash �?blocked by permission policy"},
+		{"dispatch", event.Event{Kind: event.ToolDispatch, Tool: event.Tool{Name: "read_file", Args: `{"path":"x"}`}}, "● Read(x)"},
+		{"blocked", event.Event{Kind: event.ToolResult, Tool: event.Tool{Name: "bash", Err: "blocked by permission policy"}}, "● Bash ⊘ blocked by permission policy"},
 		{"usage", event.Event{Kind: event.Usage, Usage: &provider.Usage{PromptTokens: 1000, CompletionTokens: 200, TotalTokens: 1200, CacheHitTokens: 900, CacheMissTokens: 100}}, "  · 1200 tok"},
 		{"usage-diagnostics", event.Event{Kind: event.Usage, Usage: &provider.Usage{PromptTokens: 1000, CompletionTokens: 200, TotalTokens: 1200}, CacheDiagnostics: &event.CacheDiagnostics{PrefixChanged: true, PrefixChangeReasons: []string{"tools"}}}, "cache prefix changed: tools"},
-		{"notice-info", event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: "compacted 8 messages �?summary"}, "  · compacted 8 messages �?summary"},
+		{"notice-info", event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: "compacted 8 messages → summary"}, "  · compacted 8 messages → summary"},
 		{"notice-warn", event.Event{Kind: event.Notice, Level: event.LevelWarn, Text: "response truncated: hit max output tokens"}, "  ! response truncated: hit max output tokens"},
 		{"phase", event.Event{Kind: event.Phase, Text: "planner · planning"}, "[planner · planning]"},
 	} {
@@ -342,7 +342,7 @@ func TestIngestEventRoutesByKind(t *testing.T) {
 		}
 	}
 
-	// A successful tool result is silent �?it only feeds the model.
+	// A successful tool result is silent — it only feeds the model.
 	m = newTestChatTUI()
 	m.ingestEvent(event.Event{Kind: event.ToolResult, Tool: event.Tool{Name: "read_file", Output: "contents"}})
 	if len(*m.pendingCommit) != 0 {
@@ -377,7 +377,7 @@ func TestUserBubbleEchoedImmediately(t *testing.T) {
 		t.Fatalf("bubble should be echoed to scrollback immediately, got %v", m.transcript)
 	}
 
-	// TurnStarted is emitted locally before the request �?it must not confirm.
+	// TurnStarted is emitted locally before the request — it must not confirm.
 	m.ingestEvent(event.Event{Kind: event.TurnStarted})
 	if !m.bubblePending {
 		t.Fatalf("TurnStarted should leave the send un-sendable, pending=%v", m.bubblePending)
@@ -385,7 +385,7 @@ func TestUserBubbleEchoedImmediately(t *testing.T) {
 
 	// The first real packet confirms the send; a reasoning packet also shows its
 	// live thinking marker.
-	m.ingestEvent(event.Event{Kind: event.Reasoning, Text: "thinking�?})
+	m.ingestEvent(event.Event{Kind: event.Reasoning, Text: "thinking…"})
 	if m.bubblePending {
 		t.Fatalf("first packet should confirm the send")
 	}
@@ -401,7 +401,7 @@ func TestUserBubbleIsLightweightTranscriptLine(t *testing.T) {
 
 	got := renderUserBubble("hello world", 80, false)
 	plain := ansi.Strip(got)
-	if !strings.Contains(plain, "�?hello world") {
+	if !strings.Contains(plain, "› hello world") {
 		t.Fatalf("user bubble missing prompt text: %q", plain)
 	}
 	if got == plain {
@@ -413,8 +413,8 @@ func TestUserBubbleIsLightweightTranscriptLine(t *testing.T) {
 }
 
 // TestUnsendDiscardsBufferedEvents proves that after an un-send (Esc before any
-// packet) the turn's already-buffered events are swallowed �?nothing reaches
-// scrollback �?and its TurnDone settles the model back to idle.
+// packet) the turn's already-buffered events are swallowed — nothing reaches
+// scrollback — and its TurnDone settles the model back to idle.
 func TestUnsendDiscardsBufferedEvents(t *testing.T) {
 	m := newTestChatTUI()
 	m.state = tuiRunning
@@ -436,8 +436,8 @@ func TestUnsendDiscardsBufferedEvents(t *testing.T) {
 }
 
 // TestAnswerTextStartingWithBracketStaysInAnswer locks in the win of the typed
-// event stream: model answer text starting with "[" �?a markdown link, a slice
-// literal, even a quoted "[�?· planning]" �?is a Text event, so it can never be
+// event stream: model answer text starting with "[" — a markdown link, a slice
+// literal, even a quoted "[… · planning]" — is a Text event, so it can never be
 // mistaken for a coordinator phase marker the way prefix-sniffing a flattened
 // byte stream once could. It stays in the answer buffer and renders as markdown.
 func TestAnswerTextStartingWithBracketStaysInAnswer(t *testing.T) {
@@ -482,7 +482,7 @@ func TestEchoLocalCommandAddsTranscriptMarker(t *testing.T) {
 	if len(*m.pendingCommit) != 1 {
 		t.Fatalf("pending commits = %d, want 1", len(*m.pendingCommit))
 	}
-	if got := (*m.pendingCommit)[0]; !strings.Contains(got, "�?/tree") {
+	if got := (*m.pendingCommit)[0]; !strings.Contains(got, "› /tree") {
 		t.Fatalf("command echo = %q, want /tree marker", got)
 	}
 }
@@ -753,7 +753,7 @@ func TestQueueNavigationWithArrowKeys(t *testing.T) {
 	up := tea.KeyPressMsg{Code: tea.KeyUp}
 	down := tea.KeyPressMsg{Code: tea.KeyDown}
 
-	// First �?should save draft and jump to last queued item.
+	// First ↑ should save draft and jump to last queued item.
 	model, _ := m.Update(up)
 	m = model.(chatTUI)
 	if got := m.input.Value(); got != "queued three" {
@@ -763,21 +763,21 @@ func TestQueueNavigationWithArrowKeys(t *testing.T) {
 		t.Fatalf("first up: cursor should be 2, got %d", m.queueEditCursor)
 	}
 
-	// Second �?should move to "queued two".
+	// Second ↑ should move to "queued two".
 	model, _ = m.Update(up)
 	m = model.(chatTUI)
 	if got := m.input.Value(); got != "queued two" {
 		t.Fatalf("second up: want %q, got %q", "queued two", got)
 	}
 
-	// �?should move back to "queued three".
+	// ↓ should move back to "queued three".
 	model, _ = m.Update(down)
 	m = model.(chatTUI)
 	if got := m.input.Value(); got != "queued three" {
 		t.Fatalf("down: want %q, got %q", "queued three", got)
 	}
 
-	// �?past the end should restore the draft.
+	// ↓ past the end should restore the draft.
 	model, _ = m.Update(down)
 	m = model.(chatTUI)
 	if got := m.input.Value(); got != "my draft" {
@@ -795,13 +795,13 @@ func TestQueueNavigationClampAtStart(t *testing.T) {
 	m.input.SetValue("draft")
 
 	up := tea.KeyPressMsg{Code: tea.KeyUp}
-	// First �?jumps to the only item.
+	// First ↑ jumps to the only item.
 	model, _ := m.Update(up)
 	m = model.(chatTUI)
 	if got := m.input.Value(); got != "only item" {
 		t.Fatalf("first up: want %q, got %q", "only item", got)
 	}
-	// Second �?should clamp at index 0 (not go negative).
+	// Second ↑ should clamp at index 0 (not go negative).
 	model, _ = m.Update(up)
 	m = model.(chatTUI)
 	if m.queueEditCursor != 0 {
@@ -912,8 +912,8 @@ func TestQueueIndicatorRendering(t *testing.T) {
 	// Highlight marker should appear for the browsed item.
 	m.queueEditCursor = 1
 	qi = m.renderQueueIndicator()
-	if !strings.Contains(qi, "�?) {
-		t.Fatalf("queue indicator should show �?for browsed item, got %q", qi)
+	if !strings.Contains(qi, "▸") {
+		t.Fatalf("queue indicator should show ▸ for browsed item, got %q", qi)
 	}
 }
 
@@ -1019,13 +1019,13 @@ func TestUnsendRestoresFoldedPastePlaceholder(t *testing.T) {
 	m.bubbleStartIdx = len(m.transcript)
 	m.commitLine("")
 	m.commitLine(renderUserBubble("expanded JSON", m.width, m.planMode))
-	m.pendingRestore = "[Pasted text #1 · 5 lines] 这是什�?"
+	m.pendingRestore = "[Pasted text #1 · 5 lines] 这是什么?"
 	m.bubblePending = true
 	m.state = tuiRunning
 
 	m.unsendPending()
 
-	if got := m.input.Value(); got != "[Pasted text #1 · 5 lines] 这是什�?" {
+	if got := m.input.Value(); got != "[Pasted text #1 · 5 lines] 这是什么?" {
 		t.Fatalf("restored input = %q", got)
 	}
 	if len(m.transcript) != m.bubbleStartIdx {
@@ -1200,7 +1200,7 @@ func TestCtrlCCopySelection(t *testing.T) {
 		t.Fatal("Ctrl+C on selection should return a cmd (clipboard + finalize)")
 	}
 
-	// Execute the command �?it should trigger the clipboard stub.
+	// Execute the command — it should trigger the clipboard stub.
 	cmd()
 	if copied != "hello" {
 		t.Errorf("clipboard should contain selected text %q, got %q", "hello", copied)
@@ -1267,8 +1267,8 @@ func TestTruncateSubject(t *testing.T) {
 	}{
 		{"short ASCII", "rm file", 60},
 		{"long ASCII", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", 60},
-		{"CJK at 60", "日本語の文章は通常、表示幅が広いため、端末の横幅を超えてしまうことがあります�?, 60},
-		{"CJK at 30", "日本語の文章は通常、表示幅が広いため、端末の横幅を超えてしまうことがあります�?, 30},
+		{"CJK at 60", "日本語の文章は通常、表示幅が広いため、端末の横幅を超えてしまうことがあります。", 60},
+		{"CJK at 30", "日本語の文章は通常、表示幅が広いため、端末の横幅を超えてしまうことがあります。", 30},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

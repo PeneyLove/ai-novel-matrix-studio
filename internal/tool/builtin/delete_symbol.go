@@ -77,7 +77,7 @@ func (d deleteSymbol) Execute(ctx context.Context, args json.RawMessage) (string
 
 	ext := strings.ToLower(filepath.Ext(p.Path))
 	if ext != ".go" {
-		return "", fmt.Errorf("delete_symbol only supports Go files â€?use delete_range for %s files", ext)
+		return "", fmt.Errorf("delete_symbol only supports Go files â€” use delete_range for %s files", ext)
 	}
 
 	m, fset, err := d.findSymbol(p.Path, p.Name, p.Kind, p.Parent)
@@ -188,7 +188,7 @@ func (d deleteSymbol) findSymbol(path, name, kind, parent string) (symbolMatch, 
 
 	if len(filtered) > 1 {
 		var b strings.Builder
-		fmt.Fprintf(&b, "Multiple matches for %q â€?disambiguate with kind/parent:\n", name)
+		fmt.Fprintf(&b, "Multiple matches for %q â€” disambiguate with kind/parent:\n", name)
 		for _, m := range filtered {
 			fmt.Fprintf(&b, "  line %d: %s %s", m.line, m.kind, m.name)
 			if m.parent != "" {
@@ -271,7 +271,7 @@ func collectSymbols(fset *token.FileSet, f *ast.File) []symbolMatch {
 							kind:     kind,
 							start:    ident.Pos(),
 							docStart: docStart,
-							end:      s.End(), // whole spec, incl. a multi-line value â€?ident.End() stops at the name
+							end:      s.End(), // whole spec, incl. a multi-line value â€” ident.End() stops at the name
 							line:     fset.Position(ident.Pos()).Line,
 							siblings: names,
 						})
@@ -285,7 +285,7 @@ func collectSymbols(fset *token.FileSet, f *ast.File) []symbolMatch {
 
 // specDoc returns the doc comment governing one spec of a GenDecl: the spec's own
 // doc when grouped (type/const/var (...)), else the GenDecl's doc for an
-// unparenthesized single declaration â€?where the parser attaches the comment to
+// unparenthesized single declaration â€” where the parser attaches the comment to
 // the GenDecl, not the spec. nil for an undocumented spec, and never the group's
 // own doc when deleting just one spec of a parenthesized block.
 func specDoc(gen *ast.GenDecl, own *ast.CommentGroup) *ast.CommentGroup {

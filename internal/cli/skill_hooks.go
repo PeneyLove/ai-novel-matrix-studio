@@ -52,7 +52,7 @@ func (m *chatTUI) runSkillSubcommand(input string) {
 		if _, ok := m.ctrl.RunSkill("/" + args[1]); ok {
 			hint = " (to run it, type /" + args[1] + ")"
 		}
-		m.notice("unknown /skills subcommand " + args[1] + hint + " â€?try: /skills, /skills manage, /skills show <name>, /skills enable <name>, /skills disable <name>, /skills new <name>, /skills paths")
+		m.notice("unknown /skills subcommand " + args[1] + hint + " â€” try: /skills, /skills manage, /skills show <name>, /skills enable <name>, /skills disable <name>, /skills new <name>, /skills paths")
 	}
 }
 
@@ -145,12 +145,12 @@ func (m *chatTUI) skillSaveEnabledChanges(changes map[string]bool) {
 			name, enabled = n, e
 		}
 		if enabled {
-			notice = "enabled skill " + name + " â€?refreshing session"
+			notice = "enabled skill " + name + " â€” refreshing session"
 		} else {
-			notice = "disabled skill " + name + " â€?refreshing session"
+			notice = "disabled skill " + name + " â€” refreshing session"
 		}
 	} else {
-		notice = fmt.Sprintf("updated %d skills â€?refreshing session", len(changes))
+		notice = fmt.Sprintf("updated %d skills â€” refreshing session", len(changes))
 	}
 	m.scheduleSkillSessionRefresh("skill toggle", notice)
 }
@@ -215,7 +215,7 @@ func (m *chatTUI) skillNew(name string, global bool) {
 		m.notice("skill new: " + err.Error())
 		return
 	}
-	m.notice(fmt.Sprintf("created skill %q at %s â€?edit it, then /new (or restart) to pick it up", name, path))
+	m.notice(fmt.Sprintf("created skill %q at %s â€” edit it, then /new (or restart) to pick it up", name, path))
 }
 
 func (m *chatTUI) skillPaths() {
@@ -247,9 +247,9 @@ func (m *chatTUI) runHooksSubcommand(input string) {
 			m.notice("hooks trust: " + err.Error())
 			return
 		}
-		m.notice("trusted this project's hooks â€?they load on the next /new or restart")
+		m.notice("trusted this project's hooks â€” they load on the next /new or restart")
 	default:
-		m.notice("unknown /hooks subcommand " + args[1] + " â€?try: /hooks, /hooks trust")
+		m.notice("unknown /hooks subcommand " + args[1] + " â€” try: /hooks, /hooks trust")
 	}
 }
 

@@ -15,7 +15,7 @@ func (discardWriteCloser) Close() error                { return nil }
 // context is cancelled even though the server never replies. The stdio child is
 // bound to the session, not the turn, so without this a hung server would hang a
 // cancelled turn forever. No reader goroutine runs here, so the reply never
-// arrives â€?only ctx cancellation can return the call.
+// arrives â€” only ctx cancellation can return the call.
 func TestStdioCallReturnsOnContextCancel(t *testing.T) {
 	tr := &stdioTransport{
 		name:    "hung",
@@ -38,6 +38,6 @@ func TestStdioCallReturnsOnContextCancel(t *testing.T) {
 			t.Fatal("cancelled call returned nil error")
 		}
 	case <-time.After(2 * time.Second):
-		t.Fatal("stdio call did not return within 2s of ctx cancel â€?a hung server hangs the turn")
+		t.Fatal("stdio call did not return within 2s of ctx cancel â€” a hung server hangs the turn")
 	}
 }

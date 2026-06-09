@@ -5,8 +5,8 @@
 // without touching disk, so a front-end can show an approval card or a
 // changed-files panel before the call runs.
 //
-// The line diff uses Myers' O(ND) algorithm â€?the same shortest-edit-script
-// approach git uses â€?so the hunks read the way a developer expects rather than
+// The line diff uses Myers' O(ND) algorithm â€” the same shortest-edit-script
+// approach git uses â€” so the hunks read the way a developer expects rather than
 // a naive longest-common-subsequence walk.
 package diff
 
@@ -65,7 +65,7 @@ func Build(path, oldText, newText string, kind Kind) Change {
 		// Change too large for an O(NÂ²) line diff (a big rewrite). Give cheap,
 		// order-insensitive tallies and omit the unreadable diff.
 		c.Added, c.Removed = approxTally(oldLines, newLines)
-		c.Diff = "(diff omitted: change too large to render â€?+" + itoa(c.Added) + " / -" + itoa(c.Removed) + " lines)"
+		c.Diff = "(diff omitted: change too large to render â€” +" + itoa(c.Added) + " / -" + itoa(c.Removed) + " lines)"
 		return c
 	}
 
@@ -81,7 +81,7 @@ func Build(path, oldText, newText string, kind Kind) Change {
 	return c
 }
 
-// approxTally counts added/removed lines by multiset difference â€?order-
+// approxTally counts added/removed lines by multiset difference â€” order-
 // insensitive but O(n+m), used when the exact diff is skipped for being too large.
 func approxTally(oldLines, newLines []string) (added, removed int) {
 	counts := make(map[string]int, len(oldLines))
@@ -102,7 +102,7 @@ func approxTally(oldLines, newLines []string) (added, removed int) {
 }
 
 // isBinary reports whether s looks non-textual. A NUL byte never appears in
-// UTF-8 text, so it is a cheap, reliable signal â€?the same heuristic git uses.
+// UTF-8 text, so it is a cheap, reliable signal â€” the same heuristic git uses.
 func isBinary(s string) bool { return strings.IndexByte(s, 0) >= 0 }
 
 // splitLines breaks s into lines without their terminators and reports whether
@@ -138,7 +138,7 @@ type op struct {
 
 // maxDiffEdits caps the edit distance Myers will explore. The trace it records is
 // O(D) snapshots of an O(D)-wide vector, so an unbounded D (a full rewrite of a
-// large file) is O(DÂ²) â‰?O(NÂ²) time and memory â€?gigabytes for a few-thousand-line
+// large file) is O(DÂ²) â‰ˆ O(NÂ²) time and memory â€” gigabytes for a few-thousand-line
 // rewrite, which would OOM the synchronous preview. Small edits converge well
 // below this regardless of file size; a change that exceeds it is a near-total
 // rewrite whose line-by-line diff is unreadable anyway, so we fall back to tallies.
@@ -146,7 +146,7 @@ const maxDiffEdits = 2000
 
 // myers returns the shortest edit script transforming a into b, line by line, and
 // ok=true. It records the search trace, then backtracks it into an ordered op
-// list. ok is false when the edit distance exceeds maxDiffEdits â€?the caller then
+// list. ok is false when the edit distance exceeds maxDiffEdits â€” the caller then
 // skips the rendered diff rather than pay O(NÂ²).
 func myers(a, b []string) ([]op, bool) {
 	n, m := len(a), len(b)
@@ -185,7 +185,7 @@ func myers(a, b []string) ([]op, bool) {
 			}
 		}
 	}
-	return nil, false // edit distance exceeded maxDiffEdits â€?caller falls back
+	return nil, false // edit distance exceeded maxDiffEdits â€” caller falls back
 }
 
 // backtrack walks the recorded trace from the end back to the origin,

@@ -223,7 +223,7 @@ func TestApprovalDeny(t *testing.T) {
 func TestApprovalSessionGrant(t *testing.T) {
 	c, ids, prompts := approvalIDs()
 	// Only the first call reaches the frontend (the session grant short-circuits
-	// the rest), so a single approval is all this needs â€?ranging would block on
+	// the rest), so a single approval is all this needs â€” ranging would block on
 	// a second ID that never arrives.
 	go func() { c.Approve(<-ids, true, true, false) }()
 

@@ -173,13 +173,13 @@ func renderSqrt(idx, arg string) string {
 	}
 	switch idx {
 	case "", "2":
-		return "âˆ? + arg
+		return "âˆš" + arg
 	case "3":
-		return "âˆ? + arg
+		return "âˆ›" + arg
 	case "4":
-		return "âˆ? + arg
+		return "âˆœ" + arg
 	}
-	return superscript(idx) + "âˆ? + arg
+	return superscript(idx) + "âˆš" + arg
 }
 
 func wrapIfCompound(s string) string {
@@ -335,38 +335,38 @@ var symbols = map[string]string{
 	"Gamma": "Î“", "Delta": "Î”", "Theta": "Î˜", "Lambda": "Î›", "Xi": "Î",
 	"Pi": "Î ", "Sigma": "Î£", "Upsilon": "Î¥", "Phi": "Î¦", "Psi": "Î¨", "Omega": "Î©",
 
-	"times": "Ã—", "div": "Ã·", "cdot": "Â·", "ast": "âˆ?, "star": "â‹?,
-	"pm": "Â±", "mp": "âˆ?, "oplus": "âŠ?, "ominus": "âŠ?, "otimes": "âŠ?,
-	"oslash": "âŠ?, "odot": "âŠ?, "circ": "âˆ?, "bullet": "â€?, "setminus": "âˆ?,
+	"times": "Ã—", "div": "Ã·", "cdot": "Â·", "ast": "âˆ—", "star": "â‹†",
+	"pm": "Â±", "mp": "âˆ“", "oplus": "âŠ•", "ominus": "âŠ–", "otimes": "âŠ—",
+	"oslash": "âŠ˜", "odot": "âŠ™", "circ": "âˆ˜", "bullet": "â€¢", "setminus": "âˆ–",
 
-	"leq": "â‰?, "le": "â‰?, "geq": "â‰?, "ge": "â‰?, "neq": "â‰?, "ne": "â‰?,
-	"equiv": "â‰?, "approx": "â‰?, "cong": "â‰?, "sim": "âˆ?, "simeq": "â‰?,
-	"propto": "âˆ?, "ll": "â‰?, "gg": "â‰?, "doteq": "â‰?, "asymp": "â‰?,
+	"leq": "â‰¤", "le": "â‰¤", "geq": "â‰¥", "ge": "â‰¥", "neq": "â‰ ", "ne": "â‰ ",
+	"equiv": "â‰¡", "approx": "â‰ˆ", "cong": "â‰…", "sim": "âˆ¼", "simeq": "â‰ƒ",
+	"propto": "âˆ", "ll": "â‰ª", "gg": "â‰«", "doteq": "â‰", "asymp": "â‰",
 
-	"leftarrow": "â†?, "rightarrow": "â†?, "to": "â†?, "gets": "â†?,
-	"leftrightarrow": "â†?, "Leftarrow": "â‡?, "Rightarrow": "â‡?,
-	"Leftrightarrow": "â‡?, "implies": "â‡?, "iff": "â‡?, "mapsto": "â†?,
-	"uparrow": "â†?, "downarrow": "â†?, "longrightarrow": "âŸ?, "longleftarrow": "âŸ?,
+	"leftarrow": "â†", "rightarrow": "â†’", "to": "â†’", "gets": "â†",
+	"leftrightarrow": "â†”", "Leftarrow": "â‡", "Rightarrow": "â‡’",
+	"Leftrightarrow": "â‡”", "implies": "â‡’", "iff": "â‡”", "mapsto": "â†¦",
+	"uparrow": "â†‘", "downarrow": "â†“", "longrightarrow": "âŸ¶", "longleftarrow": "âŸµ",
 
-	"sum": "âˆ?, "prod": "âˆ?, "coprod": "âˆ?, "int": "âˆ?, "iint": "âˆ?,
-	"iiint": "âˆ?, "oint": "âˆ?, "nabla": "âˆ?, "partial": "âˆ?,
-	"infty": "âˆ?, "sqrt": "âˆ?, "surd": "âˆ?,
+	"sum": "âˆ‘", "prod": "âˆ", "coprod": "âˆ", "int": "âˆ«", "iint": "âˆ¬",
+	"iiint": "âˆ­", "oint": "âˆ®", "nabla": "âˆ‡", "partial": "âˆ‚",
+	"infty": "âˆ", "sqrt": "âˆš", "surd": "âˆš",
 
-	"in": "âˆ?, "notin": "âˆ?, "ni": "âˆ?, "subset": "âŠ?, "supset": "âŠ?,
-	"subseteq": "âŠ?, "supseteq": "âŠ?, "cup": "âˆ?, "cap": "âˆ?,
-	"emptyset": "âˆ?, "varnothing": "âˆ?, "forall": "âˆ€", "exists": "âˆ?,
-	"nexists": "âˆ?, "neg": "Â¬", "lnot": "Â¬", "land": "âˆ?, "wedge": "âˆ?,
-	"lor": "âˆ?, "vee": "âˆ?,
+	"in": "âˆˆ", "notin": "âˆ‰", "ni": "âˆ‹", "subset": "âŠ‚", "supset": "âŠƒ",
+	"subseteq": "âŠ†", "supseteq": "âŠ‡", "cup": "âˆª", "cap": "âˆ©",
+	"emptyset": "âˆ…", "varnothing": "âˆ…", "forall": "âˆ€", "exists": "âˆƒ",
+	"nexists": "âˆ„", "neg": "Â¬", "lnot": "Â¬", "land": "âˆ§", "wedge": "âˆ§",
+	"lor": "âˆ¨", "vee": "âˆ¨",
 
-	"angle": "âˆ?, "perp": "âŠ?, "parallel": "âˆ?, "mid": "âˆ?, "nmid": "âˆ?,
-	"triangle": "â–?, "square": "â–?, "diamond": "â—?, "top": "âŠ?, "bot": "âŠ?,
-	"vdash": "âŠ?, "models": "âŠ?, "therefore": "âˆ?, "because": "âˆ?,
+	"angle": "âˆ ", "perp": "âŠ¥", "parallel": "âˆ¥", "mid": "âˆ£", "nmid": "âˆ¤",
+	"triangle": "â–³", "square": "â–¡", "diamond": "â—‡", "top": "âŠ¤", "bot": "âŠ¥",
+	"vdash": "âŠ¢", "models": "âŠ¨", "therefore": "âˆ´", "because": "âˆµ",
 
-	"ldots": "â€?, "dots": "â€?, "cdots": "â‹?, "vdots": "â‹?, "ddots": "â‹?,
-	"prime": "â€?, "degree": "Â°", "deg": "Â°", "hbar": "â„?, "ell": "â„?,
-	"Re": "â„?, "Im": "â„?, "aleph": "â„?, "wp": "â„?,
-	"langle": "âŸ?, "rangle": "âŸ?, "lceil": "âŒ?, "rceil": "âŒ?,
-	"lfloor": "âŒ?, "rfloor": "âŒ?, "backslash": "\\",
+	"ldots": "â€¦", "dots": "â€¦", "cdots": "â‹¯", "vdots": "â‹®", "ddots": "â‹±",
+	"prime": "â€²", "degree": "Â°", "deg": "Â°", "hbar": "â„", "ell": "â„“",
+	"Re": "â„œ", "Im": "â„‘", "aleph": "â„µ", "wp": "â„˜",
+	"langle": "âŸ¨", "rangle": "âŸ©", "lceil": "âŒˆ", "rceil": "âŒ‰",
+	"lfloor": "âŒŠ", "rfloor": "âŒ‹", "backslash": "\\",
 
 	"quad": "  ", "qquad": "    ", "space": " ", "thinspace": " ",
 	"lim": "lim", "sin": "sin", "cos": "cos", "tan": "tan", "log": "log",
@@ -376,30 +376,30 @@ var symbols = map[string]string{
 
 var accents = map[string]rune{
 	"hat": 'Ì‚', "widehat": 'Ì‚', "bar": 'Ì„', "overline": 'Ì„',
-	"vec": 'âƒ?, "dot": 'Ì‡', "ddot": 'Ìˆ', "tilde": 'Ìƒ',
+	"vec": 'âƒ—', "dot": 'Ì‡', "ddot": 'Ìˆ', "tilde": 'Ìƒ',
 	"widetilde": 'Ìƒ', "acute": 'Ì', "grave": 'Ì€', "check": 'ÌŒ',
 }
 
 var superMap = map[rune]rune{
-	'0': 'â?, '1': 'Â¹', '2': 'Â²', '3': 'Â³', '4': 'â?, '5': 'â?, '6': 'â?,
-	'7': 'â?, '8': 'â?, '9': 'â?, '+': 'â?, '-': 'â?, '=': 'â?, '(': 'â?,
-	')': 'â?, 'a': 'áµ?, 'b': 'áµ?, 'c': 'á¶?, 'd': 'áµ?, 'e': 'áµ?, 'f': 'á¶?,
-	'g': 'áµ?, 'h': 'Ê°', 'i': 'â?, 'j': 'Ê²', 'k': 'áµ?, 'l': 'Ë¡', 'm': 'áµ?,
-	'n': 'â?, 'o': 'áµ?, 'p': 'áµ?, 'r': 'Ê³', 's': 'Ë¢', 't': 'áµ?, 'u': 'áµ?,
-	'v': 'áµ?, 'w': 'Ê·', 'x': 'Ë£', 'y': 'Ê¸', 'z': 'á¶?,
+	'0': 'â°', '1': 'Â¹', '2': 'Â²', '3': 'Â³', '4': 'â´', '5': 'âµ', '6': 'â¶',
+	'7': 'â·', '8': 'â¸', '9': 'â¹', '+': 'âº', '-': 'â»', '=': 'â¼', '(': 'â½',
+	')': 'â¾', 'a': 'áµƒ', 'b': 'áµ‡', 'c': 'á¶œ', 'd': 'áµˆ', 'e': 'áµ‰', 'f': 'á¶ ',
+	'g': 'áµ', 'h': 'Ê°', 'i': 'â±', 'j': 'Ê²', 'k': 'áµ', 'l': 'Ë¡', 'm': 'áµ',
+	'n': 'â¿', 'o': 'áµ’', 'p': 'áµ–', 'r': 'Ê³', 's': 'Ë¢', 't': 'áµ—', 'u': 'áµ˜',
+	'v': 'áµ›', 'w': 'Ê·', 'x': 'Ë£', 'y': 'Ê¸', 'z': 'á¶»',
 }
 
 var subMap = map[rune]rune{
-	'0': 'â‚€', '1': 'â‚?, '2': 'â‚?, '3': 'â‚?, '4': 'â‚?, '5': 'â‚?, '6': 'â‚?,
-	'7': 'â‚?, '8': 'â‚?, '9': 'â‚?, '+': 'â‚?, '-': 'â‚?, '=': 'â‚?, '(': 'â‚?,
-	')': 'â‚?, 'a': 'â‚?, 'e': 'â‚?, 'h': 'â‚?, 'i': 'áµ?, 'j': 'â±?, 'k': 'â‚?,
-	'l': 'â‚?, 'm': 'â‚?, 'n': 'â‚?, 'o': 'â‚?, 'p': 'â‚?, 'r': 'áµ?, 's': 'â‚?,
-	't': 'â‚?, 'u': 'áµ?, 'v': 'áµ?, 'x': 'â‚?,
+	'0': 'â‚€', '1': 'â‚', '2': 'â‚‚', '3': 'â‚ƒ', '4': 'â‚„', '5': 'â‚…', '6': 'â‚†',
+	'7': 'â‚‡', '8': 'â‚ˆ', '9': 'â‚‰', '+': 'â‚Š', '-': 'â‚‹', '=': 'â‚Œ', '(': 'â‚',
+	')': 'â‚', 'a': 'â‚', 'e': 'â‚‘', 'h': 'â‚•', 'i': 'áµ¢', 'j': 'â±¼', 'k': 'â‚–',
+	'l': 'â‚—', 'm': 'â‚˜', 'n': 'â‚™', 'o': 'â‚’', 'p': 'â‚š', 'r': 'áµ£', 's': 'â‚›',
+	't': 'â‚œ', 'u': 'áµ¤', 'v': 'áµ¥', 'x': 'â‚“',
 }
 
 var blackboardCaps = map[rune]rune{
-	'A': 'ğ”¸', 'B': 'ğ”¹', 'C': 'â„?, 'D': 'ğ”»', 'E': 'ğ”¼', 'F': 'ğ”½', 'G': 'ğ”¾',
-	'H': 'â„?, 'I': 'ğ•€', 'J': 'ğ•', 'K': 'ğ•‚', 'L': 'ğ•ƒ', 'M': 'ğ•„', 'N': 'â„?,
-	'O': 'ğ•†', 'P': 'â„?, 'Q': 'â„?, 'R': 'â„?, 'S': 'ğ•Š', 'T': 'ğ•‹', 'U': 'ğ•Œ',
-	'V': 'ğ•', 'W': 'ğ•', 'X': 'ğ•', 'Y': 'ğ•', 'Z': 'â„?,
+	'A': 'ğ”¸', 'B': 'ğ”¹', 'C': 'â„‚', 'D': 'ğ”»', 'E': 'ğ”¼', 'F': 'ğ”½', 'G': 'ğ”¾',
+	'H': 'â„', 'I': 'ğ•€', 'J': 'ğ•', 'K': 'ğ•‚', 'L': 'ğ•ƒ', 'M': 'ğ•„', 'N': 'â„•',
+	'O': 'ğ•†', 'P': 'â„™', 'Q': 'â„š', 'R': 'â„', 'S': 'ğ•Š', 'T': 'ğ•‹', 'U': 'ğ•Œ',
+	'V': 'ğ•', 'W': 'ğ•', 'X': 'ğ•', 'Y': 'ğ•', 'Z': 'â„¤',
 }

@@ -110,7 +110,7 @@ func isDeepSeekBaseURL(baseURL string) bool {
 }
 
 // bufPool reuses byte buffers for JSON-marshalled request bodies. Each turn
-// allocates a buffer, marshals the request, and sends it â€?pooling avoids the
+// allocates a buffer, marshals the request, and sends it â€” pooling avoids the
 // GC churn from repeated alloc/free of ~10-100KB buffers. The pool is
 // provider-level (not global) so OpenAI and Anthropic don't compete.
 var bufPool = sync.Pool{
@@ -149,7 +149,7 @@ func (c *client) Stream(ctx context.Context, req provider.Request) (<-chan provi
 }
 
 // maxStreamReconnects bounds how many times a mid-stream connection drop is
-// replayed from scratch before the error is surfaced â€?each replay re-runs the
+// replayed from scratch before the error is surfaced â€” each replay re-runs the
 // whole request (cheap under prompt caching, but not free).
 const maxStreamReconnects = 3
 
@@ -180,7 +180,7 @@ func (c *client) streamWithReconnect(ctx context.Context, resp *http.Response, n
 func (c *client) buildRequest(req provider.Request) chatRequest {
 	// Repair tool-call pairing before sending: an interrupted/resumed history can
 	// carry an assistant tool_calls turn whose results never landed, which DeepSeek
-	// rejects with a 400 ("must be followed by tool messages â€?).
+	// rejects with a 400 ("must be followed by tool messages â€¦").
 	src := provider.SanitizeToolPairing(req.Messages)
 	msgs := make([]chatMessage, len(src))
 	for i, m := range src {
@@ -233,13 +233,13 @@ func (c *client) buildRequest(req provider.Request) chatRequest {
 // tool-call fragments accumulate by index and emit complete on [DONE], and a
 // ChunkToolCallStart fires the moment a call's name is known. It returns whether
 // any model output was forwarded (so the caller can decide a replay is safe) and
-// the first fatal error â€?a nil error means the stream reached [DONE].
+// the first fatal error â€” a nil error means the stream reached [DONE].
 func (c *client) readStream(ctx context.Context, resp *http.Response, out chan<- provider.Chunk) (emitted bool, _ error) {
 	defer resp.Body.Close()
 
 	// Close the response body when the context is canceled so scanner.Scan()
 	// unblocks instead of hanging on a stalled connection. done lets the goroutine
-	// exit when readStream returns normally â€?otherwise it outlives the call, and
+	// exit when readStream returns normally â€” otherwise it outlives the call, and
 	// blocks forever on a non-cancellable context whose Done() is nil.
 	done := make(chan struct{})
 	defer close(done)
@@ -349,7 +349,8 @@ func (c *client) readStream(ctx context.Context, resp *http.Response, out chan<-
 		tc := acc[idx]
 		if tc.ID == "" {
 			// Some OpenAI-compatible gateways stream tool calls by index with no id.
-			// Synthesize a stable one so the result can be paired back to its call â€?			// an empty tool_call_id collapses multi-tool turns downstream.
+			// Synthesize a stable one so the result can be paired back to its call â€”
+			// an empty tool_call_id collapses multi-tool turns downstream.
 			tc.ID = fmt.Sprintf("call_%d", idx)
 		}
 		out <- provider.Chunk{Type: provider.ChunkToolCall, ToolCall: tc}
@@ -421,7 +422,7 @@ type chatMessage struct {
 	ToolCallID string         `json:"tool_call_id,omitempty"`
 	Name       string         `json:"name,omitempty"`
 	// no reasoning_content field: it is a response-only signal and is never sent
-	// back upstream â€?re-uploading it is paid prompt input.
+	// back upstream â€” re-uploading it is paid prompt input.
 }
 
 type chatTool struct {
@@ -461,7 +462,7 @@ type streamResponse struct {
 }
 
 // wireUsage covers both DeepSeek's top-level cache fields and the
-// OpenAI/MiMo nested details â€?normaliseUsage chooses whichever side
+// OpenAI/MiMo nested details â€” normaliseUsage chooses whichever side
 // reports values.
 type wireUsage struct {
 	PromptTokens          int `json:"prompt_tokens"`

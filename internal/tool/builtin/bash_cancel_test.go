@@ -11,7 +11,7 @@ import (
 )
 
 // TestBashCancelReturnsPromptly proves a cancelled bash run stops fast instead of
-// blocking for the command's natural duration â€?the process-tree kill path.
+// blocking for the command's natural duration â€” the process-tree kill path.
 func TestBashCancelReturnsPromptly(t *testing.T) {
 	bt, ok := tool.LookupBuiltin("bash")
 	if !ok {
@@ -44,9 +44,9 @@ func TestBashCancelReturnsPromptly(t *testing.T) {
 	}
 	elapsed := time.Since(start)
 
-	// Must have run until the cancel (â‰?~300ms) â€?not failed instantly.
+	// Must have run until the cancel (â‰¥ ~300ms) â€” not failed instantly.
 	if elapsed < 250*time.Millisecond {
-		t.Fatalf("command exited too fast (%v) â€?it didn't actually run; err=%v", elapsed, err)
+		t.Fatalf("command exited too fast (%v) â€” it didn't actually run; err=%v", elapsed, err)
 	}
 	if err == nil {
 		t.Error("expected an error after cancel, got nil")

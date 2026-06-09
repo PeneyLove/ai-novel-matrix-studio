@@ -19,7 +19,7 @@ func TestRenderSkillListUsesSharedVisualLanguage(t *testing.T) {
 		{Name: "explore", Description: strings.Repeat("long ", 30), Scope: skill.ScopeProject},
 		{Name: "deep", Description: "run in isolation", Scope: skill.ScopeGlobal, RunAs: skill.RunSubagent},
 	}, map[string]bool{"explore": true})
-	for _, want := range []string{"skills (2)", "/explore", "(project)", "â€?, "/deep", "subagent", "disabled", "invoke:"} {
+	for _, want := range []string{"skills (2)", "/explore", "(project)", "â€¦", "/deep", "subagent", "disabled", "invoke:"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("skill list missing %q:\n%s", want, got)
 		}
@@ -48,7 +48,7 @@ func TestRenderSkillShowCapsLongBody(t *testing.T) {
 func TestViewProtectLinesCompactsLongBodyLines(t *testing.T) {
 	got := viewProtectLines(strings.Repeat("x", 80)+"\nshort", 20)
 	lines := strings.Split(got, "\n")
-	if len(lines) != 2 || !strings.HasSuffix(lines[0], "â€?) || visibleWidth(lines[0]) > 20 || lines[1] != "short" {
+	if len(lines) != 2 || !strings.HasSuffix(lines[0], "â€¦") || visibleWidth(lines[0]) > 20 || lines[1] != "short" {
 		t.Fatalf("protected lines = %q", got)
 	}
 }
@@ -78,7 +78,7 @@ func TestRenderOutputStylesUsesActiveStatus(t *testing.T) {
 		{Name: "concise", Description: "short answers", Builtin: true},
 		{Name: "team", Description: strings.Repeat("custom ", 20), Builtin: false},
 	}, "team")
-	for _, want := range []string{"output styles", "concise", "(builtin)", "team", "(custom)", "active", "â€?} {
+	for _, want := range []string{"output styles", "concise", "(builtin)", "team", "(custom)", "active", "â€¦"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("output style view missing %q:\n%s", want, got)
 		}
@@ -92,7 +92,7 @@ func TestRenderOutputStylesUsesActiveStatus(t *testing.T) {
 func TestRenderModelsUsesActiveStatus(t *testing.T) {
 	width := 72
 	got := renderModels(width, []string{"deepseek/v4", "openai/really-long-model-name-" + strings.Repeat("x", 80)}, "deepseek/v4")
-	for _, want := range []string{"models", "deepseek/v4", "active", "â€?, "switch with /model"} {
+	for _, want := range []string{"models", "deepseek/v4", "active", "â€¦", "switch with /model"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("model view missing %q:\n%s", want, got)
 		}
@@ -107,7 +107,7 @@ func TestRenderHooksUsesSharedVisualLanguage(t *testing.T) {
 		Event:      hook.PreToolUse,
 		Scope:      hook.ScopeProject,
 	}}, false, true)
-	for _, want := range []string{"hooks (1 active)", "PreToolUse", "project", "â€?, "not trusted", "/hooks trust"} {
+	for _, want := range []string{"hooks (1 active)", "PreToolUse", "project", "â€¦", "not trusted", "/hooks trust"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("hooks view missing %q:\n%s", want, got)
 		}

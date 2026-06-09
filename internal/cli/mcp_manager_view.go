@@ -39,7 +39,7 @@ func (p *mcpManager) render(width int) string {
 func (p *mcpManager) footerHint() string {
 	switch p.stage {
 	case mcpStageDetail:
-		return "â†?â†?navigate Â· Enter to select Â· Esc to back"
+		return "â†‘/â†“ navigate Â· Enter to select Â· Esc to back"
 	case mcpStageTools, mcpStageLogs:
 		return "Esc to back"
 	case mcpStageMode:
@@ -48,9 +48,9 @@ func (p *mcpManager) footerHint() string {
 		return "Enter to select Â· y confirm Â· n cancel Â· Esc to back"
 	default:
 		if len(p.snapshot.servers) == 0 {
-			return "â†?â†?navigate Â· Enter to confirm Â· Esc to cancel"
+			return "â†‘/â†“ navigate Â· Enter to confirm Â· Esc to cancel"
 		}
-		return "â†?â†?navigate Â· Enter for details Â· Esc to close"
+		return "â†‘/â†“ navigate Â· Enter for details Â· Esc to close"
 	}
 }
 
@@ -67,7 +67,7 @@ func (p *mcpManager) renderList(width int) string {
 	}
 	start, end := visibleRange(len(p.snapshot.servers), p.sel, mcpListMaxRows)
 	if start > 0 {
-		fmt.Fprintf(&b, "%s\n", viewMeta(fmt.Sprintf("â†?%d more above", start)))
+		fmt.Fprintf(&b, "%s\n", viewMeta(fmt.Sprintf("â†‘ %d more above", start)))
 	}
 	lastGroup := ""
 	for i := start; i < end; i++ {
@@ -90,7 +90,7 @@ func (p *mcpManager) renderList(width int) string {
 		b.WriteString(p.renderListRow(i, s, width) + "\n")
 	}
 	if end < len(p.snapshot.servers) {
-		fmt.Fprintf(&b, "%s\n", viewMeta(fmt.Sprintf("â†?%d more below", len(p.snapshot.servers)-end)))
+		fmt.Fprintf(&b, "%s\n", viewMeta(fmt.Sprintf("â†“ %d more below", len(p.snapshot.servers)-end)))
 	}
 	return strings.TrimRight(b.String(), "\n")
 }
@@ -98,7 +98,7 @@ func (p *mcpManager) renderList(width int) string {
 func (p *mcpManager) renderListRow(i int, s mcpServerView, width int) string {
 	prefix := "    "
 	if i == p.sel {
-		prefix = accent("  â€?")
+		prefix = accent("  â€º ")
 	}
 	nameWidth := min(28, max(12, width/3))
 	name := compactMiddle(s.Name, nameWidth)
@@ -335,17 +335,17 @@ func writeMCPDetailField(b *strings.Builder, label, value string) {
 func mcpStatusLabel(v mcpServerView) string {
 	switch {
 	case v.Status == "connected":
-		return green("âœ?connected")
+		return green("âœ“ connected")
 	case v.Status == "failed" && mcpAuthStatus(v) == mcpdiag.AuthRequired:
-		return yellow("âš?needs authentication")
+		return yellow("âš  needs authentication")
 	case v.Status == "failed":
-		return red("âœ?failed")
+		return red("âœ• failed")
 	case v.Status == "deferred":
-		return "â—?connect on use"
+		return "â—‹ connect on use"
 	case v.Status == "initializing":
-		return "â—?connecting..."
+		return "â—Œ connecting..."
 	case v.Status == "disabled":
-		return "â—?disabled"
+		return "â—‹ disabled"
 	default:
 		return viewMeta("unknown")
 	}
@@ -354,9 +354,9 @@ func mcpStatusLabel(v mcpServerView) string {
 func mcpAuthLabel(v mcpServerView) string {
 	switch {
 	case v.Status == "connected":
-		return green("âœ?authenticated")
+		return green("âœ“ authenticated")
 	case mcpAuthStatus(v) == mcpdiag.AuthRequired:
-		return red("âœ?not authenticated")
+		return red("âœ• not authenticated")
 	case mcpAuthStatus(v) == mcpdiag.AuthPossible:
 		return yellow("may need authorization")
 	default:

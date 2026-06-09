@@ -12,7 +12,7 @@ import (
 )
 
 // mcpJSONFile is the project-root file Claude Code calls .mcp.json. Reasonix reads
-// it so an MCP server already configured for Claude works here unchanged â€?the
+// it so an MCP server already configured for Claude works here unchanged â€” the
 // server specs map field-for-field onto PluginEntry.
 const mcpJSONFile = ".mcp.json"
 
@@ -80,9 +80,9 @@ func legacyConfigPath() string {
 // loadLegacyMCP reads the v0.x ~/.reasonix/config.json and returns its enabled
 // mcpServers as PluginEntry values (servers listed in its mcpDisabled are
 // skipped), so upgrading from v0.x keeps MCP servers working without rewriting
-// them as [[plugins]]. Absent or malformed â†?nil: a stale legacy file must never
+// them as [[plugins]]. Absent or malformed â†’ nil: a stale legacy file must never
 // block startup, and it is the lowest-priority source anyway (the v2 config and
-// .mcp.json win on a name collision â€?see Load).
+// .mcp.json win on a name collision â€” see Load).
 func loadLegacyMCP(path string) []PluginEntry {
 	if path == "" {
 		return nil

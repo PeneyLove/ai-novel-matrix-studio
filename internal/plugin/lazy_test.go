@@ -15,8 +15,8 @@ import (
 
 // helperSpec returns a Spec that re-invokes this test binary as a minimal MCP
 // stdio server (see TestHelperProcess in plugin_test.go). Reused across every
-// lazy_test case so the helper-process contract â€?"echo: <msg>" responder with
-// tools/list exposing echo and zed â€?stays the single source of truth.
+// lazy_test case so the helper-process contract â€” "echo: <msg>" responder with
+// tools/list exposing echo and zed â€” stays the single source of truth.
 func helperSpec() Spec {
 	return Spec{
 		Name:    "mock",
@@ -29,7 +29,7 @@ func helperSpec() Spec {
 // writeMockCache primes the on-disk cache for spec with the two tools the
 // helper subprocess exposes (echo, zed). We mirror the real schemas so a
 // cache-hit lazyTool surfaces the same Schema() bytes that a freshly handshaked
-// remoteTool would â€?the test for "model sees real schema before any Execute"
+// remoteTool would â€” the test for "model sees real schema before any Execute"
 // depends on this equivalence.
 func writeMockCache(t *testing.T, spec Spec) {
 	t.Helper()
@@ -56,7 +56,7 @@ func writeMockCache(t *testing.T, spec Spec) {
 
 // waitForServer polls host.ServerNames() until name appears or timeout
 // elapses. The lazy path spawns via a goroutine, so tests need a bounded poll
-// rather than a fixed sleep â€?five seconds covers a slow CI subprocess fork
+// rather than a fixed sleep â€” five seconds covers a slow CI subprocess fork
 // while still aborting clearly on a real hang.
 func waitForServer(t *testing.T, host *Host, name string, timeout time.Duration) {
 	t.Helper()
@@ -76,7 +76,7 @@ func waitForServer(t *testing.T, host *Host, name string, timeout time.Duration)
 // pre-populated, the model can see real schemas before any spawn, and the
 // first Execute synchronously handshakes, swaps the placeholder for the real
 // *remoteTool, and forwards through in one turn. This is the "warm start"
-// payoff â€?lazy plugins should be indistinguishable from eager once they have
+// payoff â€” lazy plugins should be indistinguishable from eager once they have
 // a cache.
 func TestLazyCacheHitSyncSpawn(t *testing.T) {
 	redirectCache(t)
@@ -118,7 +118,7 @@ func TestLazyCacheHitSyncSpawn(t *testing.T) {
 	}
 
 	// First Execute: cache-hit path runs the handshake synchronously and
-	// forwards to the real tool â€?the user sees "echo: hi" in this same turn.
+	// forwards to the real tool â€” the user sees "echo: hi" in this same turn.
 	out, err := echoBefore.Execute(ctx, json.RawMessage(`{"msg":"hi"}`))
 	if err != nil {
 		t.Fatalf("Execute: %v", err)
@@ -127,7 +127,7 @@ func TestLazyCacheHitSyncSpawn(t *testing.T) {
 		t.Fatalf("Execute result = %q, want %q", out, "echo: hi")
 	}
 
-	// The spawn actually happened â€?host now lists the mock server.
+	// The spawn actually happened â€” host now lists the mock server.
 	names := host.ServerNames()
 	if len(names) != 1 || names[0] != "mock" {
 		t.Fatalf("host.ServerNames() = %v, want [mock]", names)
@@ -186,7 +186,7 @@ func TestLazyToolsetAppliesSpecReadOnlyOverrideToCachedTools(t *testing.T) {
 // single "connect" placeholder shows up; first Execute returns a retry hint and
 // kicks the spawn async; once that spawn finishes, the registry swaps to the
 // real tools under their real names, and the connect stub is dropped. This is
-// the "model warm-up" contract â€?the model must not see stale schemas, so we
+// the "model warm-up" contract â€” the model must not see stale schemas, so we
 // refuse to forward the first call and instead ask for one more turn.
 func TestLazyCacheMissAsyncSpawn(t *testing.T) {
 	redirectCache(t)
@@ -211,7 +211,7 @@ func TestLazyCacheMissAsyncSpawn(t *testing.T) {
 		t.Fatalf("registry missing mcp__mock__connect; names=%v", reg.Names())
 	}
 
-	// First Execute must NOT forward â€?schema is unknown, so the model would
+	// First Execute must NOT forward â€” schema is unknown, so the model would
 	// be feeding garbage. It returns a retry hint and triggers spawn async.
 	_, err := connect.Execute(ctx, json.RawMessage(`{}`))
 	if err == nil {
@@ -312,7 +312,7 @@ func TestLazyBackgroundKick(t *testing.T) {
 		reg.Add(lt)
 	}
 
-	// Wait for the background spawn to complete â€?proof that kick fired off
+	// Wait for the background spawn to complete â€” proof that kick fired off
 	// the handshake without us calling Execute.
 	waitForServer(t, host, "mock", 5*time.Second)
 
@@ -328,7 +328,7 @@ func TestLazyBackgroundKick(t *testing.T) {
 		t.Fatalf("Execute result = %q, want %q", out, "echo: bg")
 	}
 
-	// One spawn, not two â€?kick + Execute must collapse onto the same run.
+	// One spawn, not two â€” kick + Execute must collapse onto the same run.
 	if names := host.ServerNames(); len(names) != 1 {
 		t.Fatalf("host.ServerNames() = %v, want exactly one 'mock'", names)
 	}
@@ -345,7 +345,7 @@ func TestLazyBackgroundKick(t *testing.T) {
 // synchronously; the losers observe spawnInFlight and return a "retry next
 // turn" hint rather than blocking. We assert that contract too: at least one
 // goroutine got "echo: r<i>", and the racers that didn't win got the
-// initializing hint â€?never a spurious error and never a stale or partial
+// initializing hint â€” never a spurious error and never a stale or partial
 // result. After all goroutines complete, a fresh Execute hits spawnReady and
 // forwards normally.
 func TestLazyConcurrentExecuteOnlyOneSpawn(t *testing.T) {
@@ -381,7 +381,7 @@ func TestLazyConcurrentExecuteOnlyOneSpawn(t *testing.T) {
 	wg.Wait()
 
 	// Every result must be either the real "echo: rN" output or the explicit
-	// initializing hint â€?nothing else. At least one goroutine (the racing
+	// initializing hint â€” nothing else. At least one goroutine (the racing
 	// winner) must succeed, otherwise the state machine deadlocked the win.
 	winners := 0
 	for i, err := range errs {
@@ -392,16 +392,16 @@ func TestLazyConcurrentExecuteOnlyOneSpawn(t *testing.T) {
 		case err != nil && strings.Contains(err.Error(), "initializing"):
 			// expected loser
 		default:
-			t.Errorf("goroutine %d: result=%q err=%v â€?must be either %q or an 'initializing' hint", i, results[i], err, want)
+			t.Errorf("goroutine %d: result=%q err=%v â€” must be either %q or an 'initializing' hint", i, results[i], err, want)
 		}
 	}
 	if winners == 0 {
-		t.Fatal("no goroutine succeeded â€?at least the race winner must forward through")
+		t.Fatal("no goroutine succeeded â€” at least the race winner must forward through")
 	}
 
 	// Exactly one Client landed on the host: the mu+state gate kept the 9
 	// losers off the spawn path. This is the headline invariant of the lazy
-	// design â€?racing the first call must not fork-bomb the subprocess.
+	// design â€” racing the first call must not fork-bomb the subprocess.
 	mockCount := 0
 	for _, n := range host.ServerNames() {
 		if n == "mock" {
@@ -426,7 +426,7 @@ func TestLazyConcurrentExecuteOnlyOneSpawn(t *testing.T) {
 // TestLazyHandshakeFailureSurfaced covers the spawnFailed sticky branch: a
 // bogus command can't start, the first Execute returns an error that mentions
 // "failed to start", and a second Execute returns the SAME error (the state
-// machine doesn't retry â€?we don't want to fork a doomed subprocess every
+// machine doesn't retry â€” we don't want to fork a doomed subprocess every
 // turn until the user fixes config).
 func TestLazyHandshakeFailureSurfaced(t *testing.T) {
 	redirectCache(t)
@@ -435,7 +435,7 @@ func TestLazyHandshakeFailureSurfaced(t *testing.T) {
 
 	// Hand-craft a cache so the cache-HIT branch runs (synchronous spawn,
 	// failure surfaces directly to the first caller rather than via a retry
-	// hint). The SpecHash must match â€?otherwise LoadCachedSchema would miss
+	// hint). The SpecHash must match â€” otherwise LoadCachedSchema would miss
 	// and we'd be exercising the async path.
 	cs := &CachedSchema{
 		SpecHash:     SpecFingerprint(spec),
@@ -470,7 +470,8 @@ func TestLazyHandshakeFailureSurfaced(t *testing.T) {
 		t.Fatalf("error %q should mention 'failed to start'", err1.Error())
 	}
 
-	// Second call: same error, no retry. spawnFailed is sticky on purpose â€?	// the operator must fix config and restart, not have us fork-bomb on
+	// Second call: same error, no retry. spawnFailed is sticky on purpose â€”
+	// the operator must fix config and restart, not have us fork-bomb on
 	// every turn.
 	_, err2 := doit.Execute(ctx, json.RawMessage(`{}`))
 	if err2 == nil {

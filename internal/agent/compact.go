@@ -41,7 +41,7 @@ const (
 // structured briefing it can keep relying on after the originals are dropped.
 // The section layout mirrors what a coding agent actually needs to resume work
 // mid-task: the goal verbatim, the concrete state of the code, and an explicit
-// next step â€?so the post-compaction turn doesn't lose the thread or re-derive
+// next step â€” so the post-compaction turn doesn't lose the thread or re-derive
 // decisions already made.
 const summarySystemPrompt = `You are compacting the earlier part of a coding agent's conversation to save context.
 The agent will keep ONLY your summary (the original messages are dropped), so it must be able to resume the task from it alone.
@@ -51,13 +51,13 @@ Write a briefing under these exact headings, omitting a heading only if it has n
 The user's request and intent, kept close to their own words. Include explicit requirements, constraints, and preferences.
 
 ## Decisions & rationale
-Key choices made so far and why â€?so they are not re-litigated or reversed.
+Key choices made so far and why â€” so they are not re-litigated or reversed.
 
 ## Files & code
 Files read or modified, with the specific facts that matter: signatures, line locations, data shapes, and exact edits applied. Be concrete; this is what lets the agent act without re-reading everything.
 
 ## Commands & outcomes
-Commands run (builds, tests, git) and their relevant results â€?what passed, what failed, and the error text that matters.
+Commands run (builds, tests, git) and their relevant results â€” what passed, what failed, and the error text that matters.
 
 ## Errors & fixes
 Problems hit and how they were resolved (or not), so the same dead ends are not repeated.
@@ -65,7 +65,7 @@ Problems hit and how they were resolved (or not), so the same dead ends are not 
 ## Pending & next step
 What is still in progress or unstarted, and the single most concrete next action to take.
 
-Rules: be terse â€?bullet points and fragments, not prose. Preserve identifiers, paths, and numbers exactly. Do NOT invent anything not present in the messages; if something is unknown, leave it out rather than guessing.`
+Rules: be terse â€” bullet points and fragments, not prose. Preserve identifiers, paths, and numbers exactly. Do NOT invent anything not present in the messages; if something is unknown, leave it out rather than guessing.`
 
 // maybeCompact compacts the session when the last turn's prompt has grown to the
 // configured fraction of the context window. It is a no-op when compaction is
@@ -77,7 +77,7 @@ func (a *Agent) maybeCompact(ctx context.Context, u *provider.Usage) {
 	high := int(float64(a.contextWindow) * a.compactRatio)
 	soft := int(float64(a.contextWindow) * a.softCompactRatio)
 	// Between the soft ratio and the trigger, report growing context once without
-	// rewriting the prefix â€?a compaction here would needlessly crater the cache.
+	// rewriting the prefix â€” a compaction here would needlessly crater the cache.
 	if u.PromptTokens >= soft && u.PromptTokens < high && !a.softCompactNoticed {
 		a.softCompactNoticed = true
 		a.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo, Text: fmt.Sprintf("context reached %.0f%% of window; keeping cache-first prefix until compact threshold %.0f%%", a.softCompactRatio*100, a.compactRatio*100)})
@@ -102,7 +102,7 @@ func (a *Agent) maybeCompact(ctx context.Context, u *provider.Usage) {
 	}
 	// A healthy compaction drops the prompt under the trigger, so the next turn
 	// won't compact. Compacting on consecutive turns means the kept tail alone
-	// exceeds the trigger â€?the system prompt plus one verbatim turn is bigger than
+	// exceeds the trigger â€” the system prompt plus one verbatim turn is bigger than
 	// the window allows. Re-firing every turn is the loop users hit, so pause
 	// auto-compaction and say why, once.
 	a.consecutiveCompacts++
@@ -164,7 +164,7 @@ func estimateTextTokens(s string) int {
 // (the user's `/compact <focus>` text); a PreCompact hook can contribute more.
 // force bypasses the fold-economics skip (manual /compact and the force-ratio
 // high-water mark always compact). A Started event is emitted before the (network)
-// summarize so the UI can show a "compactingâ€? placeholder, and a Done event
+// summarize so the UI can show a "compactingâ€¦" placeholder, and a Done event
 // (carrying the summary) replaces it.
 func (a *Agent) compact(ctx context.Context, trigger, instructions string, force bool) error {
 	msgs := a.session.Messages
@@ -234,7 +234,7 @@ func (a *Agent) compact(ctx context.Context, trigger, instructions string, force
 	return nil
 }
 
-// emitCompactionAborted resolves a "compactingâ€? placeholder when a pass fails
+// emitCompactionAborted resolves a "compactingâ€¦" placeholder when a pass fails
 // after the Started event: a Done with no summary tells a frontend to drop the
 // placeholder. The caller still surfaces the reason (a Notice), so this carries
 // no text of its own.
@@ -244,7 +244,8 @@ func (a *Agent) emitCompactionAborted(trigger string) {
 
 // SummarizeFrom replaces the messages from fromIdx onward with a single summary,
 // keeping everything before it verbatim ("summarize from here"). fromIdx is a turn
-// boundary (a user message), so the split never severs a tool_call/result pair â€?// those live within one turn. A no-op when the region is empty.
+// boundary (a user message), so the split never severs a tool_call/result pair â€”
+// those live within one turn. A no-op when the region is empty.
 func (a *Agent) SummarizeFrom(ctx context.Context, fromIdx int) error {
 	msgs := a.session.Messages
 	if fromIdx < 0 || fromIdx >= len(msgs) {
@@ -266,7 +267,7 @@ func (a *Agent) SummarizeFrom(ctx context.Context, fromIdx int) error {
 	})
 	a.session.Replace(next)
 	a.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-		Text: fmt.Sprintf("summarized %d later messages â†?summary", len(region))})
+		Text: fmt.Sprintf("summarized %d later messages â†’ summary", len(region))})
 	return nil
 }
 
@@ -299,7 +300,7 @@ func (a *Agent) SummarizeUpTo(ctx context.Context, toIdx int) error {
 	next = append(next, msgs[toIdx:]...)
 	a.session.Replace(next)
 	a.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelInfo,
-		Text: fmt.Sprintf("summarized %d earlier messages â†?summary", len(region))})
+		Text: fmt.Sprintf("summarized %d earlier messages â†’ summary", len(region))})
 	return nil
 }
 
@@ -384,7 +385,8 @@ func (a *Agent) tokPerChar() float64 {
 	return fallbackTokPerChar
 }
 
-// msgChars counts the characters that ride to the provider for one message â€?// content plus tool-call names and arguments, but not reasoning (stripped on
+// msgChars counts the characters that ride to the provider for one message â€”
+// content plus tool-call names and arguments, but not reasoning (stripped on
 // send).
 func msgChars(m provider.Message) int {
 	n := len(m.Content)

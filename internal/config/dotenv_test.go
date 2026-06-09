@@ -7,7 +7,8 @@ import (
 )
 
 // TestLoadDotEnvFallsBackToHome proves the unified-key behaviour: the working
-// directory's .env wins, but a key only present in ~/.env is still picked up â€?// so a key set once in the home .env (the desktop app writes there) reaches the
+// directory's .env wins, but a key only present in ~/.env is still picked up â€”
+// so a key set once in the home .env (the desktop app writes there) reaches the
 // CLI run from any project directory. Existing env vars beat both files.
 func TestLoadDotEnvFallsBackToHome(t *testing.T) {
 	cwd := t.TempDir()
@@ -45,8 +46,8 @@ func TestLoadDotEnvFallsBackToHome(t *testing.T) {
 	}
 }
 
-// TestLoadDotEnvReadsGlobalCredentials proves `reasonix setup`'s target â€?the
-// reasonix-owned credentials file in the user config dir â€?is loaded from any
+// TestLoadDotEnvReadsGlobalCredentials proves `reasonix setup`'s target â€” the
+// reasonix-owned credentials file in the user config dir â€” is loaded from any
 // working directory, while a project ./.env still wins on a shared key.
 func TestLoadDotEnvReadsGlobalCredentials(t *testing.T) {
 	cwd := t.TempDir()

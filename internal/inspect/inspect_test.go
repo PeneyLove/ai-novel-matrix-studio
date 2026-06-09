@@ -130,7 +130,8 @@ func TestCommands(t *testing.T) {
 	}
 }
 
-// TestNilInputsSafe ensures every projector tolerates absent runtime objects â€?// a desktop front-end may query capabilities before plugins/registry exist.
+// TestNilInputsSafe ensures every projector tolerates absent runtime objects â€”
+// a desktop front-end may query capabilities before plugins/registry exist.
 func TestNilInputsSafe(t *testing.T) {
 	if Providers(nil) != nil || Tools(nil) != nil ||
 		Servers(nil) != nil || Prompts(nil) != nil || Resources(nil) != nil {

@@ -48,7 +48,7 @@ func (m *chatTUI) runModelSubcommand(input string) {
 	// Both the build AND the old-controller close run in the goroutine so
 	// neither blocks the bubbletea event loop. The old controller's Close
 	// kills plugin subprocesses (incl. CodeGraph), which can disrupt the
-	// terminal's cancelReader if called synchronously inside Update â€?so it
+	// terminal's cancelReader if called synchronously inside Update â€” so it
 	// must happen here, before we hand the new controller back.
 	m.modelSwitchPending = true
 	m.pendingModelSwitch = func() tea.Msg {
@@ -58,7 +58,7 @@ func (m *chatTUI) runModelSubcommand(input string) {
 		}
 		// Do NOT close the old controller here. Controller.Close() runs
 		// SessionEnd hooks (arbitrary shell commands) and kills plugin
-		// subprocesses â€?operations that corrupt bubbletea's terminal raw
+		// subprocesses â€” operations that corrupt bubbletea's terminal raw
 		// mode when executed from a goroutine. Instead, pass the old
 		// controller back in the message so the Update handler can defer
 		// its cleanup as a tea.Cmd that runs after the next render.

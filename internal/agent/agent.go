@@ -21,7 +21,7 @@ import (
 )
 
 // maxToolOutputBytes caps a single tool result before it goes into the model's
-// context. ~32KB is roughly 8K tokens â€?enough for a full file read or a busy
+// context. ~32KB is roughly 8K tokens â€” enough for a full file read or a busy
 // grep, while preventing one accidental "read this 5 MB log" from blowing the
 // window before the next compaction runs.
 const maxToolOutputBytes = 32 * 1024
@@ -80,7 +80,7 @@ func CallContext(ctx context.Context) (parentID string, sink event.Sink, asker A
 // execute time (after the plan-mode gate). It is interface-shaped so the agent
 // stays independent of the permission package and of how "ask" is resolved
 // (silently in headless runs, interactively in the chat TUI). A nil gate means
-// no gating â€?every call runs, preserving behaviour for callers that don't wire
+// no gating â€” every call runs, preserving behaviour for callers that don't wire
 // one in. reason is fed back to the model when allow is false; a non-nil err
 // (e.g. ctx cancelled awaiting approval) is treated as a block for that call.
 type Gate interface {
@@ -91,13 +91,13 @@ type Gate interface {
 // runs before the call and may block it (block=true; message is the reason fed
 // back to the model); PostToolUse runs after and only surfaces output to the
 // user (it can't block). It is interface-shaped so the agent stays independent
-// of the hook package â€?a nil hooks field disables hook firing entirely.
+// of the hook package â€” a nil hooks field disables hook firing entirely.
 type ToolHooks interface {
 	PreToolUse(ctx context.Context, name string, args json.RawMessage) (block bool, message string)
 	PostToolUse(ctx context.Context, name string, args json.RawMessage, result string)
 	// PostLLMCall fires after each model turn completes (streaming finishes)
 	// but before reasoning_content is stored. It returns the (possibly
-	// translated) reasoning string â€?the original when no hook is configured.
+	// translated) reasoning string â€” the original when no hook is configured.
 	// HasPostLLMCall reports whether such a hook exists, so the agent keeps
 	// streaming reasoning live when none is wired up.
 	PostLLMCall(ctx context.Context, reasoning string, turn int) string
@@ -122,7 +122,7 @@ type Agent struct {
 
 	// sink receives the turn's typed event stream (reasoning/text deltas, tool
 	// dispatch/results, usage, notices). The agent no longer formats output
-	// itself â€?a frontend's Sink decides how to render. Never nil; New defaults
+	// itself â€” a frontend's Sink decides how to render. Never nil; New defaults
 	// it to event.Discard.
 	sink event.Sink
 
@@ -133,7 +133,7 @@ type Agent struct {
 
 	// sessCacheHit/sessCacheMiss accumulate cache tokens across every API call
 	// this session, so frontends can show the aggregate hit-rate (Î£hit/Î£(hit+miss))
-	// â€?a steadier, cost-oriented number than the single-turn rate. They are NOT
+	// â€” a steadier, cost-oriented number than the single-turn rate. They are NOT
 	// reset on compaction (compaction only rewrites session.Messages), so the
 	// aggregate never craters when the prefix is summarized away. Atomic: the run
 	// loop accumulates them while the status line reads them.
@@ -165,7 +165,7 @@ type Agent struct {
 	asker Asker
 
 	// onPreEdit, when non-nil, is called with a writer tool's previewed change
-	// just before it runs â€?the seam the checkpoint store uses to snapshot a
+	// just before it runs â€” the seam the checkpoint store uses to snapshot a
 	// file's pre-edit content. Only fires for non-ReadOnly tools that implement
 	// tool.Previewer (so bash, whose targets are unknowable, is never tracked).
 	// Set via SetPreEditHook.
@@ -211,7 +211,7 @@ type Agent struct {
 	// the loop can break a death-spiral. The signature is each call's (tool, error)
 	// in order, NOT (tool, args): a stuck model reliably reworks the arguments
 	// cosmetically (a re-worded essay, a reordered object) while the call fails
-	// identically every time â€?keying on args misses the loop entirely (observed
+	// identically every time â€” keying on args misses the loop entirely (observed
 	// live against truncated tool-call arguments). Because errors that embed their
 	// subject (e.g. "file not found: /x") differ per target, genuine varied probing
 	// does not collapse to one signature. Reset whenever a turn does anything else
@@ -222,8 +222,8 @@ type Agent struct {
 
 // SetPlanMode flips the read-only gate. While true, executeOne refuses any
 // non-ReadOnly tool the model calls and returns a "blocked" result instead of
-// running it. The cache-friendly bits â€?system prompt, tools schema, message
-// history â€?are left untouched, so the toggle costs nothing in cache hits.
+// running it. The cache-friendly bits â€” system prompt, tools schema, message
+// history â€” are left untouched, so the toggle costs nothing in cache hits.
 func (a *Agent) SetPlanMode(v bool) { a.planMode.Store(v) }
 
 // SetGate installs the per-call permission gate. Used by `reasonix chat` to swap the
@@ -276,7 +276,7 @@ func (a *Agent) SetSession(s *Session) {
 func (a *Agent) LastUsage() *provider.Usage { return a.lastUsage.Load() }
 
 // SessionCache returns the cumulative cache hit/miss prompt tokens across every
-// API call this session â€?the basis for the status line's aggregate hit-rate.
+// API call this session â€” the basis for the status line's aggregate hit-rate.
 func (a *Agent) SessionCache() (hit, miss int) {
 	return int(a.sessCacheHit.Load()), int(a.sessCacheMiss.Load())
 }
@@ -326,7 +326,7 @@ type Options struct {
 	ProjectChecks []instruction.VerifyCheck
 }
 
-// New constructs an Agent. MaxSteps <= 0 means no cap â€?the run loop continues
+// New constructs an Agent. MaxSteps <= 0 means no cap â€” the run loop continues
 // until the model gives a final answer, the context is cancelled, or the
 // provider errors (compaction keeps the context bounded). A nil sink is replaced
 // with event.Discard so the agent can always emit unconditionally.
@@ -378,7 +378,7 @@ func New(prov provider.Provider, tools *tool.Registry, session *Session, opts Op
 
 // Run appends the user input and drives the tool loop until the model returns a
 // final answer (no tool calls), the context is cancelled, or the provider errors.
-// With maxSteps <= 0 the loop is unbounded â€?the natural termination is the model
+// With maxSteps <= 0 the loop is unbounded â€” the natural termination is the model
 // finishing, and the real safety bounds are user cancellation and compaction, not
 // a round count. A positive maxSteps imposes an optional hard guard, surfaced as
 // a resumable notice when hit.
@@ -457,7 +457,7 @@ func (a *Agent) Run(ctx context.Context, input string) error {
 	// Only reached when a positive maxSteps guard is configured. The work so far
 	// is already in the session, so the user can just send another message to pick
 	// up where it left off.
-	return fmt.Errorf("paused after %d tool-call rounds (agent.max_steps) â€?the work so far is saved; send another message to continue, or set max_steps higher or to 0 for no limit", a.maxSteps)
+	return fmt.Errorf("paused after %d tool-call rounds (agent.max_steps) â€” the work so far is saved; send another message to continue, or set max_steps higher or to 0 for no limit", a.maxSteps)
 }
 
 func (a *Agent) finalReadinessFailure() string {
@@ -546,7 +546,7 @@ func (a *Agent) stream(ctx context.Context, turn int) (string, string, string, [
 	// A PostLLMCall hook rewrites the whole reasoning block, so when one is wired
 	// up we buffer reasoning silently and emit the transformed text once after the
 	// stream. With no such hook the reasoning streams live, chunk by chunk, as
-	// before â€?the common case must not lose its live "thinkingâ€? display.
+	// before â€” the common case must not lose its live "thinkingâ€¦" display.
 	transformReasoning := a.hooks != nil && a.hooks.HasPostLLMCall()
 
 	var text, reasoning strings.Builder
@@ -567,8 +567,8 @@ func (a *Agent) stream(ctx context.Context, turn int) (string, string, string, [
 			text.WriteString(chunk.Text)
 			a.sink.Emit(event.Event{Kind: event.Text, Text: chunk.Text})
 		case provider.ChunkToolCallStart:
-			// Surface the tool card as soon as the call begins â€?before its
-			// (possibly large) arguments finish streaming â€?so the user sees it
+			// Surface the tool card as soon as the call begins â€” before its
+			// (possibly large) arguments finish streaming â€” so the user sees it
 			// working instead of a stall. executeBatch emits the full dispatch
 			// (with args) once the call completes; the frontend merges by ID.
 			if tc := chunk.ToolCall; tc != nil {
@@ -589,7 +589,7 @@ func (a *Agent) stream(ctx context.Context, turn int) (string, string, string, [
 	}
 	// With a PostLLMCall hook, the live stream was suppressed above; transform the
 	// full reasoning now and emit it once so the sink never sees the untranslated
-	// text. Without a hook this is skipped â€?the chunk-by-chunk events already fired.
+	// text. Without a hook this is skipped â€” the chunk-by-chunk events already fired.
 	original := reasoning.String()
 	display := original
 	if transformReasoning && original != "" {
@@ -598,7 +598,7 @@ func (a *Agent) stream(ctx context.Context, turn int) (string, string, string, [
 			a.sink.Emit(event.Event{Kind: event.Reasoning, Text: display})
 		}
 	}
-	// Store the transformed reasoning â€?except when a provider signature pins it to
+	// Store the transformed reasoning â€” except when a provider signature pins it to
 	// the original text (Anthropic extended thinking). That signed thinking block is
 	// replayed verbatim on the next tool-call turn; re-uploading transformed text
 	// under the original signature is rejected, so keep the original for storage
@@ -748,14 +748,14 @@ func runParallel(start, end int, run func(int)) {
 // stormBreakThreshold is how many times in a row the same tool may fail the same
 // way before the loop stops echoing the raw error back and instead returns a
 // directive to change approach. Two natural self-corrections are healthy; the
-// third identical failure is a death-spiral â€?the dominant case being a tool call
+// third identical failure is a death-spiral â€” the dominant case being a tool call
 // whose arguments are truncated at the output-token ceiling, which the model then
 // re-emits (re-worded but still over-long), truncating the same way again.
 const stormBreakThreshold = 3
 
 // applyStormBreaker detects a run of identically-failing turns and, past the
 // threshold, rewrites the model-facing result (results[0]) into a directive to
-// change approach. It keys on each call's (tool, error) â€?not its args â€?because a
+// change approach. It keys on each call's (tool, error) â€” not its args â€” because a
 // stuck model reworks the arguments cosmetically while failing identically (see
 // the stormSig field doc). A turn is a fixation candidate only when every one of
 // its calls errored and none was merely blocked by plan mode / permissions (those
@@ -785,15 +785,15 @@ func (a *Agent) applyStormBreaker(calls []provider.ToolCall, outcomes []toolOutc
 		short = fmt.Sprintf("a batch of %d calls", len(calls))
 	}
 	results[0] = outcomes[0].output + fmt.Sprintf(
-		"\n\n[loop guard] %s has now failed %d times in a row with the same error. Re-sending it â€?even with the wording changed â€?will not help: the calls keep failing the same way. Change approach: if an argument is being truncated, write less in one call and split the work into several smaller calls; otherwise fix the arguments, use a different tool, or explain the blocker in your final answer.",
+		"\n\n[loop guard] %s has now failed %d times in a row with the same error. Re-sending it â€” even with the wording changed â€” will not help: the calls keep failing the same way. Change approach: if an argument is being truncated, write less in one call and split the work into several smaller calls; otherwise fix the arguments, use a different tool, or explain the blocker in your final answer.",
 		subject, a.stormCount)
 	a.sink.Emit(event.Event{Kind: event.Notice, Level: event.LevelWarn, Text: fmt.Sprintf(
-		"loop guard: %s failed %dÃ— the same way â€?nudging the model to change approach",
+		"loop guard: %s failed %dÃ— the same way â€” nudging the model to change approach",
 		short, a.stormCount)})
 }
 
-// batchStormSignature returns a per-turn fixation signature â€?each call's
-// (name, error) in order â€?and ok=true only when every call errored and none was
+// batchStormSignature returns a per-turn fixation signature â€” each call's
+// (name, error) in order â€” and ok=true only when every call errored and none was
 // merely blocked. ok=false (any success or block) means the turn made varied
 // progress, so the caller resets the counter. Keying on the error rather than the
 // args is deliberate: a stuck model reworks the arguments while failing the same
@@ -817,8 +817,8 @@ func batchStormSignature(calls []provider.ToolCall, outcomes []toolOutcome) (str
 
 // toolOutcome is one tool call's result, split into the model-facing output and
 // the display-facing notice bits. errMsg is the short failure reason (empty on
-// success) â€?a refused call, an unknown tool, or an execution error â€?so a sink
-// renders the result as failed ("âŠ?name <errMsg>" / a red card) instead of OK;
+// success) â€” a refused call, an unknown tool, or an execution error â€” so a sink
+// renders the result as failed ("âŠ˜ name <errMsg>" / a red card) instead of OK;
 // blocked narrows that to a refusal (plan mode / permission). truncMsg is set
 // (without the "Â· " prefix) when the output was head+tailed.
 type toolOutcome struct {
@@ -830,7 +830,7 @@ type toolOutcome struct {
 }
 
 // executeOne runs a single tool call. It is pure with respect to the event sink
-// â€?the caller emits ToolDispatch/ToolResult â€?so it is safe to invoke from
+// â€” the caller emits ToolDispatch/ToolResult â€” so it is safe to invoke from
 // parallel goroutines.
 func (a *Agent) executeOne(ctx context.Context, call provider.ToolCall) toolOutcome {
 	t, ok := a.tools.Get(call.Name)
@@ -842,7 +842,7 @@ func (a *Agent) executeOne(ctx context.Context, call provider.ToolCall) toolOutc
 	}
 	if a.planMode.Load() && !t.ReadOnly() {
 		return toolOutcome{
-			output:  fmt.Sprintf("blocked: %q is a writer tool and plan mode is read-only. Keep exploring with read-only tools, then write your plan as your reply â€?the user will be asked to approve it before any changes are made.", call.Name),
+			output:  fmt.Sprintf("blocked: %q is a writer tool and plan mode is read-only. Keep exploring with read-only tools, then write your plan as your reply â€” the user will be asked to approve it before any changes are made.", call.Name),
 			blocked: true,
 			errMsg:  "blocked: plan mode is read-only",
 		}
@@ -924,7 +924,7 @@ func (a *Agent) executeOne(ctx context.Context, call provider.ToolCall) toolOutc
 	if err != nil {
 		detail := result
 		// Malformed-args failures are a transient model JSON glitch (e.g. options
-		// written as ["a":"b"] â†?"invalid character ':' after array element"). The
+		// written as ["a":"b"] â†’ "invalid character ':' after array element"). The
 		// args can't be safely re-parsed, but echoing the tool's schema makes the
 		// retry land valid instead of repeating the same broken shape.
 		if !json.Valid([]byte(call.Arguments)) {
@@ -933,8 +933,8 @@ func (a *Agent) executeOne(ctx context.Context, call provider.ToolCall) toolOutc
 		body, truncMsg := truncateToolOutput(fmt.Sprintf("error: %v\n%s", err, detail))
 		return toolOutcome{output: body, errMsg: firstLine(err.Error()), truncated: truncMsg != "", truncMsg: truncMsg}
 	}
-	// A foreground `task` sub-agent just finished â€?its result is the final answer.
-	// (A backgrounded one returns a "Startedâ€? string and stops later in a job, so
+	// A foreground `task` sub-agent just finished â€” its result is the final answer.
+	// (A backgrounded one returns a "Startedâ€¦" string and stops later in a job, so
 	// it doesn't fire here.) SubagentStop lets a hook react to delegated work.
 	if a.hooks != nil && call.Name == "task" && !isBackgroundTaskCall(call.Arguments) {
 		a.hooks.SubagentStop(ctx, result)
@@ -960,7 +960,7 @@ func (a *Agent) toolReadOnly(name string) bool {
 	return ok && t.ReadOnly()
 }
 
-// firstLine returns s up to its first newline â€?a one-line failure summary for
+// firstLine returns s up to its first newline â€” a one-line failure summary for
 // the display Err, while the full error stays in the model-facing output.
 func firstLine(s string) string {
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
@@ -982,7 +982,7 @@ func truncateToolOutput(s string) (string, string) {
 	tail := snapToRuneBoundary(s, len(s)-keep, len(s))
 	omitted := len(s) - len(head) - len(tail)
 	notice := fmt.Sprintf("tool output truncated: %d of %d bytes elided", omitted, len(s))
-	body := head + fmt.Sprintf("\n\nâ€¦[truncated %d of %d bytes â€?rerun with narrower args to see the middle]â€¦\n\n", omitted, len(s)) + tail
+	body := head + fmt.Sprintf("\n\nâ€¦[truncated %d of %d bytes â€” rerun with narrower args to see the middle]â€¦\n\n", omitted, len(s)) + tail
 	return body, notice
 }
 

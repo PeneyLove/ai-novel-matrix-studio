@@ -128,7 +128,7 @@ var (
 	statusAutoColor  = cliColor{"#f59e0b", 214}
 	statusPlanColor  = cliColor{"#2563eb", 27}
 	statusYoloColor  = cliColor{"#e5484d", 167}
-	statusShellColor = cliColor{"#16a34a", 71} // green â€?shell mode indicator
+	statusShellColor = cliColor{"#16a34a", 71} // green â€” shell mode indicator
 )
 
 func (m chatTUI) statusModeColor() cliColor {
@@ -160,7 +160,7 @@ func (s gitStatus) RenderWithin(maxWidth int, repoColor cliColor) string {
 	repo, branch := s.compactIdentity(maxWidth)
 	out := s.render(themeFg(repoColor, repo), branch)
 	if maxWidth > 0 && visibleWidth(out) > maxWidth {
-		return ansi.Truncate(out, maxWidth, "â€?)
+		return ansi.Truncate(out, maxWidth, "â€¦")
 	}
 	return out
 }

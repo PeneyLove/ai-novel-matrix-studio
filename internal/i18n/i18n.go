@@ -4,11 +4,11 @@
 // language declares one Messages value in its own file. Call sites read
 // i18n.M.SomeField; for parameterised messages they pass it to fmt.Sprintf.
 //
-// Adding a field requires updating every messages_*.go file ‚Ä?drift is caught
+// Adding a field requires updating every messages_*.go file ‚Äî drift is caught
 // at test time by TestCatalogsComplete via reflection, so a missing translation
 // fails CI instead of surfacing as a blank line at runtime.
 //
-// Scope (v1): CLI surface only ‚Ä?welcome, init wizard, chat REPL banner, usage,
+// Scope (v1): CLI surface only ‚Äî welcome, init wizard, chat REPL banner, usage,
 // user-facing CLI errors. System prompts, internal error wrappers, and agent
 // runtime telemetry stay English so model behaviour and developer logs are
 // language-stable.
@@ -21,28 +21,28 @@ import (
 
 // Messages is the catalogue of translatable CLI strings. Plain fields are
 // printed verbatim; *Fmt fields are fmt format strings the caller passes to
-// fmt.Sprintf. Catalogue values do not include trailing newlines ‚Ä?call sites
+// fmt.Sprintf. Catalogue values do not include trailing newlines ‚Äî call sites
 // add framing whitespace, so the same field works wherever it appears.
 type Messages struct {
 	// welcome / status screen
 	Subtitle        string // tagline under the product name in the welcome box
-	WelcomeTitleFmt string // first-run box title ‚Ä?%s = product name (styled)
+	WelcomeTitleFmt string // first-run box title ‚Äî %s = product name (styled)
 	NoConfigYet     string // first-run cue under the welcome box
-	StartingChatFmt string // "Starting %s‚Ä? before dropping into chat
+	StartingChatFmt string // "Starting %s‚Ä¶" before dropping into chat
 	SetKeyHint      string // shown when key is missing after init
 	ConfigLabel     string // "config" status row label
 	ModelsLabel     string // "models" status row label
 	ConfigNotFound  string // shown when no config file exists
-	ConfigErrorFmt  string // "%s ‚Ä?error: %v" ‚Ä?config path + parse error
-	NoKey           string // status dot ‚Ä?no API key set
-	Ready           string // status dot ‚Ä?provider ready
+	ConfigErrorFmt  string // "%s ‚Äî error: %v" ‚Äî config path + parse error
+	NoKey           string // status dot ‚Äî no API key set
+	Ready           string // status dot ‚Äî provider ready
 	GetStarted      string // section title above numbered steps
-	StepScaffold    string // step 1 desc ‚Ä?reasonix setup
+	StepScaffold    string // step 1 desc ‚Äî reasonix setup
 	StepSetKey      string // step 2 command label
 
-	// `reasonix init` ‚Ä?points to the in-session /init skill + setup
+	// `reasonix init` ‚Äî points to the in-session /init skill + setup
 	InitHint       string
-	StepSetKeyHint string // step 2 desc ‚Ä?env var hint
+	StepSetKeyHint string // step 2 desc ‚Äî env var hint
 	StepChatDesc   string // reasonix chat step desc
 	StepRunDesc    string // reasonix run step desc
 	HelpFooter     string // dim footer linking to reasonix help
@@ -64,11 +64,11 @@ type Messages struct {
 	ResumePickHint      string // keyboard hint in the interactive resume picker
 
 	// chat TUI status line / approval banner.
-	ChatThinking           string // live reasoning marker label, e.g. "thinking‚Ä?
+	ChatThinking           string // live reasoning marker label, e.g. "thinking‚Ä¶"
 	ChatThoughtForFmt      string // collapsed reasoning summary, "%d" = elapsed s
-	ChatStatusThinkingFmt  string // "%s thinking‚Ä?(%ds ¬∑ <cancel hint>)" ‚Ä?%s = spinner, %d = elapsed s
-	ChatToolWorkingFmt     string // "%s working ¬∑ %ds" under a running tool ‚Ä?%s = spinner, %d = elapsed s
-	ChatStatusRetryingFmt  string // "%s retrying (%d/%d)‚Ä? ‚Ä?%s = spinner, %d/%d = attempt/max
+	ChatStatusThinkingFmt  string // "%s thinking‚Ä¶ (%ds ¬∑ <cancel hint>)" ‚Äî %s = spinner, %d = elapsed s
+	ChatToolWorkingFmt     string // "%s working ¬∑ %ds" under a running tool ‚Äî %s = spinner, %d = elapsed s
+	ChatStatusRetryingFmt  string // "%s retrying (%d/%d)‚Ä¶" ‚Äî %s = spinner, %d/%d = attempt/max
 	ChatStatusIdle         string // shortcuts hint when idle
 	ChatStatusYoloIdle     string // shortcuts hint when idle in YOLO/bypass mode
 	ChatStatusCycleHint    string // mode-cycle shortcut hint shown when no modal prompt owns the status row
@@ -77,11 +77,11 @@ type Messages struct {
 	ChatStatusPlanApproval string // shortcuts hint while a plan is pending
 	PlanApprovalPrompt     string // one-line "plan above is ready" banner shown above the input
 	ChatStatusToolApproval string // shortcuts hint while a tool call awaits approval
-	ToolApprovalPromptFmt  string // approval banner ‚Ä?tool, subject suffix, and source/intent detail
+	ToolApprovalPromptFmt  string // approval banner ‚Äî tool, subject suffix, and source/intent detail
 	ToolApprovalSourceFmt  string // "Source: %s" / "Êù•Ê∫ê: %s"
 	ToolApprovalBuiltIn    string // built-in tool source label
 	ToolApprovalImageUse   string // image-understanding detail for understand_image-style tools
-	DiffFoldedFmt          string // "‚Ä?+%d more lines" footer when a writer diff is folded
+	DiffFoldedFmt          string // "‚Ä¶ +%d more lines" footer when a writer diff is folded
 
 	// `ask` tool question card.
 	AskTypeSomething   string // the "type your own answer" option label
@@ -257,8 +257,8 @@ type Messages struct {
 	SkillPickerDeleteCancel      string
 	SkillPickerDeleteHint        string
 	SkillPickerDeletedFmt        string // "deleted skill %s"
-	SkillPickerMoreAboveFmt      string // "‚Ü?%d more above"
-	SkillPickerMoreBelowFmt      string // "‚Ü?%d more below"
+	SkillPickerMoreAboveFmt      string // "‚Üë %d more above"
+	SkillPickerMoreBelowFmt      string // "‚Üì %d more below"
 	SkillPickerTokenFmt          string // "~%d tok"
 	SkillPickerDetailMetaFmt     string // "Scope: %s  Run as: %s"
 	SkillPickerSkillsUnit        string // "skills" (used as "%d skills")
@@ -273,10 +273,10 @@ type Messages struct {
 	SelectProvidersLabel  string // multi-select label
 	EnterAPIKeysHeader    string // header before the per-env-var prompts
 	MissingKeyIntro       string // shown when re-running the key step on a configured setup
-	WroteFileFmt          string // "Wrote %s" ‚Ä?used for reasonix.toml and .env both
+	WroteFileFmt          string // "Wrote %s" ‚Äî used for reasonix.toml and .env both
 	SetupComplete         string // success line at end of init
 	SetupCancelled        string // shown when the user aborts the wizard
-	TryHintFmt            string // "Try: %s" ‚Ä?%s = command to try (styled)
+	TryHintFmt            string // "Try: %s" ‚Äî %s = command to try (styled)
 	NextHint              string // non-interactive post-write hint
 	ConfirmReconfigureFmt string // "%s already exists. Reconfigure and overwrite?"
 	KeepingExisting       string // when the user declines to overwrite
@@ -290,9 +290,9 @@ type Messages struct {
 	FamilyKeyPromptFmt         string // "Enter your %s API key to list available models (Enter to skip):"
 	SelectModelsLabel          string // "Select models to enable for %s"
 	NoModelsAvailableFmt       string // "%s: no models available, skipping"
-	CustomFetchEmpty           string // "/models returned an empty list ‚Ä?falling back to manual entry"
-	AnthropicFetchEmpty        string // "/models returned an empty list ‚Ä?Anthropic-compatible providers usually don't expose one, falling back to manual entry"
-	SkipStaleCustomEntryFmt    string // "skipping stale %q entry from reasonix.toml (pointing at %s) ‚Ä?please remove it"
+	CustomFetchEmpty           string // "/models returned an empty list ‚Äî falling back to manual entry"
+	AnthropicFetchEmpty        string // "/models returned an empty list ‚Äî Anthropic-compatible providers usually don't expose one, falling back to manual entry"
+	SkipStaleCustomEntryFmt    string // "skipping stale %q entry from reasonix.toml (pointing at %s) ‚Äî please remove it"
 	APIKeyAlreadySetFmt        string // "reusing existing value for %s"
 
 	// custom provider
@@ -326,12 +326,12 @@ type Messages struct {
 	// top-level / runAgent
 	UnknownCommandFmt         string // "unknown command %q"
 	UsageRunHint              string // "usage: reasonix run [--model NAME] <task>"
-	ErrorPrefix               string // "error:" ‚Ä?prefix for fatal-error output
+	ErrorPrefix               string // "error:" ‚Äî prefix for fatal-error output
 	ReconfigureOnUnknownModel string // shown when the configured model no longer resolves and setup is re-run
-	WriteConfigErr            string // "write config:" ‚Ä?prefix for write failure
-	WriteEnvErr               string // "write .env:" ‚Ä?prefix for env-write failure
+	WriteConfigErr            string // "write config:" ‚Äî prefix for write failure
+	WriteEnvErr               string // "write .env:" ‚Äî prefix for env-write failure
 
-	// provider HTTP error explanations ‚Ä?actionable, reason + fix per status code
+	// provider HTTP error explanations ‚Äî actionable, reason + fix per status code
 	ProviderErrBadRequest          string // 400
 	ProviderErrAuth                string // 401
 	ProviderErrInsufficientBalance string // 402
@@ -341,8 +341,8 @@ type Messages struct {
 	ProviderErrServerBusy          string // 503
 
 	// selection menus
-	SelectOneHint  string // "(‚Ü?‚Ü?¬∑ Enter ¬∑ q to cancel)"
-	SelectManyHint string // "(‚Ü?‚Ü?¬∑ Space ¬∑ Enter ¬∑ q)"
+	SelectOneHint  string // "(‚Üë/‚Üì ¬∑ Enter ¬∑ q to cancel)"
+	SelectManyHint string // "(‚Üë/‚Üì ¬∑ Space ¬∑ Enter ¬∑ q)"
 
 	// usage / help
 	UsageBody string // full multi-line help text
@@ -416,7 +416,7 @@ func normalize(s string) string {
 	if s == "" {
 		return ""
 	}
-	if strings.HasPrefix(s, "zh") || strings.Contains(s, "chinese") || strings.Contains(s, "‰∏Ñ1§7ñá") {
+	if strings.HasPrefix(s, "zh") || strings.Contains(s, "chinese") || strings.Contains(s, "‰∏≠Êñá") {
 		return "zh"
 	}
 	if strings.HasPrefix(s, "en") || strings.Contains(s, "english") {

@@ -8,7 +8,7 @@
 // on stdout; a future GUI/serve transport forwards them to a webview or
 // websocket. This replaces the old io.Writer contract, where the agent wrote
 // pre-formatted ANSI and the consumer had to re-derive structure by matching
-// line prefixes â€?fragile, and lossy for any frontend richer than a terminal.
+// line prefixes â€” fragile, and lossy for any frontend richer than a terminal.
 package event
 
 import "github.com/PeneyLove/ai-novel-matrix-studio/internal/provider"
@@ -36,7 +36,7 @@ const (
 	ToolResult
 	// Usage carries per-turn token telemetry (Usage; Pricing optional, for cost).
 	Usage
-	// Notice is an out-of-band message â€?a warning, truncation, block, or
+	// Notice is an out-of-band message â€” a warning, truncation, block, or
 	// compaction notice (Level + Text).
 	Notice
 	// Phase marks a coordinator boundary, e.g. plannerâ†’executor handoff (Text =
@@ -44,18 +44,18 @@ const (
 	Phase
 	// ApprovalRequest asks the frontend to approve a pending tool call
 	// (Approval: ID/Tool/Subject). The run blocks until the controller's
-	// Approve(ID, â€? resolves it; a frontend shows a prompt and answers.
+	// Approve(ID, â€¦) resolves it; a frontend shows a prompt and answers.
 	ApprovalRequest
 	// AskRequest asks the frontend to put one or more structured multiple-choice
 	// questions to the user (Ask: ID + Questions). The run blocks until the
-	// controller's AnswerQuestion(ID, â€? resolves it. Powers the `ask` tool.
+	// controller's AnswerQuestion(ID, â€¦) resolves it. Powers the `ask` tool.
 	AskRequest
 	// TurnDone marks the end of one top-level Run (Err non-nil on failure;
 	// nil also for a user cancellation, which is not an error). Always the
 	// last event of a turn.
 	TurnDone
 	// CompactionStarted marks the start of a context-compaction pass (Compaction
-	// payload: Trigger). A frontend shows a "compactingâ€? placeholder while the
+	// payload: Trigger). A frontend shows a "compactingâ€¦" placeholder while the
 	// summarizer runs; CompactionDone replaces it. Mirrors ToolDispatch/ToolResult.
 	CompactionStarted
 	// CompactionDone reports a finished compaction pass (Compaction payload:
@@ -76,7 +76,7 @@ const (
 	// Retrying fires before each backoff sleep while the provider re-attempts the
 	// connection+header phase after a transient failure (RetryAttempt of RetryMax).
 	// A frontend shows a transient "retrying (n/m)" indicator that the next stream
-	// event â€?or TurnDone â€?clears. Appended last to keep the Kind values before
+	// event â€” or TurnDone â€” clears. Appended last to keep the Kind values before
 	// it wire-stable.
 	Retrying
 )
@@ -91,7 +91,7 @@ const (
 
 // Tool describes a tool call for ToolDispatch / ToolResult events. On dispatch
 // only ID/Name/Args/ReadOnly are set; on result Output/Err/Truncated are filled
-// in. Args is the raw JSON arguments â€?a sink compacts it for display.
+// in. Args is the raw JSON arguments â€” a sink compacts it for display.
 type Tool struct {
 	ID        string
 	Name      string
@@ -104,7 +104,7 @@ type Tool struct {
 	// Args still streaming) so a frontend can show the card immediately; a second,
 	// full ToolDispatch (Partial false, Args set) follows when the call completes.
 	Partial bool
-	// ParentID, when set, is the ID of the tool call that spawned this one â€?a
+	// ParentID, when set, is the ID of the tool call that spawned this one â€” a
 	// sub-agent's calls carry the parent `task` call's ID so a frontend can nest
 	// them under it. Empty for top-level calls.
 	ParentID string
@@ -122,7 +122,7 @@ type FileDiff struct {
 }
 
 // Approval identifies a pending tool-call approval for an ApprovalRequest
-// event. ID correlates the request with the controller's Approve(ID, â€? reply.
+// event. ID correlates the request with the controller's Approve(ID, â€¦) reply.
 type Approval struct {
 	ID      string
 	Tool    string
@@ -145,7 +145,7 @@ type AskQuestion struct {
 }
 
 // Ask carries an AskRequest: a batch of questions and the ID that correlates the
-// controller's AnswerQuestion(ID, â€? reply.
+// controller's AnswerQuestion(ID, â€¦) reply.
 type Ask struct {
 	ID        string
 	Questions []AskQuestion
@@ -197,7 +197,7 @@ type Event struct {
 	CacheDiagnostics *CacheDiagnostics // Usage: cache-churn attribution (nil = N/A)
 	// SessionHit/SessionMiss carry cumulative cache tokens across the whole
 	// session (Usage events only), so a frontend can show the aggregate hit-rate
-	// â€?which doesn't crater on a short turn or after compaction â€?alongside
+	// â€” which doesn't crater on a short turn or after compaction â€” alongside
 	// Usage's single-turn numbers.
 	SessionHit   int        // Usage: cumulative cache-hit prompt tokens this session
 	SessionMiss  int        // Usage: cumulative cache-miss prompt tokens this session
@@ -213,7 +213,7 @@ type Event struct {
 // Sink consumes a turn's events. The agent calls Emit serially from its run
 // loop (tool execution may fan out across goroutines, but emission does not),
 // so an implementation need not be safe for concurrent Emit. Emit must not
-// block indefinitely â€?a channel-backed sink should be buffered or drained by
+// block indefinitely â€” a channel-backed sink should be buffered or drained by
 // a live reader.
 type Sink interface {
 	Emit(Event)

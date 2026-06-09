@@ -1,7 +1,7 @@
 // Package lsp is a minimal Language Server Protocol client: it spawns a language
 // server per language on demand, syncs queried documents from disk, and adapts a
 // few read-only capabilities (definition, references, hover, diagnostics) to the
-// tool.Tool interface. Servers are not bundled â€?they resolve on PATH and a clear
+// tool.Tool interface. Servers are not bundled â€” they resolve on PATH and a clear
 // install hint is returned when one is missing.
 package lsp
 

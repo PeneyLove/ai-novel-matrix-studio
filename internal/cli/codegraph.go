@@ -10,7 +10,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/netclient"
 )
 
-// codegraphCommand backs `reasonix codegraph` â€?managing the CodeGraph
+// codegraphCommand backs `reasonix codegraph` â€” managing the CodeGraph
 // code-intelligence runtime that reasonix otherwise fetches lazily on first use.
 func codegraphCommand(args []string) int {
 	sub := ""
@@ -66,13 +66,13 @@ func codegraphStatus() int {
 	if p, ok := codegraph.Resolve(cfg.Codegraph.Path); ok {
 		fmt.Printf("%-13s %s\n", "resolved:", p)
 	} else {
-		fmt.Printf("%-13s %s\n", "resolved:", "(not installed â€?run `reasonix codegraph install`)")
+		fmt.Printf("%-13s %s\n", "resolved:", "(not installed â€” run `reasonix codegraph install`)")
 	}
 	return 0
 }
 
 func codegraphUsage() {
-	fmt.Print(`reasonix codegraph â€?manage the CodeGraph code-intelligence runtime
+	fmt.Print(`reasonix codegraph â€” manage the CodeGraph code-intelligence runtime
 
 Usage:
   reasonix codegraph install   download + cache the runtime for this platform

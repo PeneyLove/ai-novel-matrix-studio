@@ -38,7 +38,7 @@ func assistantReasoning(msgs []provider.Message) string {
 
 // TestPostLLMCallAbsentStreamsReasoningLive is the regression guard: with no
 // PostLLMCall hook, reasoning must still stream chunk-by-chunk (one Reasoning
-// event per delta) so the live "thinkingâ€? display keeps working.
+// event per delta) so the live "thinkingâ€¦" display keeps working.
 func TestPostLLMCallAbsentStreamsReasoningLive(t *testing.T) {
 	prov := &scriptedProvider{name: "p", turns: reasoningTurn()}
 	var reasoningEvents []string
@@ -111,7 +111,7 @@ func TestPostLLMCallConfiguredButNoReasoning(t *testing.T) {
 
 // TestPostLLMCallKeepsSignedReasoningOriginal proves that when the reasoning is
 // pinned by a provider signature (Anthropic extended thinking), a transform hook
-// changes only the live display â€?the stored reasoning_content stays the original
+// changes only the live display â€” the stored reasoning_content stays the original
 // so the signed thinking block can be replayed verbatim on the next tool-call
 // turn. Storing the transformed text under the original signature is a 400.
 func TestPostLLMCallKeepsSignedReasoningOriginal(t *testing.T) {

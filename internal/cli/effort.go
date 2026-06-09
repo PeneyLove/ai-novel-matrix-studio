@@ -77,7 +77,7 @@ func (m *chatTUI) runEffortCommand(input string) tea.Cmd {
 	if display == "" {
 		display = "auto"
 	}
-	m.notice(fmt.Sprintf("setting effort for %s to %sâ€?, entry.Name, display))
+	m.notice(fmt.Sprintf("setting effort for %s to %sâ€¦", entry.Name, display))
 	carried := m.ctrl.History()
 	prevPath := m.ctrl.SessionPath()
 	if err := m.ctrl.Snapshot(); err != nil {

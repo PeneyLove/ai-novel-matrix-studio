@@ -1,5 +1,5 @@
 // Package encoding detects and converts file encodings for the built-in
-// file tools. The detection cascade (BOM â†?strict UTF-8 â†?GB18030 â†?lossy
+// file tools. The detection cascade (BOM â†’ strict UTF-8 â†’ GB18030 â†’ lossy
 // UTF-8) mirrors v1's file-encoding.ts and keeps CJK Windows files editable
 // without silently mangling their bytes.
 package encoding
@@ -17,7 +17,7 @@ import (
 type Kind int
 
 const (
-	// UTF8 is plain UTF-8 without a BOM â€?the common case.
+	// UTF8 is plain UTF-8 without a BOM â€” the common case.
 	UTF8 Kind = iota
 	// UTF8BOM is UTF-8 with a leading BOM (EF BB BF).
 	UTF8BOM
@@ -27,10 +27,10 @@ const (
 	UTF16BE
 	// GB18030 is the Chinese national standard charset (superset of GBK).
 	GB18030
-	// LossyUTF8 is not valid UTF-8 and not valid GB18030 â€?decoded lossily
+	// LossyUTF8 is not valid UTF-8 and not valid GB18030 â€” decoded lossily
 	// as UTF-8 with replacement characters so the model sees something.
 	LossyUTF8
-	// UTF16LENoBOM is UTF-16 Little-Endian without a BOM â€?common for source
+	// UTF16LENoBOM is UTF-16 Little-Endian without a BOM â€” common for source
 	// files saved by Windows tools. Detected heuristically from the NUL-byte
 	// pattern; written back without a BOM to preserve the original bytes.
 	UTF16LENoBOM
@@ -60,7 +60,7 @@ func Detect(data []byte) (Kind, []byte) {
 	if utf8.Valid(data) {
 		return UTF8, data
 	}
-	// Try GB18030 â€?it is a strict superset of GBK and rejects truly
+	// Try GB18030 â€” it is a strict superset of GBK and rejects truly
 	// invalid byte sequences, so a successful decode is a reliable signal.
 	dec := simplifiedchinese.GB18030.NewDecoder()
 	if _, _, err := transform.Bytes(dec, data); err == nil {
@@ -89,7 +89,7 @@ func DetectQuick(peek []byte) Kind {
 // DetectUTF16NoBOM heuristically recognises BOM-less UTF-16 from the NUL-byte
 // distribution: ASCII-range text encodes one byte of payload and one 0x00 per
 // code unit, so the NULs cluster on odd offsets (LE) or even offsets (BE). It
-// requires a strong skew â€?one parity heavily NUL, the other almost none â€?so
+// requires a strong skew â€” one parity heavily NUL, the other almost none â€” so
 // genuine binary (NULs on both parities) and plain UTF-8 (no NULs) fall through.
 func DetectUTF16NoBOM(b []byte) (Kind, bool) {
 	n := len(b)
@@ -138,14 +138,14 @@ func Decode(data []byte, enc Kind) []byte {
 		}
 		return out
 	}
-	// UTF8 and LossyUTF8 both pass through â€?LossyUTF8 is already
+	// UTF8 and LossyUTF8 both pass through â€” LossyUTF8 is already
 	// "best effort" and Go strings can hold arbitrary bytes.
 	return data
 }
 
 // Decoder returns a streaming transform.Transformer for the given encoding,
 // suitable for wrapping an io.Reader via dec.Reader(r). Returns nil for UTF-8
-// and LossyUTF8 (no transformation needed â€?the caller should read directly).
+// and LossyUTF8 (no transformation needed â€” the caller should read directly).
 func Decoder(enc Kind) transform.Transformer {
 	switch enc {
 	case UTF8BOM:

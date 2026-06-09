@@ -13,10 +13,11 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tool"
 )
 
-// DefaultTaskSystemPrompt steers a sub-agent toward focused, terse delivery â€?// it doesn't see the parent's conversation so it must self-contain.
+// DefaultTaskSystemPrompt steers a sub-agent toward focused, terse delivery â€”
+// it doesn't see the parent's conversation so it must self-contain.
 const DefaultTaskSystemPrompt = `You are a sub-agent invoked by a parent coding agent to carry out one focused task.
 Use the provided tools to investigate or act. Return a single final answer that is concise
-and self-contained â€?the parent will see only that answer, not your tool calls or reasoning.
+and self-contained â€” the parent will see only that answer, not your tool calls or reasoning.
 If you need to ask for clarification, fail with a precise question instead of guessing.`
 
 var subagentMetaTools = []string{
@@ -65,7 +66,7 @@ type TaskTool struct {
 // NewTaskTool wires a task tool to the parent agent's environment so its
 // sub-agents can use the same provider and tools. sysPrompt is the system
 // prompt every sub-agent starts with; pass "" for DefaultTaskSystemPrompt. gate
-// is the permission gate sub-agents inherit â€?pass the headless variant so
+// is the permission gate sub-agents inherit â€” pass the headless variant so
 // deny rules still bite while autonomous sub-agents are never blocked on an
 // interactive prompt (there is no UI to answer one).
 func NewTaskTool(prov provider.Provider, pricing *provider.Pricing, parentReg *tool.Registry,
@@ -99,7 +100,7 @@ func (t *TaskTool) Schema() json.RawMessage {
 	return json.RawMessage(`{
 "type":"object",
 "properties":{
-  "prompt":{"type":"string","description":"What the sub-agent should accomplish. Be specific about the deliverable â€?the sub-agent does not see this conversation."},
+  "prompt":{"type":"string","description":"What the sub-agent should accomplish. Be specific about the deliverable â€” the sub-agent does not see this conversation."},
   "description":{"type":"string","description":"Short label for the sub-task (3-7 words). Surfaced in the dispatch line so the user sees what's running."},
   "tools":{"type":"array","items":{"type":"string"},"description":"Optional tool whitelist. Subagent/skill meta-tools are still excluded so delegation stays one layer deep."},
   "max_steps":{"type":"integer","description":"Optional cap on tool-call rounds. Defaults to half the parent's cap (min 5).","minimum":1},
@@ -135,7 +136,7 @@ func (t *TaskTool) Execute(ctx context.Context, args json.RawMessage) (string, e
 		// the sub-agent at half its budget (min 5) so a delegated sub-task stays
 		// shorter than the whole turn; an unbounded parent yields an unbounded
 		// sub-agent. The sub-agent shares the parent's ctx, so cancelling the turn
-		// stops it, and it compacts its own context â€?the same bounds the parent has.
+		// stops it, and it compacts its own context â€” the same bounds the parent has.
 		if t.maxSteps > 0 {
 			maxSteps = t.maxSteps / 2
 			if maxSteps < 5 {
@@ -180,7 +181,7 @@ func (t *TaskTool) buildSubReg(names []string) *tool.Registry {
 
 // FilterRegistry builds a sub-registry from parent: the named whitelist (empty =
 // every parent tool), minus any excluded names. Used to scope what a spawned
-// sub-agent â€?a `task` sub-agent or a subagent skill â€?may call, e.g. excluding
+// sub-agent â€” a `task` sub-agent or a subagent skill â€” may call, e.g. excluding
 // `task` to bar recursive nesting, or restricting to a skill's allowed-tools.
 func FilterRegistry(parent *tool.Registry, names []string, exclude ...string) *tool.Registry {
 	ex := make(map[string]bool, len(exclude))
@@ -231,7 +232,8 @@ func RunSubAgent(ctx context.Context, prov provider.Provider, reg *tool.Registry
 	if err := sub.Run(ctx, prompt); err != nil {
 		return "", fmt.Errorf("sub-agent: %w", err)
 	}
-	// Walk the session backwards for the last assistant message with content â€?	// that's the sub-agent's final answer. Intermediate assistant messages with
+	// Walk the session backwards for the last assistant message with content â€”
+	// that's the sub-agent's final answer. Intermediate assistant messages with
 	// tool_calls but no text don't count.
 	for i := len(sess.Messages) - 1; i >= 0; i-- {
 		m := sess.Messages[i]
@@ -256,7 +258,8 @@ func NestedSink(ctx context.Context, fallback event.Sink) event.Sink {
 
 // subSink forwards a sub-agent's tool dispatch/result events to the parent's
 // event stream, tagged with the parent task call's ID so a frontend nests them
-// under it. The sub-agent's own turn/usage/text/reasoning events are dropped â€?// only its tool activity (the part worth seeing live) and its final answer
+// under it. The sub-agent's own turn/usage/text/reasoning events are dropped â€”
+// only its tool activity (the part worth seeing live) and its final answer
 // (returned by Execute) reach the parent. The forwarded call IDs are namespaced
 // with the parent ID so a sub-agent call can never collide with a parent call in
 // the frontend's dispatchâ†’result matching. Falls back to Discard when there's no

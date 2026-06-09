@@ -8,7 +8,7 @@ import (
 )
 
 // Workspace builds a built-in tool set bound to a working directory, so several
-// agents can run concurrently with independent path roots â€?a desktop front-end
+// agents can run concurrently with independent path roots â€” a desktop front-end
 // opening one tab per project, say. The process working directory is global and
 // cannot be made per-agent (os.Chdir is process-wide), so each tool instead
 // resolves relative paths against this directory and bash runs in it.
@@ -28,7 +28,7 @@ type Workspace struct {
 // Tools returns the built-in tools bound to the workspace, ready to Add to a
 // per-run tool.Registry. An empty enabled list yields every built-in; otherwise
 // only the named ones are returned (unknown names are ignored). This is the
-// per-workspace analogue of the cli's process-cwd assembly â€?a desktop driver
+// per-workspace analogue of the cli's process-cwd assembly â€” a desktop driver
 // calls it once per agent instead of relying on the global working directory.
 func (w Workspace) Tools(enabled ...string) []tool.Tool {
 	writeRoots := w.WriteRoots
@@ -67,10 +67,10 @@ func (w Workspace) Tools(enabled ...string) []tool.Tool {
 }
 
 // resolveIn maps a tool's path/pattern argument into a working directory. With
-// an empty workDir it returns p unchanged â€?the process-cwd behavior the
+// an empty workDir it returns p unchanged â€” the process-cwd behavior the
 // compile-time built-ins have always had, so existing callers are unaffected.
 // Otherwise a relative p is joined onto workDir; an absolute p is returned as-is
-// (an explicit absolute path is honored verbatim â€?the write-confiner, not this,
+// (an explicit absolute path is honored verbatim â€” the write-confiner, not this,
 // enforces the workspace boundary). An empty p resolves to workDir itself, so a
 // defaulted "." (ls/grep) targets the workspace root.
 func resolveIn(workDir, p string) string {
@@ -89,7 +89,7 @@ func resolveIn(workDir, p string) string {
 // vendorDirs are directory names grep and glob skip during a recursive walk:
 // dependency, VCS, and build-cache trees that almost never hold the searched
 // source and would otherwise dominate the walk (node_modules alone can be 100k+
-// files) and fill the result cap with noise. Only skipped when nested â€?a walk
+// files) and fill the result cap with noise. Only skipped when nested â€” a walk
 // rooted directly at one (an explicit `grep node_modules`) still searches it.
 var vendorDirs = map[string]bool{
 	".git": true, ".svn": true, ".hg": true, ".jj": true,

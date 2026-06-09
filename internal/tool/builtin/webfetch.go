@@ -43,7 +43,7 @@ func (webFetch) Schema() json.RawMessage {
 func (webFetch) ReadOnly() bool { return true }
 
 // ssrfGuardedClient is an HTTP client whose dialer refuses to connect to private,
-// link-local, or unspecified addresses â€?the SSRF surface a prompt-injected fetch
+// link-local, or unspecified addresses â€” the SSRF surface a prompt-injected fetch
 // would aim at (cloud metadata at 169.254.169.254, RFC1918 internal services).
 // Loopback is allowed: the agent can already reach localhost via bash, so a local
 // dev server stays fetchable. The check runs at dial time on the resolved IP, so a
@@ -141,14 +141,14 @@ func (webFetch) Execute(ctx context.Context, args json.RawMessage) (string, erro
 	}
 	out = strings.TrimSpace(out)
 	if out == "" {
-		return fmt.Sprintf("(empty body â€?status %s)", resp.Status), nil
+		return fmt.Sprintf("(empty body â€” status %s)", resp.Status), nil
 	}
 	header := fmt.Sprintf("status %s Â· %s Â· %d bytes\n\n", resp.Status, contentTypeShort(ct), len(body))
 	return header + out, nil
 }
 
 // looksLikeHTML lets servers that misreport Content-Type still hit the HTML
-// reducer â€?GitHub raw pages and many docs sites lie about content type.
+// reducer â€” GitHub raw pages and many docs sites lie about content type.
 func looksLikeHTML(s string) bool {
 	head := s
 	if len(head) > 512 {
@@ -168,7 +168,7 @@ var (
 
 // htmlToText strips <script>/<style> blocks, HTML comments, and every other
 // tag, then unescapes the common entities and collapses runs of blank lines.
-// It is intentionally lossy â€?we want to give the model readable text rather
+// It is intentionally lossy â€” we want to give the model readable text rather
 // than preserve structure for re-rendering.
 func htmlToText(s string) string {
 	s = scriptStyle.ReplaceAllString(s, "")

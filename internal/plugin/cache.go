@@ -26,7 +26,7 @@ import (
 )
 
 // cacheableToolsOf extracts the persistable subset of remote tools so Start()
-// can hand them to SaveCachedSchema. Non-remote tools are skipped â€?Start
+// can hand them to SaveCachedSchema. Non-remote tools are skipped â€” Start
 // only feeds remote ones at the call site, but the type-assert is defensive.
 func cacheableToolsOf(tools []tool.Tool) []CachedTool {
 	out := make([]CachedTool, 0, len(tools))
@@ -51,7 +51,7 @@ func cacheableToolsOf(tools []tool.Tool) []CachedTool {
 const cacheVersion = 1
 
 // CachedSchema is the persisted snapshot of one server's handshake result.
-// SpecHash gates reuse â€?Capabilities/Tools are only trusted when the
+// SpecHash gates reuse â€” Capabilities/Tools are only trusted when the
 // caller's expectedHash (from SpecFingerprint of the current Spec) matches,
 // so renaming env vars or swapping a command never serves stale tools.
 type CachedSchema struct {
@@ -75,7 +75,7 @@ type CachedTool struct {
 
 // SpecFingerprint hashes the load-bearing parts of a Spec so changing the
 // command/url/args/env (not just renaming) invalidates the cache. Env map
-// keys are sorted so ordering doesn't perturb the hash â€?Go map iteration
+// keys are sorted so ordering doesn't perturb the hash â€” Go map iteration
 // order is randomised, so we'd otherwise get fingerprint churn on every
 // launch.
 func SpecFingerprint(s Spec) string {
@@ -93,9 +93,9 @@ func SpecFingerprint(s Spec) string {
 }
 
 // LoadCachedSchema returns the cached schema for name iff it exists, parses,
-// and matches expectedHash. Any error â†?(nil, false): cache is best-effort,
+// and matches expectedHash. Any error â†’ (nil, false): cache is best-effort,
 // a corrupt file just means we re-handshake. Returning an error here would
-// only invite callers to log it on every launch â€?silence is intentional.
+// only invite callers to log it on every launch â€” silence is intentional.
 func LoadCachedSchema(name, expectedHash string) (*CachedSchema, bool) {
 	p := cachePath(name)
 	if p == "" {

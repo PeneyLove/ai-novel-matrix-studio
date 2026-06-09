@@ -3,7 +3,7 @@ package fileutil
 import "os"
 
 // ReplaceFile renames tmp onto dest, falling back to a copy when the rename
-// fails â€?Windows encryption-software filter drivers report a cross-device link
+// fails â€” Windows encryption-software filter drivers report a cross-device link
 // (EXDEV) for a same-dir rename. The rename error surfaces only if the copy also fails.
 func ReplaceFile(tmp, dest string) error {
 	if err := os.Rename(tmp, dest); err != nil {

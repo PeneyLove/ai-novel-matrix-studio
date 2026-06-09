@@ -14,7 +14,7 @@ import (
 // TestBuildUnknownModelErrorIsActionable: a default_model that doesn't resolve
 // (e.g. a preset name after [[providers]] replaced the built-in presets) must
 // fail with a message that names the model, lists what IS configured, and hints
-// at the [[providers]] trap â€?not a silent empty model.
+// at the [[providers]] trap â€” not a silent empty model.
 func TestBuildUnknownModelErrorIsActionable(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)

@@ -14,7 +14,7 @@ var ansiSGR = regexp.MustCompile("\x1b\\[[0-9;]*m")
 
 // visibleWidth returns the column count of s after stripping ANSI SGR codes.
 // Delegates to go-runewidth so emoji, fullwidth forms, and ZWJ sequences all
-// measure correctly â€?a hand-rolled CJK-only table missed every emoji range
+// measure correctly â€” a hand-rolled CJK-only table missed every emoji range
 // and made the streamed-text row count drift on emoji-heavy answers.
 func visibleWidth(s string) int {
 	return runewidth.StringWidth(ansiSGR.ReplaceAllString(s, ""))
@@ -24,7 +24,8 @@ func visibleWidth(s string) int {
 // of length s was printed at the given terminal width. Used by the markdown
 // redraw to know how far up to move before clearing. Each \n descends one
 // row; lines whose visible width exceeds the terminal width descend an extra
-// row per wrap. A line exactly the terminal width does not wrap on its own â€?// terminals "lazy-wrap" only when the next visible character lands.
+// row per wrap. A line exactly the terminal width does not wrap on its own â€”
+// terminals "lazy-wrap" only when the next visible character lands.
 func streamedRows(s string, width int) int {
 	if width <= 0 {
 		width = 80

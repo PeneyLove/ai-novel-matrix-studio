@@ -22,8 +22,8 @@ func TestParseRule(t *testing.T) {
 		{"bash(echo (hi))", "bash", "echo (hi)", false, true},             // first '(' wins, trailing ')'
 		{"bash=rm *.log", "bash", "rm *.log", true, true},                 // literal: '*' is not a wildcard
 		{"bash=make FOO=bar", "bash", "make FOO=bar", true, true},         // split on first '=' only
-		{"bash=echo (hi)", "bash", "echo (hi)", true, true},               // '=' before '(' â†?literal, parens kept
-		{"bash(make FOO=*)", "bash", "make FOO=*", false, true},           // '(' before '=' â†?still a glob
+		{"bash=echo (hi)", "bash", "echo (hi)", true, true},               // '=' before '(' â†’ literal, parens kept
+		{"bash(make FOO=*)", "bash", "make FOO=*", false, true},           // '(' before '=' â†’ still a glob
 		{"", "", "", false, false},
 		{"(noTool)", "", "", false, false},
 	}
@@ -106,7 +106,7 @@ func TestPolicyDecide(t *testing.T) {
 		{"reader defaults allow", "grep", true, `{"pattern":"x"}`, Allow},
 		{"ask rule overrides reader-allow", "read_file", true, `{"path":"/a"}`, Ask},
 		{"bare allow rule", "ls", true, `{"path":"/a"}`, Allow},
-		{"subject rule needs subject", "bash", false, `{}`, Ask}, // no command â†?go test* can't match â†?fallback
+		{"subject rule needs subject", "bash", false, `{}`, Ask}, // no command â†’ go test* can't match â†’ fallback
 	}
 	for _, c := range cases {
 		got := p.Decide(c.tool, c.readOnly, json.RawMessage(c.args))
@@ -141,7 +141,7 @@ func (s *stubApprover) Approve(ctx context.Context, tool, subject string, args j
 }
 
 func TestGateHeadlessAllowsAsk(t *testing.T) {
-	// No approver â†?Ask resolves to allow (autonomy preserved), deny still blocks.
+	// No approver â†’ Ask resolves to allow (autonomy preserved), deny still blocks.
 	g := NewGate(New("ask", nil, nil, []string{"bash(rm*)"}), nil)
 
 	allow, _, err := g.Check(context.Background(), "bash", json.RawMessage(`{"command":"git commit"}`), false)
@@ -205,6 +205,6 @@ func TestLiteralRuleMatchesExactly(t *testing.T) {
 		t.Errorf("exact command = %v, want Allow", got)
 	}
 	if got := p.Decide("bash", false, json.RawMessage(`{"command":"rm secrets.log"}`)); got == Allow {
-		t.Errorf("literal rule wildcard-matched %q â€?'*' must stay literal", "rm secrets.log")
+		t.Errorf("literal rule wildcard-matched %q â€” '*' must stay literal", "rm secrets.log")
 	}
 }

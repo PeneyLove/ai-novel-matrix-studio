@@ -8,7 +8,7 @@ import (
 )
 
 // TestRenderTOMLRoundTrips ensures the annotated TOML we emit parses back into
-// an equivalent config â€?i.e. the wizard never writes a file it can't read.
+// an equivalent config â€” i.e. the wizard never writes a file it can't read.
 func TestRenderTOMLRoundTrips(t *testing.T) {
 	orig := Default()
 	orig.DefaultModel = "mimo-pro"

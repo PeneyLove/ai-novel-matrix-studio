@@ -124,7 +124,8 @@ func TestStartAvailableKeepsGoodServers(t *testing.T) {
 
 // TestStartAllAllOrNothingOnFailure pins the strict StartAll contract the
 // parallel rewrite must preserve: any single plugin failing aborts the whole
-// set, returns no Host or tools, and tears down every server that did start â€?// including, under parallel start, a good server whose index sits after the
+// set, returns no Host or tools, and tears down every server that did start â€”
+// including, under parallel start, a good server whose index sits after the
 // failing one ([bad, good]). On error the Host is nil, so callers never see a
 // half-built set; the started servers are closed before StartAll returns.
 func TestStartAllAllOrNothingOnFailure(t *testing.T) {
@@ -332,7 +333,7 @@ func TestStartPolicyConcurrencyCap(t *testing.T) {
 	elapsed := time.Since(t0)
 	// 4 specs Ã— 50ms init each, serialised. Allow generous slack for CI.
 	if elapsed < 4*50*time.Millisecond {
-		t.Fatalf("with Concurrency=1, total time should be â‰?Î£(per-spec) but was %v", elapsed)
+		t.Fatalf("with Concurrency=1, total time should be â‰¥ Î£(per-spec) but was %v", elapsed)
 	}
 	if len(tools) != 4*2 { // helper exposes 2 tools per server
 		t.Fatalf("want %d tools, got %d", 4*2, len(tools))
@@ -432,7 +433,7 @@ func TestStartRecordsTimeoutStats(t *testing.T) {
 // The helper advertises prompts and stalls prompts/list by 200ms; StartAvailable
 // must return as soon as tools are ready (well before that 200ms), and the
 // prompts must only materialise on Host after StartPhaseB has been called and
-// drained â€?proving prompts ride the background phase, not the boot critical path.
+// drained â€” proving prompts ride the background phase, not the boot critical path.
 func TestStartPhaseAReturnsBeforePhaseB(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -457,14 +458,14 @@ func TestStartPhaseAReturnsBeforePhaseB(t *testing.T) {
 		t.Fatalf("want tools from helper, got 0")
 	}
 	if startDur >= 150*time.Millisecond {
-		t.Fatalf("StartAvailable took %v â€?phase B (200ms prompts) leaked onto the critical path", startDur)
+		t.Fatalf("StartAvailable took %v â€” phase B (200ms prompts) leaked onto the critical path", startDur)
 	}
 	if got := host.Prompts(); len(got) != 0 {
 		t.Fatalf("phase A must not surface prompts yet, got %d", len(got))
 	}
 
 	// Drive phase B and wait for the surface-ready event. Use a buffered channel
-	// sink so the test never blocks the emitter â€?the event payload itself is
+	// sink so the test never blocks the emitter â€” the event payload itself is
 	// our completion signal.
 	ready := make(chan event.Event, 4)
 	host.StartPhaseB(ctx, event.FuncSink(func(e event.Event) {

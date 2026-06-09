@@ -87,7 +87,7 @@ func TestDirectHostsBypassProxy(t *testing.T) {
 func TestNoDirectHostsKeepsEveryoneProxied(t *testing.T) {
 	t.Setenv("HTTPS_PROXY", "http://proxy.example.com:8080")
 	t.Setenv("NO_PROXY", "")
-	pf, err := proxyFunc(ProxySpec{Mode: "env"}) // no DirectHosts â†?nothing special-cased
+	pf, err := proxyFunc(ProxySpec{Mode: "env"}) // no DirectHosts â†’ nothing special-cased
 	if err != nil {
 		t.Fatalf("proxyFunc: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestHTTPClientProxyModesAffectRequests(t *testing.T) {
 	t.Cleanup(customProxy.Close)
 
 	// Windows env vars are case-insensitive, so HTTP_PROXY and http_proxy are the
-	// same var â€?set the intended value last or the empty clear wipes it.
+	// same var â€” set the intended value last or the empty clear wipes it.
 	t.Setenv("http_proxy", "")
 	t.Setenv("HTTPS_PROXY", "")
 	t.Setenv("https_proxy", "")

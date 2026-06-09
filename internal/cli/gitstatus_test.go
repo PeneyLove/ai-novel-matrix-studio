@@ -61,7 +61,7 @@ func TestGitStatusRenderWithinCompactsRepoBeforeBranch(t *testing.T) {
 	if !strings.Contains(got, "@codex/cli-tui-status-row") {
 		t.Fatalf("branch should stay intact while repo can be compacted: %q", got)
 	}
-	if !strings.Contains(got, "â€?) {
+	if !strings.Contains(got, "â€¦") {
 		t.Fatalf("long repo should be compacted with ellipsis: %q", got)
 	}
 }
@@ -82,7 +82,7 @@ func TestGitStatusRenderWithinKeepsDirtySuffix(t *testing.T) {
 	if !strings.Contains(got, "(+12 -3 ?4)") {
 		t.Fatalf("dirty suffix should be preserved: %q", got)
 	}
-	if !strings.Contains(got, "@") || !strings.Contains(got, "â€?) {
+	if !strings.Contains(got, "@") || !strings.Contains(got, "â€¦") {
 		t.Fatalf("identity should remain segmented and compacted: %q", got)
 	}
 }

@@ -17,7 +17,7 @@ import (
 // true it replies as text/event-stream (prefixing a server notification event
 // to prove the client skips non-matching messages); otherwise application/json.
 // It assigns a session id on initialize and fails any later request that
-// doesn't echo it, and requires the Authorization header â€?so the test proves
+// doesn't echo it, and requires the Authorization header â€” so the test proves
 // session + header plumbing, not just the happy path.
 func mcpHTTPServer(t *testing.T, sse bool) *httptest.Server {
 	t.Helper()

@@ -50,7 +50,7 @@ func TestCustomCommandLookup(t *testing.T) {
 }
 
 func TestComposePlanModeMarker(t *testing.T) {
-	c := New(Options{}) // no executor �?SetPlanMode still tracks the flag
+	c := New(Options{}) // no executor — SetPlanMode still tracks the flag
 
 	if got := c.Compose("hi"); got != "hi" {
 		t.Errorf("plan off: Compose = %q, want verbatim", got)
@@ -64,7 +64,7 @@ func TestComposePlanModeMarker(t *testing.T) {
 }
 
 func TestComposeDrainsQueuedMemory(t *testing.T) {
-	c := New(Options{}) // no executor/memory �?QueueMemory still queues a turn-tail note
+	c := New(Options{}) // no executor/memory — QueueMemory still queues a turn-tail note
 
 	c.QueueMemory("Saved memory \"rmb\": user's balance is in RMB")
 	got := c.Compose("hello")
@@ -257,7 +257,7 @@ func TestRunTurnAutoPlanClassifierBorderlineTrue(t *testing.T) {
 	runner := &fakeTurnRunner{}
 	c := New(Options{AutoPlan: "on", Classifier: classifier, Runner: runner})
 
-	if err := c.runTurn(context.Background(), "实现一个小的配置入�?); err != nil {
+	if err := c.runTurn(context.Background(), "实现一个小的配置入口"); err != nil {
 		t.Fatal(err)
 	}
 	if len(runner.inputs) != 1 || !strings.HasPrefix(runner.inputs[0], PlanModeMarker) {
@@ -273,7 +273,7 @@ func TestRunTurnAutoPlanClassifierBorderlineFalse(t *testing.T) {
 	runner := &fakeTurnRunner{}
 	c := New(Options{AutoPlan: "on", Classifier: classifier, Runner: runner})
 
-	if err := c.runTurn(context.Background(), "实现一个小的配置入�?); err != nil {
+	if err := c.runTurn(context.Background(), "实现一个小的配置入口"); err != nil {
 		t.Fatal(err)
 	}
 	if len(runner.inputs) != 1 || strings.HasPrefix(runner.inputs[0], PlanModeMarker) {

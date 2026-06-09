@@ -37,7 +37,7 @@ func TestWaitTimeout(t *testing.T) {
 		<-ctx.Done()
 		return "", ctx.Err()
 	})
-	// Wait with a very short timeout â€?the job won't finish in time.
+	// Wait with a very short timeout â€” the job won't finish in time.
 	res := m.Wait(context.Background(), []string{j.ID}, 1)
 	if len(res) != 1 {
 		t.Fatalf("want 1 result, got %d", len(res))
@@ -56,7 +56,7 @@ func TestWaitAllRunning(t *testing.T) {
 	defer m.Close()
 
 	// Jobs block until cancelled so they are still running when Wait resolves the
-	// "all running" set â€?instant-returning jobs could finish first and be missed,
+	// "all running" set â€” instant-returning jobs could finish first and be missed,
 	// which is exactly the resolution this test must observe deterministically. A
 	// short timeout returns the still-running snapshot.
 	j1 := m.Start("bash", "", func(ctx context.Context, _ io.Writer) (string, error) {

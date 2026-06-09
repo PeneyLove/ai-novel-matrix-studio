@@ -115,9 +115,9 @@ func TestDecodeUTF16BE(t *testing.T) {
 }
 
 func TestDecodeGB18030(t *testing.T) {
-	gb, _ := simplifiedchinese.GB18030.NewEncoder().String("你好世界\n第二�?)
+	gb, _ := simplifiedchinese.GB18030.NewEncoder().String("你好世界\n第二行")
 	out := Decode([]byte(gb), GB18030)
-	if string(out) != "你好世界\n第二�? {
+	if string(out) != "你好世界\n第二行" {
 		t.Errorf("got %q", out)
 	}
 }
@@ -191,7 +191,7 @@ func TestRoundTripGB18030(t *testing.T) {
 		t.Fatalf("decode mismatch: %q", decoded)
 	}
 
-	edited := strings.Replace(decoded, "第二�?, "新的�?, 1)
+	edited := strings.Replace(decoded, "第二行", "新的行", 1)
 	reencoded := Encode(edited, enc)
 	redecoded := string(Decode(reencoded, enc))
 	if redecoded != edited {
@@ -254,7 +254,7 @@ func TestDetectPlainUTF8NotUTF16(t *testing.T) {
 }
 
 func TestDetectBinaryNotUTF16NoBOM(t *testing.T) {
-	// NULs on both parities �?genuine binary must not look like BOM-less UTF-16.
+	// NULs on both parities — genuine binary must not look like BOM-less UTF-16.
 	bin := []byte{0x00, 0x00, 0x01, 0x00, 0x00, 0x02, 0xFF, 0x00, 0x00, 0x03, 0x00, 0x00, 0x04, 0x00, 0x00, 0x05, 0x00, 0x00}
 	if k, ok := DetectUTF16NoBOM(bin); ok {
 		t.Errorf("binary misdetected as %v", k)

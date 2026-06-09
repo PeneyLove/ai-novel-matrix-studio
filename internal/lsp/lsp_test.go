@@ -120,10 +120,10 @@ func TestURIRoundtrip(t *testing.T) {
 	for _, p := range paths {
 		uri := pathToURI(p)
 		if !strings.HasPrefix(uri, "file://") {
-			t.Errorf("%q â†?%q is not a file URI", p, uri)
+			t.Errorf("%q â†’ %q is not a file URI", p, uri)
 		}
 		if got := uriToPath(uri); got != p {
-			t.Errorf("roundtrip %q â†?%q", p, got)
+			t.Errorf("roundtrip %q â†’ %q", p, got)
 		}
 	}
 }

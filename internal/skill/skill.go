@@ -3,9 +3,9 @@
 // (or the user via "/<name>"): an "inline" skill folds its body into the turn as
 // a tool result, a "subagent" skill runs in an isolated child loop and returns
 // only its final answer. Project scope wins over global; only names+descriptions
-// enter the cache-stable system-prompt index (see index.go) â€?bodies load on
+// enter the cache-stable system-prompt index (see index.go) â€” bodies load on
 // demand. Discovery scans several conventions (.reasonix / .agents / .agent /
-// .claude under the project root and the home dir â€?see config.ConventionDirs) so
+// .claude under the project root and the home dir â€” see config.ConventionDirs) so
 // skills authored for other agent tools migrate in unchanged, and follows
 // symlinks, so a linked skill directory or flat <name>.md is picked up like a real one.
 package skill
@@ -150,7 +150,7 @@ type Root struct {
 
 // roots returns the discovery directories, highest priority first: the
 // convention dirs (config.ConventionDirs: .reasonix / .agents / .agent / .claude)
-// under the project root â†?custom paths â†?the same convention dirs under the home
+// under the project root â†’ custom paths â†’ the same convention dirs under the home
 // dir. A later root never overrides an earlier one.
 func (s *Store) roots() []Root {
 	type de struct {
@@ -343,7 +343,7 @@ func (s *Store) parse(path, stem string, scope Scope) (Skill, bool) {
 	}
 	desc := strings.TrimSpace(fm["description"])
 	if desc == "" {
-		fmt.Fprintf(s.stderr, "warning: skill %q at %s has no description: â€?it will load but won't appear in the skills index\n", name, path)
+		fmt.Fprintf(s.stderr, "warning: skill %q at %s has no description: â€” it will load but won't appear in the skills index\n", name, path)
 	}
 	return Skill{
 		Name:         name,
@@ -367,13 +367,13 @@ func (s *Store) Create(name string, scope Scope) (string, error) {
 // skill of the same name. Returns the written path.
 func (s *Store) CreateWithContent(name string, scope Scope, content string) (string, error) {
 	if !IsValidName(name) {
-		return "", fmt.Errorf("invalid skill name %q â€?use letters, digits, '_', '-', '.'", name)
+		return "", fmt.Errorf("invalid skill name %q â€” use letters, digits, '_', '-', '.'", name)
 	}
 	var root string
 	switch scope {
 	case ScopeProject:
 		if s.projectRoot == "" {
-			return "", fmt.Errorf("project scope requires a workspace â€?run from a project directory, or use global scope")
+			return "", fmt.Errorf("project scope requires a workspace â€” run from a project directory, or use global scope")
 		}
 		root = filepath.Join(s.projectRoot, ".reasonix", SkillsDirname)
 	default:
@@ -473,10 +473,10 @@ func parseRunAs(runAs, context, agent string) RunAs {
 	return RunInline
 }
 
-// stubBody is the scaffold written by `/skill new` â€?minimal frontmatter plus
+// stubBody is the scaffold written by `/skill new` â€” minimal frontmatter plus
 // guidance the author fills in.
 func stubBody(name string) string {
-	return "---\nname: " + name + "\ndescription: One-liner â€?what does this skill do?\n---\n\n# " + name + `
+	return "---\nname: " + name + "\ndescription: One-liner â€” what does this skill do?\n---\n\n# " + name + `
 
 Replace this body with the playbook the model should follow when this skill is invoked.
 

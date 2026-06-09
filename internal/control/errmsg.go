@@ -42,7 +42,7 @@ func explainError(err error) error {
 }
 
 // requestErrorReason returns the provider's verbatim reason for request-shaped
-// 4xx (400/422) â€?the localized line names the category, the body names the
+// 4xx (400/422) â€” the localized line names the category, the body names the
 // actual cause (context-length exceeded, unpaired tool_calls). Empty otherwise.
 func requestErrorReason(e *provider.APIError) string {
 	if e.Status != 400 && e.Status != 422 {
@@ -73,5 +73,5 @@ func clampRunes(s string, max int) string {
 	if len(r) <= max {
 		return s
 	}
-	return string(r[:max]) + "â€?
+	return string(r[:max]) + "â€¦"
 }

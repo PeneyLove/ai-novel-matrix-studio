@@ -11,8 +11,8 @@ import (
 )
 
 // KillTree terminates cmd and every descendant it spawned. Process.Kill only
-// signals the direct child, so a launcher (cmd.exe â†?node.exe) leaves the
-// grandchild alive holding the inherited stdout/stderr pipes â€?which makes
+// signals the direct child, so a launcher (cmd.exe â†’ node.exe) leaves the
+// grandchild alive holding the inherited stdout/stderr pipes â€” which makes
 // cmd.Wait block forever. taskkill /T walks the live tree and kills it all.
 func KillTree(cmd *exec.Cmd) {
 	if cmd == nil || cmd.Process == nil {
@@ -27,8 +27,8 @@ func KillTree(cmd *exec.Cmd) {
 // TrackTree assigns cmd to a new Job Object set to terminate every process in
 // it when the job handle is closed. A launcher's detached grandchild (e.g. the
 // CodeGraph node daemon, which re-parents itself away from the launcher) stays
-// in the job even though it leaves cmd's live child tree, so KillTracked â€?and,
-// crucially, an abrupt reasonix exit, which closes the handle â€?still reaps it,
+// in the job even though it leaves cmd's live child tree, so KillTracked â€” and,
+// crucially, an abrupt reasonix exit, which closes the handle â€” still reaps it,
 // where taskkill /T would miss it. Returns 0 on failure; the caller then relies
 // on KillTree alone.
 func TrackTree(cmd *exec.Cmd) uintptr {

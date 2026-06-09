@@ -16,7 +16,8 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tool"
 )
 
-// These tests drive the full real stack â€?acp.Serve â†?control.Controller â†?// agent.Agent â€?with a scripted provider and a fake tool standing in for the
+// These tests drive the full real stack â€” acp.Serve â†’ control.Controller â†’
+// agent.Agent â€” with a scripted provider and a fake tool standing in for the
 // model and a real tool. They are the keyless, deterministic counterpart to a
 // live network run: they exercise session/update streaming, the gateâ†’approval
 // round-trip, cancellation, and transcript persistence end to end.
@@ -111,7 +112,7 @@ func openSession(t *testing.T, c *rpcClient) string {
 }
 
 // TestE2EToolTurnAndPersistence runs a full turn that streams text, calls a
-// read-only tool (auto-allowed, no prompt), streams more text, and ends â€?then
+// read-only tool (auto-allowed, no prompt), streams more text, and ends â€” then
 // checks the session/update stream, the stopReason, and that the turn was
 // persisted to the transcript path returned to the client.
 func TestE2EToolTurnAndPersistence(t *testing.T) {
@@ -208,7 +209,7 @@ func TestE2EToolTurnAndPersistence(t *testing.T) {
 
 // TestE2ESessionLoad runs a turn in one server (saving a transcript keyed by
 // session id), then resumes it in a fresh server pointed at the same session dir
-// â€?simulating a restart â€?and checks the conversation is replayed to the client
+// â€” simulating a restart â€” and checks the conversation is replayed to the client
 // as session/update notifications.
 func TestE2ESessionLoad(t *testing.T) {
 	dir := t.TempDir()

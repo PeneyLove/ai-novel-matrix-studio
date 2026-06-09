@@ -11,11 +11,11 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/i18n"
 )
 
-// chooser is the in-chat multiple-choice prompt the `ask` tool raises ‚Ä?the CLI's
+// chooser is the in-chat multiple-choice prompt the `ask` tool raises ‚Äî the CLI's
 // question card. It holds the questions, the per-question selections, and the
 // cursor; chatTUI routes keystrokes to it while it's active
 // (m.chooser != nil) and renders it pinned above the input. One AskRequest can
-// carry several questions, shown as tabs (‚Ü?‚Ü? plus a final Submit tab.
+// carry several questions, shown as tabs (‚Üê/‚Üí) plus a final Submit tab.
 type chooser struct {
 	id        string
 	questions []event.AskQuestion
@@ -84,7 +84,7 @@ func (c *chooser) answers() []event.AskAnswer {
 // --- chatTUI integration ---
 
 // handleChooserKey routes a keystroke to the active chooser (when not in free-text
-// mode ‚Ä?that's handled in Update by the textarea). Selecting an option in a
+// mode ‚Äî that's handled in Update by the textarea). Selecting an option in a
 // single-select question advances; on the last/only question it submits.
 func (m chatTUI) handleChooserKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	c := m.chooser
@@ -94,7 +94,7 @@ func (m chatTUI) handleChooserKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.chooser = nil
 		return m, nil
 	case "esc":
-		return m.chooserAnswer(nil) // dismiss ‚Ü?empty answer
+		return m.chooserAnswer(nil) // dismiss ‚Üí empty answer
 	case "left", "h":
 		if c.tab > 0 {
 			c.tab--
@@ -253,9 +253,9 @@ func (m chatTUI) chooserTabs() string {
 	c := m.chooser
 	parts := make([]string, 0, len(c.questions)+1)
 	for i, q := range c.questions {
-		mark := "‚ò?
+		mark := "‚òê"
 		if c.answered(i) {
-			mark = "‚ú?
+			mark = "‚úî"
 		}
 		label := mark + " " + headerOr(q, i)
 		if i == c.tab {
@@ -265,9 +265,9 @@ func (m chatTUI) chooserTabs() string {
 		}
 		parts = append(parts, label)
 	}
-	smark := "‚ò?
+	smark := "‚òê"
 	if c.allAnswered() {
-		smark = "‚ú?
+		smark = "‚úî"
 	}
 	submit := smark + " Submit"
 	if c.onSubmitTab() {
@@ -275,7 +275,7 @@ func (m chatTUI) chooserTabs() string {
 	} else {
 		submit = dim(submit)
 	}
-	return dim("‚Ü?") + strings.Join(parts, "  ") + "  " + submit + dim(" ‚Ü?)
+	return dim("‚Üê ") + strings.Join(parts, "  ") + "  " + submit + dim(" ‚Üí")
 }
 
 // chooserOptionRow renders one option line (with its description underneath).
@@ -283,9 +283,9 @@ func (m chatTUI) chooserOptionRow(j int, opt event.AskOption, multi bool) string
 	c := m.chooser
 	box := ""
 	if multi {
-		box = "‚ò?"
+		box = "‚òê "
 		if c.sel[c.tab][j] {
-			box = "‚ò?"
+			box = "‚òë "
 		}
 	}
 	line := rowLine(c.cursor == j, j+1, box, opt.Label, false)
@@ -295,11 +295,11 @@ func (m chatTUI) chooserOptionRow(j int, opt event.AskOption, multi bool) string
 	return line
 }
 
-// rowLine formats a selectable row: "‚ù?N. <box><label>", highlighted when current.
+// rowLine formats a selectable row: "‚ùØ N. <box><label>", highlighted when current.
 func rowLine(cur bool, num int, box, label string, active bool) string {
 	prefix := "  "
 	if cur {
-		prefix = accent("‚ù?")
+		prefix = accent("‚ùØ ")
 	}
 	body := fmt.Sprintf("%d. %s%s", num, box, label)
 	if cur {

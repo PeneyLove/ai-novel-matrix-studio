@@ -44,7 +44,7 @@ func TestLanguageServers(t *testing.T) {
 
 			line := findLine(t, root, tc.file, tc.callNeedle)
 			def := defWithRetry(t, ctx, m, tc.file, line, tc.symbol, 150*time.Second)
-			t.Logf("[%s] definition â†?%s", tc.lang, def)
+			t.Logf("[%s] definition â†’ %s", tc.lang, def)
 			if strings.Contains(def, "no definition") || !strings.Contains(def, filepath.Base(tc.file)) {
 				t.Errorf("%s: definition did not resolve into %s: %s", tc.lang, tc.file, def)
 			}
@@ -52,18 +52,18 @@ func TestLanguageServers(t *testing.T) {
 			if hov, err := m.Hover(ctx, tc.file, line, tc.symbol); err != nil {
 				t.Errorf("%s hover: %v", tc.lang, err)
 			} else {
-				t.Logf("[%s] hover â†?%s", tc.lang, oneLine(hov))
+				t.Logf("[%s] hover â†’ %s", tc.lang, oneLine(hov))
 			}
 			if diag, err := m.Diagnostics(ctx, tc.file); err != nil {
 				t.Errorf("%s diagnostics: %v", tc.lang, err)
 			} else {
-				t.Logf("[%s] diagnostics â†?%s", tc.lang, oneLine(diag))
+				t.Logf("[%s] diagnostics â†’ %s", tc.lang, oneLine(diag))
 			}
 		})
 	}
 }
 
-// defWithRetry polls Definition until it resolves or the budget elapses â€?some
+// defWithRetry polls Definition until it resolves or the budget elapses â€” some
 // servers (rust-analyzer) keep indexing for a while after initialize returns.
 func defWithRetry(t *testing.T, ctx context.Context, m *Manager, file string, line int, symbol string, budget time.Duration) string {
 	end := time.Now().Add(budget)
@@ -71,7 +71,7 @@ func defWithRetry(t *testing.T, ctx context.Context, m *Manager, file string, li
 	for {
 		d, err := m.Definition(ctx, file, line, symbol)
 		if err != nil {
-			// ContentModified means the server is still indexing â€?retry per LSP Â§-32801.
+			// ContentModified means the server is still indexing â€” retry per LSP Â§-32801.
 			if strings.Contains(err.Error(), "content modified") && time.Now().Before(end) {
 				time.Sleep(time.Second)
 				continue
@@ -89,7 +89,7 @@ func defWithRetry(t *testing.T, ctx context.Context, m *Manager, file string, li
 func oneLine(s string) string {
 	s = strings.TrimSpace(s)
 	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		return s[:i] + " â€?
+		return s[:i] + " â€¦"
 	}
 	return s
 }
@@ -130,7 +130,7 @@ func TestGoplsSmoke(t *testing.T) {
 	if err != nil {
 		t.Fatalf("diagnostics: %v", err)
 	}
-	t.Logf("diagnostics â†?%s", diag)
+	t.Logf("diagnostics â†’ %s", diag)
 	if !strings.Contains(diag, "no diagnostics") {
 		t.Errorf("clean file should have no diagnostics, got: %s", diag)
 	}

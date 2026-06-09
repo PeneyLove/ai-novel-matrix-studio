@@ -4,7 +4,7 @@
 // (built-in vs. MCP, read-only, previewable), which MCP servers are connected
 // and what prompts/resources they expose, and which slash commands are loaded.
 //
-// It is a read-only projection layer â€?every function takes the already-built
+// It is a read-only projection layer â€” every function takes the already-built
 // runtime objects (config, tool registry, plugin host, command list) and
 // returns a view. Nothing here mutates state or performs I/O beyond reading the
 // environment for key readiness. The CLI's `/mcp` listing and a desktop

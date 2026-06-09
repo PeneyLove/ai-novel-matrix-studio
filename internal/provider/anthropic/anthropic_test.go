@@ -44,7 +44,7 @@ func TestBuildRequest(t *testing.T) {
 	if r.System[0].CacheControl == nil {
 		t.Fatal("system block should carry cache_control")
 	}
-	// System present â‡?the tool does NOT also get a breakpoint (system caches tools).
+	// System present â‡’ the tool does NOT also get a breakpoint (system caches tools).
 	if r.Tools[0].CacheControl != nil {
 		t.Fatal("tool should not carry cache_control when system does")
 	}

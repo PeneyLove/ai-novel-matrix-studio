@@ -1,5 +1,5 @@
-// Package outputstyle adds a selectable "output style" â€?a block of persona /
-// tone instructions appended to (or replacing) the system prompt â€?so the user
+// Package outputstyle adds a selectable "output style" â€” a block of persona /
+// tone instructions appended to (or replacing) the system prompt â€” so the user
 // can shift how the agent communicates without rewriting the system prompt. It
 // mirrors the skill/command loaders: built-in styles plus markdown files with
 // frontmatter discovered under the project and home convention dirs.
@@ -28,14 +28,14 @@ type OutputStyle struct {
 }
 
 // builtins are the always-available styles. Default ("" / "default") is absent
-// on purpose â€?no style means the unmodified system prompt.
+// on purpose â€” no style means the unmodified system prompt.
 var builtins = []OutputStyle{
 	{
 		Name:        "explanatory",
 		Description: "Explain non-obvious implementation choices as you go",
 		KeepCoding:  true,
 		Builtin:     true,
-		Body: "Communication style â€?Explanatory: as you work, surface the reasoning behind " +
+		Body: "Communication style â€” Explanatory: as you work, surface the reasoning behind " +
 			"non-obvious choices. After a substantive change, add a short \"## Insight\" note " +
 			"covering the key trade-off or why an alternative was rejected. Teach the why, not just the what; keep it brief.",
 	},
@@ -44,7 +44,7 @@ var builtins = []OutputStyle{
 		Description: "Collaborate and leave TODO(human) stubs for the user to complete",
 		KeepCoding:  true,
 		Builtin:     true,
-		Body: "Communication style â€?Learning: work collaboratively rather than doing everything. " +
+		Body: "Communication style â€” Learning: work collaboratively rather than doing everything. " +
 			"When a meaningful implementation decision comes up, pause and ask the user to make the call. " +
 			"For the most instructive pieces, write the surrounding code but leave a small, clearly-marked " +
 			"`TODO(human)` stub with a one-line description for the user to implement themselves.",
@@ -54,7 +54,7 @@ var builtins = []OutputStyle{
 		Description: "Terse replies: minimal prose, code and bullets only",
 		KeepCoding:  true,
 		Builtin:     true,
-		Body: "Communication style â€?Concise: keep replies terse. No preamble or postamble, no restating " +
+		Body: "Communication style â€” Concise: keep replies terse. No preamble or postamble, no restating " +
 			"the request. Prefer code and short bullet points over paragraphs; answer in the fewest words that are still clear.",
 	},
 }
@@ -78,8 +78,8 @@ func Dirs() []string {
 // cycle; config imports nothing from here, but this package stays dependency-light).
 var conventionDirs = []string{".reasonix", ".agents", ".agent", ".claude"}
 
-// List returns every available style â€?built-ins plus the markdown files under
-// dirs â€?deduped by lowercased name, with custom files overriding built-ins.
+// List returns every available style â€” built-ins plus the markdown files under
+// dirs â€” deduped by lowercased name, with custom files overriding built-ins.
 // Sorted by name. Malformed files are skipped.
 func List(dirs []string) []OutputStyle {
 	byName := map[string]OutputStyle{}
@@ -111,7 +111,7 @@ func List(dirs []string) []OutputStyle {
 }
 
 // Resolve finds the style named name (case-insensitive) among dirs + built-ins.
-// An empty or "default" name returns ok=false (no style â€?leave the prompt as-is).
+// An empty or "default" name returns ok=false (no style â€” leave the prompt as-is).
 func Resolve(name string, dirs []string) (OutputStyle, bool) {
 	n := strings.ToLower(strings.TrimSpace(name))
 	if n == "" || n == "default" {
@@ -191,7 +191,7 @@ func DescribeList(styles []OutputStyle, active string) string {
 		if !st.Builtin {
 			scope = "custom"
 		}
-		fmt.Fprintf(&b, "%s%s (%s) â€?%s\n", marker, st.Name, scope, st.Description)
+		fmt.Fprintf(&b, "%s%s (%s) â€” %s\n", marker, st.Name, scope, st.Description)
 	}
 	return strings.TrimRight(b.String(), "\n")
 }

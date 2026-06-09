@@ -174,7 +174,7 @@ func TestFormatBranchTreeUsesCompactVisualRows(t *testing.T) {
 	branches := []agent.BranchInfo{
 		{
 			BranchMeta: agent.BranchMeta{ID: "20260601-033830.928433000-deepseek-v4-flash"},
-			Preview:    "你是�?,
+			Preview:    "你是谁",
 			Turns:      3,
 		},
 		{

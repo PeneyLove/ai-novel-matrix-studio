@@ -44,7 +44,7 @@ func (g globTool) Execute(ctx context.Context, args json.RawMessage) (string, er
 	}
 	// Save the original pattern before resolveIn prepends workDir, so the
 	// simple-filename recursive-fallback check below works on the raw input
-	// â€?not the already-joined absolute path that always contains separators.
+	// â€” not the already-joined absolute path that always contains separators.
 	rawPattern := p.Pattern
 	p.Pattern = resolveIn(g.workDir, p.Pattern)
 	p.Pattern = filepath.FromSlash(p.Pattern) // models emit "/" (see Description); WalkDir/Match compare OS-native paths
@@ -57,7 +57,7 @@ func (g globTool) Execute(ctx context.Context, args json.RawMessage) (string, er
 	// For patterns without **, try filepath.Glob first. If no matches are
 	// found and the pattern is a simple filename (no path separator), retry
 	// with a recursive walk (equivalent to "**/<pattern>") so the tool finds
-	// files anywhere in the tree â€?the common case where the model only knows
+	// files anywhere in the tree â€” the common case where the model only knows
 	// a filename but not its exact location. Uses the raw pattern (before
 	// resolveIn) so a workspace root doesn't mask a simple "*.go".
 	matches, err := filepath.Glob(p.Pattern)
@@ -110,7 +110,7 @@ func globRecursive(ctx context.Context, pattern string) (string, error) {
 
 	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if ctx.Err() != nil {
-			return ctx.Err() // abort promptly on cancel â€?a huge tree is interruptible
+			return ctx.Err() // abort promptly on cancel â€” a huge tree is interruptible
 		}
 		if err != nil {
 			return nil // skip unreadable entries

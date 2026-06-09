@@ -81,7 +81,7 @@ func (m chatTUI) connectSelectedMCP(v mcpServerView) (tea.Model, tea.Cmd) {
 		m.mcp.stage = mcpStageDetail
 		m.mcp.selectName(v.Name)
 	}
-	m.notice(fmt.Sprintf("connected %s â€?%d tools (available next message)", v.Name, n))
+	m.notice(fmt.Sprintf("connected %s â€” %d tools (available next message)", v.Name, n))
 	return m, nil
 }
 

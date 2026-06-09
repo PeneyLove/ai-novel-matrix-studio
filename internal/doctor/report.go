@@ -89,7 +89,8 @@ type SandboxReport struct {
 	Network    bool     `json:"network"`
 	WriteRoots []string `json:"write_roots,omitempty"`
 	// Available is whether an OS sandbox actually backs an "enforce" request on
-	// this host (bwrap/seatbelt present). Without it "enforce" runs unconfined â€?	// e.g. always on Windows, where there is no OS sandbox.
+	// this host (bwrap/seatbelt present). Without it "enforce" runs unconfined â€”
+	// e.g. always on Windows, where there is no OS sandbox.
 	Available bool `json:"available"`
 }
 
@@ -257,7 +258,7 @@ func RenderText(r Report) string {
 	fmt.Fprintf(&b, "\nsandbox\n")
 	bashLine := r.Sandbox.Bash
 	if r.Sandbox.Bash == "enforce" && !r.Sandbox.Available {
-		bashLine += " (inactive: no OS sandbox on this host â€?bash runs unconfined)"
+		bashLine += " (inactive: no OS sandbox on this host â€” bash runs unconfined)"
 	}
 	fmt.Fprintf(&b, "  bash         %s\n", bashLine)
 	fmt.Fprintf(&b, "  network      %v\n", r.Sandbox.Network)

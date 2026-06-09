@@ -26,7 +26,7 @@ func (f failTool) Execute(context.Context, json.RawMessage) (string, error) {
 	return "", errors.New("unexpected end of JSON input")
 }
 
-// okTool always succeeds â€?a turn of real progress that breaks a failing run.
+// okTool always succeeds â€” a turn of real progress that breaks a failing run.
 type okTool struct{ name string }
 
 func (o okTool) Name() string                                             { return o.name }
@@ -48,8 +48,8 @@ func warnNoticeRecorder() (event.Sink, *[]string) {
 // TestStormBreakerEscalatesRepeatedFailure: once the same tool has failed the
 // same way stormBreakThreshold times in a row, the model-facing result must carry
 // the loop-guard directive (not just the raw error again), and the user must get
-// a warn notice. The arguments DIFFER on every call â€?mirroring the live failure
-// mode where a stuck model re-words the payload â€?to prove detection keys on the
+// a warn notice. The arguments DIFFER on every call â€” mirroring the live failure
+// mode where a stuck model re-words the payload â€” to prove detection keys on the
 // error, not the bytes.
 func TestStormBreakerEscalatesRepeatedFailure(t *testing.T) {
 	reg := tool.NewRegistry()
@@ -79,7 +79,7 @@ func TestStormBreakerEscalatesRepeatedFailure(t *testing.T) {
 }
 
 // TestStormBreakerEscalatesRepeatedBatch: a multi-call batch that fails the same
-// way every round is just as much a death-spiral as a single call â€?once the whole
+// way every round is just as much a death-spiral as a single call â€” once the whole
 // batch repeats stormBreakThreshold times, the guard must fire and name the batch.
 func TestStormBreakerEscalatesRepeatedBatch(t *testing.T) {
 	reg := tool.NewRegistry()
@@ -109,7 +109,7 @@ func TestStormBreakerEscalatesRepeatedBatch(t *testing.T) {
 }
 
 // TestStormBreakerBatchResetsOnPartialSuccess: a batch where even one call
-// succeeds is progress, not a fixation â€?the guard must never fire, however many
+// succeeds is progress, not a fixation â€” the guard must never fire, however many
 // times the batch repeats.
 func TestStormBreakerBatchResetsOnPartialSuccess(t *testing.T) {
 	reg := tool.NewRegistry()
@@ -136,7 +136,7 @@ func TestStormBreakerBatchResetsOnPartialSuccess(t *testing.T) {
 }
 
 // TestStormBreakerSilentBelowThreshold: the first few self-corrections are
-// healthy â€?the guard must not fire before the threshold.
+// healthy â€” the guard must not fire before the threshold.
 func TestStormBreakerSilentBelowThreshold(t *testing.T) {
 	reg := tool.NewRegistry()
 	reg.Add(failTool{name: "write_file"})
@@ -172,9 +172,9 @@ func TestStormBreakerResetsOnSuccess(t *testing.T) {
 
 	a.executeBatch(ctx, []provider.ToolCall{fail})            // count 1
 	a.executeBatch(ctx, []provider.ToolCall{fail})            // count 2
-	a.executeBatch(ctx, []provider.ToolCall{good})            // success â†?reset
+	a.executeBatch(ctx, []provider.ToolCall{good})            // success â†’ reset
 	a.executeBatch(ctx, []provider.ToolCall{fail})            // count 1
-	last := a.executeBatch(ctx, []provider.ToolCall{fail})[0] // count 2 â€?still below threshold
+	last := a.executeBatch(ctx, []provider.ToolCall{fail})[0] // count 2 â€” still below threshold
 
 	if strings.Contains(last, "[loop guard]") {
 		t.Fatalf("guard should have reset after a successful turn, got: %q", last)

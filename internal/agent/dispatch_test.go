@@ -12,7 +12,7 @@ import (
 // TestEarlyToolDispatch proves a ChunkToolCallStart surfaces a ToolDispatch
 // immediately (Partial, name only) so the card shows while the arguments are
 // still streaming, and that a second, full dispatch (with args) follows once the
-// call completes â€?the fix for "the edit_file card only appears after everything
+// call completes â€” the fix for "the edit_file card only appears after everything
 // is written".
 func TestEarlyToolDispatch(t *testing.T) {
 	prov := &mockProvider{name: "p", chunks: []provider.Chunk{

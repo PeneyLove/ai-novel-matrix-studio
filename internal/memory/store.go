@@ -69,8 +69,8 @@ func StoreFor(userDir, cwd string) Store {
 const indexFile = "MEMORY.md"
 
 // slugify turns an absolute project path into a single filesystem-safe segment,
-// matching the auto-memory convention (path separators â†?'-'), e.g.
-// "/Users/me/proj" â†?"-Users-me-proj".
+// matching the auto-memory convention (path separators â†’ '-'), e.g.
+// "/Users/me/proj" â†’ "-Users-me-proj".
 func slugify(absPath string) string {
 	r := strings.NewReplacer(string(os.PathSeparator), "-", "/", "-", "\\", "-", ":", "-")
 	return r.Replace(absPath)
@@ -95,7 +95,7 @@ func (s Store) Path(name string) string {
 }
 
 // Save writes (or overwrites) a memory file and refreshes its MEMORY.md index
-// line. It is the single mutation entry point â€?the `remember` tool, the desktop
+// line. It is the single mutation entry point â€” the `remember` tool, the desktop
 // editor, and any future importer all go through here so the index never drifts
 // from the files. Returns the path written.
 func (s Store) Save(m Memory) (string, error) {
@@ -119,7 +119,7 @@ func (s Store) Save(m Memory) (string, error) {
 	return path, nil
 }
 
-// Delete removes a memory file and its MEMORY.md line â€?the model's `forget`
+// Delete removes a memory file and its MEMORY.md line â€” the model's `forget`
 // path and the user's way to prune a stale fact. A missing file is not an error;
 // the goal state (gone) holds either way.
 func (s Store) Delete(name string) error {
@@ -161,7 +161,7 @@ func render(m Memory, name string) string {
 var indexLineRe = regexp.MustCompile(`\]\(([^)]+)\.md\)`)
 
 // indexLinesExcept returns the managed MEMORY.md lines keyed by filename stem,
-// dropping the entry for name (a missing index â†?empty map).
+// dropping the entry for name (a missing index â†’ empty map).
 func (s Store) indexLinesExcept(name string) map[string]string {
 	existing, _ := os.ReadFile(filepath.Join(s.Dir, indexFile))
 	keep := map[string]string{}
@@ -191,11 +191,11 @@ func (s Store) flushIndex(lines map[string]string) error {
 }
 
 // reindex rewrites the MEMORY.md line for name, preserving every other managed
-// line. The line is "- [<title>](<name>.md) â€?<description>"; title falls back
+// line. The line is "- [<title>](<name>.md) â€” <description>"; title falls back
 // to a de-kebabed name so the index reads as a label, never a bare slug.
 func (s Store) reindex(name string, m Memory) error {
 	lines := s.indexLinesExcept(name)
-	lines[name] = fmt.Sprintf("- [%s](%s.md) â€?%s", displayTitle(m.Title, name), name, oneLine(m.Description))
+	lines[name] = fmt.Sprintf("- [%s](%s.md) â€” %s", displayTitle(m.Title, name), name, oneLine(m.Description))
 	return s.flushIndex(lines)
 }
 

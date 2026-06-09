@@ -36,7 +36,7 @@ func TestComposeAppendsAfterBase(t *testing.T) {
 	}
 }
 
-// TestDiscoverPrecedenceOrder checks user â†?ancestor â†?project â†?local ordering,
+// TestDiscoverPrecedenceOrder checks user â†’ ancestor â†’ project â†’ local ordering,
 // which puts the most specific guidance last.
 func TestDiscoverPrecedenceOrder(t *testing.T) {
 	root := t.TempDir()

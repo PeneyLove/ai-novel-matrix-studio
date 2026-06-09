@@ -32,7 +32,7 @@ func buildExamplePlugin(t *testing.T) string {
 }
 
 // TestExamplePluginEndToEnd builds the real reference plugin and drives it
-// through StartAll over actual stdio pipes â€?the genuine end-to-end contract,
+// through StartAll over actual stdio pipes â€” the genuine end-to-end contract,
 // not a mock. It also asserts the readOnlyHint annotation flows through to
 // ReadOnly(), which is what lets plugin tools join parallel batches and the
 // permission reader-default.

@@ -146,7 +146,7 @@ func TestLoadBOM(t *testing.T) {
 
 func TestLoadMalformedFile(t *testing.T) {
 	dir := t.TempDir()
-	// A file that can't be read (directory with .md extension â€?won't happen in
+	// A file that can't be read (directory with .md extension â€” won't happen in
 	// practice but tests the error path).
 	os.MkdirAll(filepath.Join(dir, "bad.md"), 0o755)
 	// walkCommands skips directories even if named .md, so no error.

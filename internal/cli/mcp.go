@@ -20,7 +20,7 @@ import (
 //
 // A --http/--sse URL makes it a remote server; otherwise the first non-flag token
 // (after the name and any --env/--header flags) begins the stdio command, and the
-// rest are its args verbatim â€?so the command keeps its own -flags (e.g. `npx -y
+// rest are its args verbatim â€” so the command keeps its own -flags (e.g. `npx -y
 // pkg`). Flag values accept both "--http URL" and "--http=URL" forms.
 func parseMCPAdd(args []string) (config.PluginEntry, error) {
 	var e config.PluginEntry
@@ -149,7 +149,7 @@ func tokenizeArgs(s string) []string {
 }
 
 // mcpCommand implements `reasonix mcp <add|remove|list>`. It edits config only
-// (validate â†?UpsertPlugin/RemovePlugin â†?Save); the server connects on the next
+// (validate â†’ UpsertPlugin/RemovePlugin â†’ Save); the server connects on the next
 // session start. For a live connect inside an open chat, use `/mcp add`.
 func mcpCommand(args []string) int {
 	if len(args) == 0 {
@@ -236,7 +236,7 @@ func mcpAddCLI(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	fmt.Printf("added MCP server %q â€?loads on the next session (or run `/mcp add` inside chat to connect it live now)\n", entry.Name)
+	fmt.Printf("added MCP server %q â€” loads on the next session (or run `/mcp add` inside chat to connect it live now)\n", entry.Name)
 	return 0
 }
 

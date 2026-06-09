@@ -13,7 +13,7 @@ import (
 
 // legacyEvent is the subset of the v0.x typed event stream (<name>.events.jsonl)
 // needed to rebuild the conversation: user input, assistant turns (text + tool
-// calls), and tool results. All other event types (UI, plan, checkpoint, â€? are
+// calls), and tool results. All other event types (UI, plan, checkpoint, â€¦) are
 // presentation and carry no message state.
 type legacyEvent struct {
 	Type             string           `json:"type"`
@@ -34,15 +34,15 @@ type legacyToolCall struct {
 }
 
 // legacyImportMarker, once present in the v1+ session dir, records that the
-// one-time v0.x import has already run â€?so a session the user deletes after it
+// one-time v0.x import has already run â€” so a session the user deletes after it
 // was imported doesn't reappear on the next launch.
 const legacyImportMarker = ".legacy-imported"
 const legacyEventsHomeImportMarker = ".legacy-imported.v0-events-home"
 
 // MigrateLegacySessions imports v0.x event-log sessions (<name>.events.jsonl under
 // srcDir) into the v1+ message-log format (<name>.jsonl under destDir), back-filling
-// any whose .jsonl isn't already present. It runs once â€?guarded by a marker file in
-// destDir â€?so it still imports when destDir already holds v1+ sessions (the old
+// any whose .jsonl isn't already present. It runs once â€” guarded by a marker file in
+// destDir â€” so it still imports when destDir already holds v1+ sessions (the old
 // all-or-nothing skip hid a v0.x user's history the moment they opened v1, #2869)
 // without re-importing on every launch. Never modifies the legacy files. Returns the
 // count imported.
@@ -135,7 +135,7 @@ func reconstructSession(path string) ([]provider.Message, error) {
 		var e legacyEvent
 		if err := dec.Decode(&e); err != nil {
 			if !errors.Is(err, io.EOF) {
-				return msgs, nil // malformed tail â€?keep what parsed cleanly
+				return msgs, nil // malformed tail â€” keep what parsed cleanly
 			}
 			break
 		}

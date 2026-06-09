@@ -1,4 +1,4 @@
-// fetch.go â€?model auto-discovery via the OpenAI-compatible GET /models API.
+// fetch.go â€” model auto-discovery via the OpenAI-compatible GET /models API.
 package config
 
 import (

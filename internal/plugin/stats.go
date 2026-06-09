@@ -1,11 +1,11 @@
 // Per-plugin startup latency tracking for MCP servers. Reasonix uses these
 // samples to decide whether a chronically slow plugin should be demoted from
-// "eager" to "lazy" loading for the rest of a session â€?see Recommend.
+// "eager" to "lazy" loading for the rest of a session â€” see Recommend.
 //
 // Storage is one tiny JSON file per plugin under <cacheDir>/mcp/, written
 // atomically (tmpfile + Rename) so a crash mid-write can't corrupt history.
 // All errors are best-effort: missing/unreadable files yield "no demote",
-// write failures get logged via slog and dropped â€?startup must not fail
+// write failures get logged via slog and dropped â€” startup must not fail
 // because telemetry can't persist.
 package plugin
 
@@ -47,9 +47,9 @@ type StartupStats struct {
 }
 
 // Recommendation is the result of inspecting a plugin's recent startup
-// history. Demote is the actionable bit boot.go consumes (true â†?switch this
+// history. Demote is the actionable bit boot.go consumes (true â†’ switch this
 // plugin's tier to "lazy" for this session). P99 and Reason are descriptive
-// only â€?Reason is meant to be surfaced to the user as a Notice so a sudden
+// only â€” Reason is meant to be surfaced to the user as a Notice so a sudden
 // demotion isn't silent.
 type Recommendation struct {
 	Demote bool
@@ -63,19 +63,19 @@ type Recommendation struct {
 // dropping the oldest when full.
 //
 // Best-effort: any I/O or marshal failure is logged with slog.Warn and
-// returned, but callers are expected to ignore the error â€?telemetry must
+// returned, but callers are expected to ignore the error â€” telemetry must
 // never block real work. Writes go through a tmpfile + Rename so a partial
 // write can't leave the stats file truncated or unparseable.
 func RecordStartup(name string, dur time.Duration) error {
 	path := statsPath(name)
 	if path == "" {
-		// No cache dir resolvable on this host â€?silently skip. This is the
+		// No cache dir resolvable on this host â€” silently skip. This is the
 		// same fallback every other persistence helper in the project takes
 		// (ArchiveDir/SessionDir return "" and writers no-op).
 		return nil
 	}
 
-	stats := loadStats(path) // missing/corrupt â†?fresh zero value
+	stats := loadStats(path) // missing/corrupt â†’ fresh zero value
 	if stats.Version != statsVersion {
 		// Version mismatch: start over rather than try to migrate. The window
 		// is small enough that "lose 20 samples" is cheap, and it keeps the
@@ -104,7 +104,7 @@ func RecordStartup(name string, dur time.Duration) error {
 // Recommend inspects the recent samples for name and decides whether the
 // plugin should be demoted to "lazy" this session. The rule is simple: demote
 // when the last demoteAfter samples all hit or exceed the blocking startup
-// budget. Missing/empty stats â†?no demote (a fresh plugin gets the benefit of
+// budget. Missing/empty stats â†’ no demote (a fresh plugin gets the benefit of
 // the doubt and one normal startup attempt).
 //
 // budget == 0 disables the check (returns no-demote). demoteAfter <= 0 falls
@@ -124,7 +124,7 @@ func Recommend(name string, budget time.Duration, demoteAfter int) Recommendatio
 	}
 	stats := loadStats(path)
 	if stats.Version != statsVersion || len(stats.SamplesMs) == 0 {
-		// Either no history yet or a format we can't read â€?give the plugin a
+		// Either no history yet or a format we can't read â€” give the plugin a
 		// chance. The cost of one slow start is small compared to wrongly
 		// demoting a healthy plugin off stale data.
 		return Recommendation{}
@@ -166,7 +166,7 @@ func statsPath(name string) string {
 // loadStats reads and decodes a stats file. Any failure (missing file,
 // permission denied, malformed JSON) returns a zero StartupStats so callers
 // can treat absence and corruption identically. The slog.Warn fires only on
-// non-NotExist read errors and on JSON errors â€?those are surprising enough
+// non-NotExist read errors and on JSON errors â€” those are surprising enough
 // to be worth a trace, but they still must not stop the caller.
 func loadStats(path string) StartupStats {
 	var s StartupStats
@@ -214,7 +214,7 @@ func writeStatsAtomic(path string, s StartupStats) error {
 }
 
 // p99 returns the 99th-percentile sample as a Duration. With small windows
-// (n â‰?20) "p99" collapses to "the slowest sample we have"; the value is
+// (n â‰¤ 20) "p99" collapses to "the slowest sample we have"; the value is
 // purely informational, surfaced in Recommendation for UI/notice text.
 func p99(samples []int64) time.Duration {
 	if len(samples) == 0 {

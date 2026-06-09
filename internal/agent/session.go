@@ -35,7 +35,7 @@ func (s *Session) Add(m provider.Message) {
 	s.Messages = append(s.Messages, m)
 }
 
-// Replace swaps the whole message log â€?used by compaction, which rewrites the
+// Replace swaps the whole message log â€” used by compaction, which rewrites the
 // middle of the history.
 func (s *Session) Replace(msgs []provider.Message) {
 	s.mu.Lock()
@@ -59,7 +59,7 @@ func (s *Session) RewriteVersion() int { return s.rewriteVersion }
 func (s *Session) IncrementRewrite() { s.rewriteVersion++ }
 
 // HasContent returns true when the session carries at least one user,
-// assistant, or tool message â€?i.e. more than just a system prompt. An
+// assistant, or tool message â€” i.e. more than just a system prompt. An
 // "empty" conversation that has never been used should not be persisted.
 func (s *Session) HasContent() bool {
 	s.mu.RLock()

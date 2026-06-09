@@ -14,12 +14,12 @@ import (
 func init() { tool.RegisterBuiltin(completeStep{}) }
 
 // completeStep records an evidence-backed completion of one step of an approved
-// plan. Like todo_write it has no host side effects â€?the claim and its evidence
+// plan. Like todo_write it has no host side effects â€” the claim and its evidence
 // live in the call's args, which a frontend renders as a signed-off step. Its
 // reason for existing is the enforcement in Execute: a completion with no evidence
 // is rejected, so the model can't flip a step to "done" without showing why it is
 // done (the verification it ran, the diff/files it changed, or a manual check).
-// It complements todo_write â€?todo_write keeps the list moving (one item
+// It complements todo_write â€” todo_write keeps the list moving (one item
 // in_progress), complete_step is the formal sign-off of a finished step.
 type completeStep struct{}
 
@@ -31,7 +31,7 @@ type stepEvidence struct {
 }
 
 // validEvidenceKinds are the evidence forms a completion may cite. "checkpoint"
-// (main's fourth kind) is omitted â€?v2 has no checkpoint system.
+// (main's fourth kind) is omitted â€” v2 has no checkpoint system.
 var validEvidenceKinds = map[string]bool{
 	"verification": true, // a command/test was run; cite it and its outcome
 	"diff":         true, // a concrete code change; cite what changed
@@ -42,14 +42,14 @@ var validEvidenceKinds = map[string]bool{
 func (completeStep) Name() string { return "complete_step" }
 
 func (completeStep) Description() string {
-	return "Record the evidence-backed completion of ONE step of an approved plan. Call it as you finish each step instead of silently moving on: it signs the step off with PROOF it is done â€?the verification you ran (command + result), the diff/files you changed, or a manual check. A completion with no evidence is REJECTED, so don't claim a step is done until you can show why. Keep the task list moving with todo_write (set the next step in_progress); use complete_step for the formal, evidenced sign-off of the finished one. Fields: `step` (which step â€?its title or number, matching the task list), `result` (what is now true/changed), `evidence` (â‰? item, each with `kind` = verification|diff|files|manual and a `summary`, plus optional `command`/`paths`), and optional `notes`."
+	return "Record the evidence-backed completion of ONE step of an approved plan. Call it as you finish each step instead of silently moving on: it signs the step off with PROOF it is done â€” the verification you ran (command + result), the diff/files you changed, or a manual check. A completion with no evidence is REJECTED, so don't claim a step is done until you can show why. Keep the task list moving with todo_write (set the next step in_progress); use complete_step for the formal, evidenced sign-off of the finished one. Fields: `step` (which step â€” its title or number, matching the task list), `result` (what is now true/changed), `evidence` (â‰¥1 item, each with `kind` = verification|diff|files|manual and a `summary`, plus optional `command`/`paths`), and optional `notes`."
 }
 
 func (completeStep) Schema() json.RawMessage {
 	return json.RawMessage(`{
 "type":"object",
 "properties":{
-  "step":{"type":"string","description":"Which plan step this completes â€?its title or number, matching the task list."},
+  "step":{"type":"string","description":"Which plan step this completes â€” its title or number, matching the task list."},
   "result":{"type":"string","description":"What is now true or changed as a result of finishing this step."},
   "evidence":{
     "type":"array",
@@ -87,13 +87,13 @@ func (completeStep) Execute(ctx context.Context, args json.RawMessage) (string, 
 		return "", fmt.Errorf("invalid args: %w", err)
 	}
 	if strings.TrimSpace(p.Step) == "" {
-		return "", fmt.Errorf("step is required â€?name the plan step you are completing")
+		return "", fmt.Errorf("step is required â€” name the plan step you are completing")
 	}
 	if strings.TrimSpace(p.Result) == "" {
-		return "", fmt.Errorf("result is required â€?state what is now true after finishing this step")
+		return "", fmt.Errorf("result is required â€” state what is now true after finishing this step")
 	}
 	if len(p.Evidence) == 0 {
-		return "", fmt.Errorf("at least one evidence item is required â€?don't mark a step complete without showing why it's done (run a check, cite the diff, or confirm manually)")
+		return "", fmt.Errorf("at least one evidence item is required â€” don't mark a step complete without showing why it's done (run a check, cite the diff, or confirm manually)")
 	}
 	kinds := make([]string, 0, len(p.Evidence))
 	for i, e := range p.Evidence {
@@ -101,7 +101,7 @@ func (completeStep) Execute(ctx context.Context, args json.RawMessage) (string, 
 			return "", fmt.Errorf("evidence %d: invalid kind %q (want verification|diff|files|manual)", i+1, e.Kind)
 		}
 		if strings.TrimSpace(e.Summary) == "" {
-			return "", fmt.Errorf("evidence %d: summary is required â€?the evidence is the summary, not just its kind", i+1)
+			return "", fmt.Errorf("evidence %d: summary is required â€” the evidence is the summary, not just its kind", i+1)
 		}
 		kinds = append(kinds, e.Kind)
 	}

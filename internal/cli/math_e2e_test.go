@@ -9,7 +9,8 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/event"
 )
 
-// TestMathStreamingEndToEnd drives the real streaming path (ingestEvent �?// streamAnswer/flushableMarkdownPrefix �?renderer.Render �?commitPending) with
+// TestMathStreamingEndToEnd drives the real streaming path (ingestEvent →
+// streamAnswer/flushableMarkdownPrefix → renderer.Render → commitPending) with
 // the math chunked mid-formula across event.Text boundaries, the way a model
 // actually streams tokens. It proves a half-written $...$ / $$...$$ is never
 // flushed as raw LaTeX and the committed transcript shows finished Unicode.
@@ -36,7 +37,7 @@ func TestMathStreamingEndToEnd(t *testing.T) {
 	m.ingestEvent(event.Event{Kind: event.Message})
 
 	out := strings.Join(m.transcript, "\n")
-	for _, want := range []string{"e^(iπ) + 1 = 0", "�?, "1/(n²)", "(π²)/6", "That is all."} {
+	for _, want := range []string{"e^(iπ) + 1 = 0", "∑", "1/(n²)", "(π²)/6", "That is all."} {
 		if !strings.Contains(out, want) {
 			t.Errorf("final transcript missing %q:\n%s", want, out)
 		}

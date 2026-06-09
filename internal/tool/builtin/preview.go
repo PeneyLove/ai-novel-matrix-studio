@@ -15,8 +15,8 @@ import (
 // but never writing. A front-end (e.g. a desktop approval card) calls Preview
 // before the permission gate runs Execute.
 //
-// Each Preview mirrors its Execute's transformation exactly â€?same arg parsing,
-// same uniqueness / not-found rules â€?so the previewed NewText equals what
+// Each Preview mirrors its Execute's transformation exactly â€” same arg parsing,
+// same uniqueness / not-found rules â€” so the previewed NewText equals what
 // Execute would persist. That equality is asserted by TestPreviewMatchesExecute
 // in preview_test.go, which runs Execute against a temp file and compares; if
 // an Execute body ever drifts, that test fails rather than the preview lying.
@@ -48,7 +48,7 @@ func (w writeFile) Preview(args json.RawMessage) (diff.Change, error) {
 
 // Preview computes the change edit_file would make. It enforces the same
 // "old_string must occur exactly once" rule as Execute, returning that error
-// when it doesn't â€?so a preview never shows a change the call couldn't make.
+// when it doesn't â€” so a preview never shows a change the call couldn't make.
 func (e editFile) Preview(args json.RawMessage) (diff.Change, error) {
 	var p struct {
 		Path      string `json:"path"`
@@ -85,7 +85,7 @@ func (e editFile) Preview(args json.RawMessage) (diff.Change, error) {
 }
 
 // Preview computes the change multi_edit would make by replaying every edit
-// against an in-memory buffer â€?exactly as Execute does â€?and diffing the
+// against an in-memory buffer â€” exactly as Execute does â€” and diffing the
 // result against the original. Any edit error surfaces here too, so a preview
 // of an invalid batch fails the same way the call would.
 func (m multiEdit) Preview(args json.RawMessage) (diff.Change, error) {

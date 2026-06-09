@@ -33,13 +33,13 @@ func TestKillTreeUnblocksWaitOnSurvivingGrandchild(t *testing.T) {
 	select {
 	case <-done:
 	case <-time.After(8 * time.Second):
-		t.Fatal("cmd.Wait blocked after KillTree â€?grandchild survived holding the pipe")
+		t.Fatal("cmd.Wait blocked after KillTree â€” grandchild survived holding the pipe")
 	}
 }
 
 // TrackTree must create a Job Object for a started process, and KillTracked
 // must take the whole tracked tree down (the job reaps even descendants a plain
-// taskkill /T would miss â€?see the codegraph daemon leak this guards against).
+// taskkill /T would miss â€” see the codegraph daemon leak this guards against).
 func TestKillTrackedReapsTrackedTree(t *testing.T) {
 	cmd := exec.Command("cmd", "/c", "ping", "-n", "30", "127.0.0.1")
 	HideWindow(cmd)
@@ -54,7 +54,7 @@ func TestKillTrackedReapsTrackedTree(t *testing.T) {
 
 	job := TrackTree(cmd)
 	if job == 0 {
-		t.Fatal("TrackTree returned 0 â€?job object not created")
+		t.Fatal("TrackTree returned 0 â€” job object not created")
 	}
 	time.Sleep(500 * time.Millisecond) // let cmd.exe exec the ping grandchild into the job
 
@@ -65,6 +65,6 @@ func TestKillTrackedReapsTrackedTree(t *testing.T) {
 	select {
 	case <-done:
 	case <-time.After(8 * time.Second):
-		t.Fatal("cmd.Wait blocked after KillTracked â€?tracked tree survived")
+		t.Fatal("cmd.Wait blocked after KillTracked â€” tracked tree survived")
 	}
 }

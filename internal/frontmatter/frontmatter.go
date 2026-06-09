@@ -13,8 +13,8 @@ import "strings"
 //
 // Values are trimmed of surrounding whitespace and outer quotes (" or ').
 // A key with an empty value heads either a section ("metadata:") whose indented
-// "key: value" lines flatten (metadata.type â†?fm["type"]), or a YAML list whose
-// "- item" lines are joined comma-separated (allowed-tools â†?"read_file, grep"),
+// "key: value" lines flatten (metadata.type â†’ fm["type"]), or a YAML list whose
+// "- item" lines are joined comma-separated (allowed-tools â†’ "read_file, grep"),
 // so list-valued keys from skills authored for other agent tools survive.
 // The last write wins for duplicate keys.
 func Split(s string) (map[string]string, string) {
@@ -46,7 +46,7 @@ func Split(s string) (map[string]string, string) {
 				for j+1 < len(content) {
 					item, ok := strings.CutPrefix(strings.TrimSpace(content[j+1]), "-")
 					if !ok {
-						break // not a list item â€?leave it for the outer loop
+						break // not a list item â€” leave it for the outer loop
 					}
 					items = append(items, strings.Trim(strings.TrimSpace(item), `"'`))
 					j++

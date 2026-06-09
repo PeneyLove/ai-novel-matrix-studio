@@ -41,22 +41,22 @@ func boxed(lines []string) string {
 	bar := strings.Repeat("â”€", inner)
 
 	var b strings.Builder
-	b.WriteString(accent("â•? + bar + "â•?))
+	b.WriteString(accent("â•­" + bar + "â•®"))
 	b.WriteByte('\n')
 	for _, l := range lines {
 		gap := inner - visibleWidth(l) - 2
 		if gap < 0 {
 			gap = 0
 		}
-		b.WriteString(accent("â”?))
+		b.WriteString(accent("â”‚"))
 		b.WriteByte(' ')
 		b.WriteString(l)
 		b.WriteString(strings.Repeat(" ", gap))
 		b.WriteByte(' ')
-		b.WriteString(accent("â”?))
+		b.WriteString(accent("â”‚"))
 		b.WriteByte('\n')
 	}
-	b.WriteString(accent("â•? + bar + "â•?))
+	b.WriteString(accent("â•°" + bar + "â•¯"))
 	b.WriteByte('\n')
 	return b.String()
 }

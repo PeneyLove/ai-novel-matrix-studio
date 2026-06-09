@@ -1,5 +1,5 @@
 // Package anthropic implements the Anthropic Messages API provider (POST
-// /v1/messages, SSE streaming) with a hand-written net/http client â€?no SDK. It
+// /v1/messages, SSE streaming) with a hand-written net/http client â€” no SDK. It
 // self-registers under the "anthropic" kind, so any Claude model is a config
 // instance rather than code.
 //
@@ -9,7 +9,7 @@
 //     requires the *signed* thinking block be replayed on the next turn when a tool
 //     call followed thinking, so Message carries ReasoningSignature alongside
 //     ReasoningContent and this provider replays the signed block on the next
-//     request. Off by default because the field is Anthropic-specific â€?an
+//     request. Off by default because the field is Anthropic-specific â€” an
 //     OpenAI-compatible gateway (e.g. DeepSeek's) would reject it. (redacted_thinking
 //     blocks are not yet captured/replayed.)
 //   - No temperature/top_p. Current Claude models (Opus 4.8/4.7) reject sampling
@@ -177,7 +177,7 @@ func (c *client) buildRequest(req provider.Request) anthRequest {
 			var blocks []contentBlock
 			// Replay the signed thinking block first (Anthropic requires it precede
 			// the tool_use it led to). Only when thinking is on and we have both the
-			// text and its signature â€?reasoning without a signature (e.g. from an
+			// text and its signature â€” reasoning without a signature (e.g. from an
 			// openai-compatible provider) can't be replayed as a thinking block.
 			if c.thinking != "" && m.ReasoningContent != "" && m.ReasoningSignature != "" {
 				blocks = append(blocks, contentBlock{Type: "thinking", Thinking: m.ReasoningContent, Signature: m.ReasoningSignature})
@@ -206,10 +206,10 @@ func (c *client) buildRequest(req provider.Request) anthRequest {
 	}
 
 	// Prompt-cache breakpoints (ephemeral, prefix-match). Render order is
-	// tools â†?system â†?messages, so a marker on the last system block caches
+	// tools â†’ system â†’ messages, so a marker on the last system block caches
 	// tools+system together; with no system, mark the last tool. A marker on the
 	// last block of the last message caches the conversation prefix, accruing hits
-	// incrementally as turns are appended. Max 4 breakpoints; we use â‰?.
+	// incrementally as turns are appended. Max 4 breakpoints; we use â‰¤2.
 	if n := len(system); n > 0 {
 		system[n-1].CacheControl = ephemeral()
 	} else if n := len(tools); n > 0 {
@@ -352,7 +352,7 @@ func (c *client) readStream(resp *http.Response, out chan<- provider.Chunk) {
 			CompletionTokens: outTok,
 			TotalTokens:      inTok + cacheCreate + cacheRead + outTok,
 			CacheHitTokens:   cacheRead,
-			CacheMissTokens:  inTok + cacheCreate, // uncached input + cache writes (billed â‰?Ã—)
+			CacheMissTokens:  inTok + cacheCreate, // uncached input + cache writes (billed â‰¥1Ã—)
 			FinishReason:     mapStopReason(stopReason),
 		}}
 	}
@@ -370,7 +370,7 @@ func mapStopReason(s string) string {
 	case "max_tokens":
 		return "length"
 	default:
-		return s // "refusal", "pause_turn", "" â€?pass through
+		return s // "refusal", "pause_turn", "" â€” pass through
 	}
 }
 

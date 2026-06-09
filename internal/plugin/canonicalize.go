@@ -19,7 +19,7 @@ func sortToolsByName(tools []tool.Tool) []tool.Tool {
 }
 
 // canonicalizeSchema recursively stabilizes a JSON Schema so the same logical
-// schema always produces the same byte representation â€?important for cache
+// schema always produces the same byte representation â€” important for cache
 // fingerprint stability across MCP sessions.
 func canonicalizeSchema(raw json.RawMessage) json.RawMessage {
 	return provider.CanonicalizeSchema(raw)

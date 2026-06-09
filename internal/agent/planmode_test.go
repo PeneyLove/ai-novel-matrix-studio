@@ -34,7 +34,7 @@ func TestPlanModeBlocksWriters(t *testing.T) {
 
 // TestPlanModeDoesNotMutateSystemOrTools is the cache-stability test. Toggling
 // plan mode between two stream calls must not change the system prompt or the
-// tool list seen by the provider â€?those are the cache-key prefix, and any
+// tool list seen by the provider â€” those are the cache-key prefix, and any
 // change there forces an expensive cache miss.
 func TestPlanModeDoesNotMutateSystemOrTools(t *testing.T) {
 	prov := &mockProvider{name: "p", chunks: []provider.Chunk{

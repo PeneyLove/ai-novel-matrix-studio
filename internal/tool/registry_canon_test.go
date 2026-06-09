@@ -22,8 +22,8 @@ func (c countingSchemaTool) Execute(context.Context, json.RawMessage) (string, e
 }
 func (c countingSchemaTool) ReadOnly() bool { return true }
 
-// TestSchemasCanonicalizesOncePerTool guards the regression where Schemas() â€?run
-// every turn â€?re-canonicalized (unmarshal+sort+marshal) every tool's schema on
+// TestSchemasCanonicalizesOncePerTool guards the regression where Schemas() â€” run
+// every turn â€” re-canonicalized (unmarshal+sort+marshal) every tool's schema on
 // each call. Schemas never change after registration, so Schema() must be invoked
 // exactly once (at Add), no matter how many times Schemas() is called.
 func TestSchemasCanonicalizesOncePerTool(t *testing.T) {

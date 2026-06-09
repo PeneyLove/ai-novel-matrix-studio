@@ -6,7 +6,7 @@ import (
 )
 
 // TestRenderEmpty covers the contract that empty / whitespace-only input
-// returns "" â€?callers rely on this to skip a redraw when there's nothing
+// returns "" â€” callers rely on this to skip a redraw when there's nothing
 // substantive to show.
 func TestRenderEmpty(t *testing.T) {
 	r := newMarkdownRenderer(80)
@@ -19,7 +19,7 @@ func TestRenderEmpty(t *testing.T) {
 
 // TestRenderConstructsRound-trip checks each major construct emits something
 // styled while preserving the underlying text. We don't assert exact ANSI
-// sequences (palette could shift) â€?only that key visible text survives and
+// sequences (palette could shift) â€” only that key visible text survives and
 // that we don't degrade to literal markdown.
 func TestRenderConstructs(t *testing.T) {
 	r := newMarkdownRenderer(80)
@@ -59,7 +59,7 @@ func TestRenderConstructs(t *testing.T) {
 		{
 			name:     "unordered list",
 			in:       "- one\n- two\n- three\n",
-			contains: []string{"one", "two", "three", "â€?},
+			contains: []string{"one", "two", "three", "â€¢"},
 		},
 		{
 			name:     "ordered list",
@@ -79,7 +79,7 @@ func TestRenderConstructs(t *testing.T) {
 		{
 			name:     "gfm table",
 			in:       "| name | size |\n|------|------|\n| a    | 12   |\n| bb   | 345  |\n",
-			contains: []string{"name", "size", "a", "12", "bb", "345", "â”?},
+			contains: []string{"name", "size", "a", "12", "bb", "345", "â”‚"},
 			notRaw:   []string{"|------|"}, // raw separator must be transformed
 		},
 	}
@@ -104,7 +104,7 @@ func TestRenderConstructs(t *testing.T) {
 // Chinese characters wraps at half the column count.
 func TestWrapAnsiCJK(t *testing.T) {
 	// Width 10 = room for 5 Chinese characters per row.
-	in := strings.Repeat("ä¸?, 8)
+	in := strings.Repeat("ä¸­", 8)
 	out := wrapAnsi(in, 10)
 	lines := strings.Split(out, "\n")
 	if len(lines) < 2 {

@@ -5,7 +5,7 @@
 //
 // It is deliberately git-free (like Claude Code's rewind): snapshots live beside
 // the session, never touch the user's git, and work in a non-git directory. Only
-// edit-tool changes are tracked â€?bash side effects are not (a shell command's
+// edit-tool changes are tracked â€” bash side effects are not (a shell command's
 // targets can't be known in advance), which is why the capture hook only fires for
 // tools that can Preview their change.
 package checkpoint
@@ -34,8 +34,8 @@ type FileSnap struct {
 }
 
 // Checkpoint anchors the pre-edit state of every distinct file touched during one
-// user turn. MsgIndex is len(Session.Messages) at the turn's start â€?the
-// conversation-rewind boundary â€?persisted so a resumed session can rewind the
+// user turn. MsgIndex is len(Session.Messages) at the turn's start â€” the
+// conversation-rewind boundary â€” persisted so a resumed session can rewind the
 // conversation and fork, not just the code.
 type Checkpoint struct {
 	Turn     int        `json:"turn"`
@@ -55,7 +55,7 @@ type Meta struct {
 
 // Store holds a session's checkpoints in memory and, when dir is set, persists one
 // JSON file per turn under it (cheap delete, corruption-isolated). All methods are
-// safe for concurrent use â€?the agent snapshots from tool goroutines.
+// safe for concurrent use â€” the agent snapshots from tool goroutines.
 type Store struct {
 	dir  string // <session>.ckpt/, or "" for in-memory only
 	root string // workspace root, for restore path-escape guards
@@ -111,7 +111,7 @@ func (s *Store) Begin(turn int, prompt string, msgIndex int) {
 	s.persist(s.cur)
 }
 
-// Bounds returns turn â†?MsgIndex over all checkpoints (persisted + current), so
+// Bounds returns turn â†’ MsgIndex over all checkpoints (persisted + current), so
 // the controller can rebuild its conversation-rewind boundaries after loading a
 // resumed session's checkpoints from disk.
 func (s *Store) Bounds() map[int]int {
@@ -146,7 +146,7 @@ func (s *Store) Snapshot(ch diff.Change) {
 	}
 	s.seen[ch.Path] = true
 	var content *string
-	if ch.Kind != diff.Create { // create == file didn't exist â†?leave nil (restore deletes)
+	if ch.Kind != diff.Create { // create == file didn't exist â†’ leave nil (restore deletes)
 		old := ch.OldText
 		content = &old
 	}
@@ -233,7 +233,7 @@ func (s *Store) all() []*Checkpoint {
 // Returns the paths written and deleted.
 func (s *Store) RestoreCode(fromTurn int) (written, deleted []string, err error) {
 	s.mu.Lock()
-	// earliest snapshot per path across checkpoints >= fromTurn (turn order â†?first wins).
+	// earliest snapshot per path across checkpoints >= fromTurn (turn order â†’ first wins).
 	earliest := map[string]FileSnap{}
 	order := []string{}
 	for _, c := range s.all() {
@@ -294,7 +294,7 @@ func detectCurrentEncoding(path string) *fileenc.Kind {
 	return &enc
 }
 
-// safePath resolves p against root and rejects anything escaping it â€?restore
+// safePath resolves p against root and rejects anything escaping it â€” restore
 // must never write outside the workspace, even if a snapshot path is hostile or
 // the project moved since it was taken.
 func safePath(root, p string) (string, error) {

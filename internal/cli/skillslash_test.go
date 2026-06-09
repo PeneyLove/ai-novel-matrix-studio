@@ -7,8 +7,8 @@ import (
 )
 
 // TestSlashItemsIncludesSkills proves every loaded skill is offered in the slash
-// menu as "/<name>" (so /init, /explore, â€?show up), and that typing the prefix
-// filters to it â€?the data path behind "type / to see the commands".
+// menu as "/<name>" (so /init, /explore, â€¦ show up), and that typing the prefix
+// filters to it â€” the data path behind "type / to see the commands".
 func TestSlashItemsIncludesSkills(t *testing.T) {
 	m := newTestChatTUI()
 	m.skills = []skill.Skill{

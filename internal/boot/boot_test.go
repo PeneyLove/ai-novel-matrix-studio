@@ -238,7 +238,7 @@ tier = "eager"
 }
 
 // TestBuildWithoutMemoryLeavesPromptUnchanged is the inverse invariant: with no
-// memory files, the system prompt is exactly the configured base â€?the cache
+// memory files, the system prompt is exactly the configured base â€” the cache
 // prefix is untouched by the memory feature.
 func TestBuildWithoutMemoryLeavesPromptUnchanged(t *testing.T) {
 	dir := t.TempDir()
@@ -269,7 +269,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	sys := systemMessage(ctrl.History())
 	// The built-in skills always append a "# Skills" index to the prefix; this
 	// test is about memory, so strip that and assert the remaining base is exactly
-	// the configured prompt â€?i.e. no *project/ancestor* memory leaked in. (A
+	// the configured prompt â€” i.e. no *project/ancestor* memory leaked in. (A
 	// user-global REASONIX.md in the real config dir could append; the test
 	// environment has none, so the base stands alone.)
 	base := sys
@@ -412,7 +412,7 @@ func hasPermissionRule(rules []string, want string) bool {
 
 // TestBuildMigratesLegacyConfigEndToEnd drives the real boot path: a v0.x
 // ~/.reasonix/config.json with no v1+ config present must be imported during
-// Build â€?config written, key pinned into the env, and the user told via a notice.
+// Build â€” config written, key pinned into the env, and the user told via a notice.
 func TestBuildMigratesLegacyConfigEndToEnd(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -491,7 +491,8 @@ func TestBuildMigratesLegacyConfigEndToEnd(t *testing.T) {
 }
 
 // isolateConfigHome redirects os.UserConfigDir() (and the cache subtree under
-// it) at a per-test temp dir by overriding the env vars Go's stdlib reads â€?// HOME on darwin, XDG_CONFIG_HOME on linux. Without this, Build's plugin path
+// it) at a per-test temp dir by overriding the env vars Go's stdlib reads â€”
+// HOME on darwin, XDG_CONFIG_HOME on linux. Without this, Build's plugin path
 // would persist startup stats and cached schemas into the developer's real
 // ~/Library/Application Support tree and bleed state across tests. Mirrors the
 // withTempCache helper in internal/plugin/stats_test.go.
@@ -507,7 +508,7 @@ func isolateConfigHome(t *testing.T) string {
 // boot.go's plugin orchestration depends on: each tier string maps to its own
 // slice, the original order inside a tier is preserved (so /mcp status and
 // stats land deterministically), and a missing/unknown tier value falls into
-// lazy â€?the project default that keeps adding a plugin from ever slowing the
+// lazy â€” the project default that keeps adding a plugin from ever slowing the
 // next launch.
 func TestPartitionByTier(t *testing.T) {
 	entries := []config.PluginEntry{
@@ -526,7 +527,7 @@ func TestPartitionByTier(t *testing.T) {
 		t.Fatalf("background bucket = %+v, want [b1]", bg)
 	}
 	// Lazy holds both the explicit lazy entry and the default-fallback one, in
-	// the order they appeared in the input â€?proves the empty-tier default
+	// the order they appeared in the input â€” proves the empty-tier default
 	// flows through partition without reshuffling.
 	if len(lazy) != 2 || lazy[0].Name != "l1" || lazy[1].Name != "default" {
 		t.Fatalf("lazy bucket = %+v, want [l1, default] preserving input order", lazy)
@@ -537,7 +538,7 @@ func TestPartitionByTier(t *testing.T) {
 // its handshake on the boot critical path: Host.ServerNames() must include the
 // plugin after Build returns. We point the plugin at this test binary running
 // as a stdio MCP helper (see TestHelperProcess), so the spawn is real but
-// deterministic and hermetic â€?no external MCP server required on PATH.
+// deterministic and hermetic â€” no external MCP server required on PATH.
 func TestBuildEagerStartsAtBoot(t *testing.T) {
 	isolateConfigHome(t)
 	dir := t.TempDir()
@@ -584,7 +585,7 @@ env = { GO_WANT_HELPER_PROCESS = "1" }
 		}
 	}
 	if !found {
-		t.Fatalf("eager plugin missing from Host.ServerNames() = %v â€?boot did not block on its handshake", names)
+		t.Fatalf("eager plugin missing from Host.ServerNames() = %v â€” boot did not block on its handshake", names)
 	}
 	if got := ctrl.Host().Failures(); len(got) != 0 {
 		t.Fatalf("Host.Failures() = %+v, want empty for a healthy eager plugin", got)
@@ -595,11 +596,11 @@ env = { GO_WANT_HELPER_PROCESS = "1" }
 // lazy-tier plugin must NOT trigger a subprocess handshake during Build, so
 // the boot critical path stays empty even with a slow-to-spawn server in
 // config. We assert through Host.ServerNames() (must not list the plugin) and
-// Host.Failures() (lazy plugins never appear here â€?a failure surfaces only on
+// Host.Failures() (lazy plugins never appear here â€” a failure surfaces only on
 // first model use, not at boot). The placeholder tool registration itself is
 // covered by internal/plugin/lazy_test.go's TestLazy* suite; the Registry has
 // no public accessor on Controller, so at this layer we pin the load-bearing
-// boot-time invariant â€?no spawn â€?rather than re-validating the placeholder.
+// boot-time invariant â€” no spawn â€” rather than re-validating the placeholder.
 func TestBuildLazyDoesNotConnectAtBoot(t *testing.T) {
 	isolateConfigHome(t)
 	dir := t.TempDir()
@@ -639,15 +640,15 @@ env = { GO_WANT_HELPER_PROCESS = "1" }
 
 	for _, n := range ctrl.Host().ServerNames() {
 		if n == "lazymock" {
-			t.Fatalf("lazy plugin %q appeared in Host.ServerNames() â€?boot connected it eagerly", n)
+			t.Fatalf("lazy plugin %q appeared in Host.ServerNames() â€” boot connected it eagerly", n)
 		}
 	}
 	if got := ctrl.Host().Failures(); len(got) != 0 {
-		t.Fatalf("Host.Failures() = %+v, want empty â€?lazy plugins must not even attempt a boot-time spawn", got)
+		t.Fatalf("Host.Failures() = %+v, want empty â€” lazy plugins must not even attempt a boot-time spawn", got)
 	}
 	// The configured plugin is still recognised as a configured-but-disconnected
 	// server, the same signal /mcp uses to render its "lazy, will connect on
-	// first use" line â€?proves the entry made it through partition into the
+	// first use" line â€” proves the entry made it through partition into the
 	// lazy bucket rather than being dropped.
 	dconn := ctrl.DisconnectedMCPNames()
 	foundDisconnected := false
@@ -728,21 +729,21 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	}
 }
 
-// TestBuildAutoDemoteFromStats proves the Phase 5 telemetry â†?Phase 4 tier
+// TestBuildAutoDemoteFromStats proves the Phase 5 telemetry â†’ Phase 4 tier
 // bridge: three consecutive over-budget startup samples must demote an
 // eager-tier plugin to lazy at the *next* boot, so the user pays for a slow
 // MCP server at most a handful of starts. We pre-seed three 30s samples for
 // "slowserver" (well above 2 * DefaultStartupBudget = 10s) via the public
 // RecordStartup API, then Build a config that declares "slowserver" eager and
-// verify (a) boot did NOT block on its handshake â€?the plugin is absent from
-// Host.ServerNames() â€?and (b) a Notice carrying the demote reason fired so
+// verify (a) boot did NOT block on its handshake â€” the plugin is absent from
+// Host.ServerNames() â€” and (b) a Notice carrying the demote reason fired so
 // the user understands why their explicit "eager" was ignored this session.
 func TestBuildAutoDemoteFromStats(t *testing.T) {
 	isolateConfigHome(t)
 	dir := t.TempDir()
 	t.Chdir(dir)
 
-	// Three samples above 2*budget â€?the rule in stats.go's Recommend triggers
+	// Three samples above 2*budget â€” the rule in stats.go's Recommend triggers
 	// when the trailing window is entirely over the threshold. Use 30s so even
 	// future budget bumps stay below the threshold.
 	for i := 0; i < 3; i++ {
@@ -790,7 +791,7 @@ tier = "eager"
 
 	for _, n := range ctrl.Host().ServerNames() {
 		if n == "slowserver" {
-			t.Fatalf("demoted plugin %q still appeared in Host.ServerNames() â€?auto-demote did not move it out of the eager bucket", n)
+			t.Fatalf("demoted plugin %q still appeared in Host.ServerNames() â€” auto-demote did not move it out of the eager bucket", n)
 		}
 	}
 	// Crucially the missing-binary command never ran: a real eager attempt
@@ -798,7 +799,7 @@ tier = "eager"
 	// list proves boot skipped the spawn entirely, not that it tried and
 	// silently swallowed the error.
 	if got := ctrl.Host().Failures(); len(got) != 0 {
-		t.Fatalf("Host.Failures() = %+v, want empty â€?demoted plugin should never have been spawned", got)
+		t.Fatalf("Host.Failures() = %+v, want empty â€” demoted plugin should never have been spawned", got)
 	}
 
 	foundDemoteNotice := false

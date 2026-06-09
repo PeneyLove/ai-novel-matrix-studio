@@ -18,7 +18,7 @@ func TestCompactionCardLines(t *testing.T) {
 	})
 
 	joined := strings.Join(lines, "\n")
-	if !strings.Contains(lines[0], "â—?) {
+	if !strings.Contains(lines[0], "â—†") {
 		t.Errorf("header should carry the card glyph, got %q", lines[0])
 	}
 	for _, want := range []string{"Context compacted", "12", "auto"} {
@@ -26,8 +26,8 @@ func TestCompactionCardLines(t *testing.T) {
 			t.Errorf("header missing %q: %q", want, lines[0])
 		}
 	}
-	// Every summary line (and the archive line) sits under the "â”? gutter.
-	for _, want := range []string{"â”?## Goal", "â”?- do X", "â”?- a.go edited", "â”?archived /tmp/arch/20260531.jsonl"} {
+	// Every summary line (and the archive line) sits under the "â”‚" gutter.
+	for _, want := range []string{"â”‚ ## Goal", "â”‚ - do X", "â”‚ - a.go edited", "â”‚ archived /tmp/arch/20260531.jsonl"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("card missing gutter line %q in:\n%s", want, joined)
 		}

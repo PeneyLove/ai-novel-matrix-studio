@@ -11,7 +11,7 @@ import (
 // slash command "/mcp__<server>__<prompt>"; running it fetches the rendered
 // prompt and sends it to the model as a turn.
 type Prompt struct {
-	Name        string      // "mcp__<server>__<prompt>" â€?the slash-command body
+	Name        string      // "mcp__<server>__<prompt>" â€” the slash-command body
 	Server      string      // owning server name
 	Raw         string      // original prompt name for prompts/get
 	Description string      // human-readable summary

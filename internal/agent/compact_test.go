@@ -31,7 +31,7 @@ func (f *fakeProvider) Stream(_ context.Context, req provider.Request) (<-chan p
 }
 
 func TestTailStart(t *testing.T) {
-	// 10-char content â†?with tokPerChar 1.0, each non-empty message costs 10
+	// 10-char content â†’ with tokPerChar 1.0, each non-empty message costs 10
 	// "tokens"; tool-call messages carry name+args instead.
 	msg := func(role provider.Role, n int) provider.Message {
 		return provider.Message{Role: role, Content: strings.Repeat("x", n)}
@@ -155,7 +155,7 @@ func TestCompactReplacesHistory(t *testing.T) {
 
 // TestCompactEmitsEvents covers the card-driving signals: a CompactionStarted
 // (before the summarizer runs) then a CompactionDone carrying the trigger,
-// message count, and summary â€?in that order.
+// message count, and summary â€” in that order.
 func TestCompactEmitsEvents(t *testing.T) {
 	prov := &fakeProvider{reply: "- goal: do X"}
 	sess := &Session{Messages: []provider.Message{
@@ -354,7 +354,7 @@ func TestMaybeCompactThreshold(t *testing.T) {
 
 	// At/above 80%: compacts when the fold is economically worthwhile. The
 	// token-budgeted tail keeps the small recent messages, so the large early
-	// message is the only foldable region â€?folding it installs a summary at
+	// message is the only foldable region â€” folding it installs a summary at
 	// index 1 (the count is unchanged because one message becomes one summary).
 	sess = newSess()
 	a = New(&fakeProvider{reply: "s"}, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
@@ -385,7 +385,7 @@ func TestMaybeCompactForceCeilingBypassesEconomics(t *testing.T) {
 
 	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 90})
 	// The token-budgeted tail keeps "small old answer", next, ok, so only the
-	// single early message folds â€?force bypasses the economics skip and installs
+	// single early message folds â€” force bypasses the economics skip and installs
 	// a summary at index 1, leaving the count at 5.
 	if got := len(sess.Messages); got != 5 {
 		t.Fatalf("len = %d, want 5 after forced single-message fold: %+v", got, sess.Messages)

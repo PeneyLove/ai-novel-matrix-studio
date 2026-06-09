@@ -17,7 +17,7 @@ import (
 	_ "github.com/PeneyLove/ai-novel-matrix-studio/internal/tool/builtin"
 )
 
-// TestTruncateToolOutputUnderCap leaves small payloads alone â€?the cap should
+// TestTruncateToolOutputUnderCap leaves small payloads alone â€” the cap should
 // never rewrite content that already fits.
 func TestTruncateToolOutputUnderCap(t *testing.T) {
 	in := strings.Repeat("a", maxToolOutputBytes)
@@ -38,7 +38,7 @@ func TestTruncateToolOutputHeadTail(t *testing.T) {
 	in := head + tail
 	out, notice := truncateToolOutput(in)
 	if !strings.HasPrefix(out, "H") || !strings.HasSuffix(out, "T") {
-		t.Errorf("head/tail not preserved at the edges: %qâ€?q", out[:20], out[len(out)-20:])
+		t.Errorf("head/tail not preserved at the edges: %qâ€¦%q", out[:20], out[len(out)-20:])
 	}
 	if !strings.Contains(out, "truncated") {
 		t.Errorf("truncation marker missing: %q", out)
@@ -54,7 +54,7 @@ func TestTruncateToolOutputHeadTail(t *testing.T) {
 // TestTruncateToolOutputRuneBoundaries puts multibyte runes exactly across the
 // head and tail cut points; the result must still be valid UTF-8.
 func TestTruncateToolOutputRuneBoundaries(t *testing.T) {
-	in := strings.Repeat("ä¸?, maxToolOutputBytes) // 3 bytes each â€?guarantees a cut inside a rune
+	in := strings.Repeat("ä¸­", maxToolOutputBytes) // 3 bytes each â€” guarantees a cut inside a rune
 	out, _ := truncateToolOutput(in)
 	if !utf8.ValidString(out) {
 		t.Errorf("truncated output is not valid UTF-8")
@@ -199,7 +199,7 @@ func TestPartitionToolCallsTodoWriteSerial(t *testing.T) {
 }
 
 // TestExecuteBatchParallelReadOnly checks that three 80ms read-only calls
-// complete in well under 3Ã—80ms â€?the wall-clock proof of true parallelism.
+// complete in well under 3Ã—80ms â€” the wall-clock proof of true parallelism.
 func TestExecuteBatchParallelReadOnly(t *testing.T) {
 	const delay = 80 * time.Millisecond
 	calls := int32(0)
@@ -222,7 +222,7 @@ func TestExecuteBatchParallelReadOnly(t *testing.T) {
 	}
 	// Allow generous slack for CI; even 2x serial would prove we got parallelism.
 	if elapsed >= 2*delay {
-		t.Errorf("read-only batch took %v (>= %v) â€?not parallel", elapsed, 2*delay)
+		t.Errorf("read-only batch took %v (>= %v) â€” not parallel", elapsed, 2*delay)
 	}
 }
 
@@ -265,10 +265,10 @@ func TestExecuteBatchSegmentsAroundWrites(t *testing.T) {
 	// Desired shape is roughly 3*delay: (ro1|ro2), then rw, then (ro3|ro4).
 	// Old all-serial behaviour is roughly 5*delay and should fail this bound.
 	if elapsed >= 4*delay {
-		t.Errorf("mixed batch took %v (>= %v) â€?read-only segments did not parallelise", elapsed, 4*delay)
+		t.Errorf("mixed batch took %v (>= %v) â€” read-only segments did not parallelise", elapsed, 4*delay)
 	}
 	if elapsed < 2*delay {
-		t.Errorf("mixed batch took only %v â€?write call appears to have overlapped a read-only segment", elapsed)
+		t.Errorf("mixed batch took only %v â€” write call appears to have overlapped a read-only segment", elapsed)
 	}
 }
 

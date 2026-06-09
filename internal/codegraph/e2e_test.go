@@ -33,7 +33,7 @@ func TestE2ECodegraphMCP(t *testing.T) {
 	if bin == "" {
 		var ok bool
 		if bin, ok = Resolve(""); !ok {
-			t.Fatal("REASONIX_CODEGRAPH_E2E is set but no codegraph binary found â€?set REASONIX_CODEGRAPH_BIN to the launcher path")
+			t.Fatal("REASONIX_CODEGRAPH_E2E is set but no codegraph binary found â€” set REASONIX_CODEGRAPH_BIN to the launcher path")
 		}
 	}
 	t.Logf("codegraph binary: %s", bin)
@@ -48,7 +48,7 @@ func TestE2ECodegraphMCP(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 	defer cancel()
 
-	// 1) Initialise .codegraph/ (fast, no indexing â€?serve's daemon does that).
+	// 1) Initialise .codegraph/ (fast, no indexing â€” serve's daemon does that).
 	if err := EnsureInit(ctx, bin, root); err != nil {
 		t.Fatalf("EnsureInit: %v", err)
 	}
@@ -56,7 +56,8 @@ func TestE2ECodegraphMCP(t *testing.T) {
 		t.Fatalf(".codegraph was not created by EnsureInit: %v", err)
 	}
 
-	// 2) Connect through the real MCP client, pinned to the project root via Dir â€?	//    the same wiring boot uses for the built-in server.
+	// 2) Connect through the real MCP client, pinned to the project root via Dir â€”
+	//    the same wiring boot uses for the built-in server.
 	host, tools, err := plugin.StartAll(ctx, []plugin.Spec{{
 		Name:              "codegraph",
 		Command:           bin,
@@ -105,5 +106,5 @@ func TestE2ECodegraphMCP(t *testing.T) {
 		}
 		time.Sleep(300 * time.Millisecond)
 	}
-	t.Logf("e2e ok â€?%d tools (%v); search surfaced Greet", len(tools), names)
+	t.Logf("e2e ok â€” %d tools (%v); search surfaced Greet", len(tools), names)
 }

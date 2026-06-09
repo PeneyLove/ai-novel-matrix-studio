@@ -20,7 +20,7 @@ func TestRenderTodoPanelNesting(t *testing.T) {
 	if !strings.Contains(out, "Phase A") {
 		t.Fatalf("panel missing phase:\n%s", out)
 	}
-	if !strings.Contains(out, "      â—?sub one") {
+	if !strings.Contains(out, "      â—‹ sub one") {
 		t.Fatalf("sub-step not indented under its phase:\n%s", out)
 	}
 }

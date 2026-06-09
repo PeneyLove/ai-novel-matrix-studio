@@ -14,8 +14,8 @@ import (
 
 // ServerSpec declares how to launch one language server. Command resolves on
 // PATH (the binary is never bundled); InstallHint is surfaced when it is missing.
-// Extensions are the file suffixes (".go", ".rs") this server handles â€?they
-// drive file â†?language routing, so a config-only entry can add a new language
+// Extensions are the file suffixes (".go", ".rs") this server handles â€” they
+// drive file â†’ language routing, so a config-only entry can add a new language
 // without any code change.
 type ServerSpec struct {
 	Command     string
@@ -34,7 +34,7 @@ type Manager struct {
 	cancel   context.CancelFunc
 	wsRoot   string
 	specs    map[string]ServerSpec
-	extIndex map[string]string // file extension â†?language key, derived from specs
+	extIndex map[string]string // file extension â†’ language key, derived from specs
 
 	mu       sync.Mutex
 	clients  map[string]*client
@@ -199,7 +199,7 @@ func (m *Manager) Definition(ctx context.Context, file string, line int, symbol 
 // model can act on, leaving any other error to surface.
 func indexingOr(err error) (string, error) {
 	if isContentModified(err) {
-		return "the language server is still indexing this workspace â€?run the query again in a few seconds", nil
+		return "the language server is still indexing this workspace â€” run the query again in a few seconds", nil
 	}
 	return "", err
 }

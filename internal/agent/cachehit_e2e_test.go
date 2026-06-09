@@ -75,7 +75,7 @@ func (m *mockDeepSeek) handler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 
 	// Compaction issues a tool-less summarize request whose system prompt is the
-	// summarizer prompt â€?answer it with a short summary and DON'T let it pollute
+	// summarizer prompt â€” answer it with a short summary and DON'T let it pollute
 	// the conversation-prefix bookkeeping.
 	if isSummarizeRequest(body) {
 		writeSSE(w, m.t,
@@ -170,7 +170,7 @@ func TestCacheHitPrefixStable(t *testing.T) {
 				i, mock.hitChars[i], mock.reqChars[i-1])
 		}
 	}
-	t.Logf("prefix STABLE across %d requests â€?nothing in the client breaks the cache", len(mock.reqChars))
+	t.Logf("prefix STABLE across %d requests â€” nothing in the client breaks the cache", len(mock.reqChars))
 
 	t.Logf("==== reported usage (what the status line renders) ====")
 	for i, u := range sink.usages {
@@ -178,7 +178,7 @@ func TestCacheHitPrefixStable(t *testing.T) {
 		if u.PromptTokens > 0 {
 			want = 100 * u.CacheHitTokens / u.PromptTokens
 		}
-		t.Logf("turn %d: prompt=%d hit=%d miss=%d â†?'cache %d%%' (hit/prompt=%d%%) | %s",
+		t.Logf("turn %d: prompt=%d hit=%d miss=%d â†’ 'cache %d%%' (hit/prompt=%d%%) | %s",
 			i, u.PromptTokens, u.CacheHitTokens, u.CacheMissTokens, hitRate(u), want,
 			strings.TrimSpace(FormatUsageLine(u, nil, nil)))
 		if u.CacheHitTokens+u.CacheMissTokens != u.PromptTokens {
@@ -213,20 +213,20 @@ func TestCacheHitClimbsWithoutCompaction(t *testing.T) {
 		if r > peak {
 			peak = r
 		}
-		t.Logf("turn %2d: prompt=%5d hit=%5d miss=%4d â†?cache %d%%", i, u.PromptTokens, u.CacheHitTokens, u.CacheMissTokens, r)
+		t.Logf("turn %2d: prompt=%5d hit=%5d miss=%4d â†’ cache %d%%", i, u.PromptTokens, u.CacheHitTokens, u.CacheMissTokens, r)
 	}
 	t.Logf("peak hit rate without compaction: %d%%", peak)
 	if peak < 90 {
-		t.Logf("NOTE: even with a perfectly stable prefix the rate plateaus below 90%% â€?"+
+		t.Logf("NOTE: even with a perfectly stable prefix the rate plateaus below 90%% â€” "+
 			"each turn's fresh tail (incl. %d-char round-tripped reasoning) is too large a share", len(longReasoning))
 	}
 }
 
 // TestCacheHitSurvivesTooSmallWindow drives a long tool-loop against a window so
-// small a single turn can't be summarized under it â€?the misconfigured regime
+// small a single turn can't be summarized under it â€” the misconfigured regime
 // that used to make compaction rewrite the prefix every step, cratering the
 // cache turn after turn. The stuck guard now detects that compaction can't make
-// progress, pauses it (with a notice), and lets the prefix grow append-only â€?so
+// progress, pauses it (with a notice), and lets the prefix grow append-only â€” so
 // the hit rate recovers and stays high instead of collapsing repeatedly.
 func TestCacheHitSurvivesTooSmallWindow(t *testing.T) {
 	mock := &mockDeepSeek{t: t, withTools: true, reasoning: longReasoning, toolRounds: 30}
@@ -248,7 +248,7 @@ func TestCacheHitSurvivesTooSmallWindow(t *testing.T) {
 			marker = "   <<< collapse"
 			collapses++
 		}
-		t.Logf("step %2d: prompt=%5d hit=%5d miss=%4d â†?cache %3d%%%s", i, u.PromptTokens, u.CacheHitTokens, u.CacheMissTokens, r, marker)
+		t.Logf("step %2d: prompt=%5d hit=%5d miss=%4d â†’ cache %3d%%%s", i, u.PromptTokens, u.CacheHitTokens, u.CacheMissTokens, r, marker)
 	}
 
 	paused := false
@@ -261,7 +261,7 @@ func TestCacheHitSurvivesTooSmallWindow(t *testing.T) {
 
 	// The guard caps the damage: a couple of compactions at most, not one per step.
 	if collapses > 2 {
-		t.Errorf("compaction cratered the cache %d times; the stuck guard should cap it at â‰?", collapses)
+		t.Errorf("compaction cratered the cache %d times; the stuck guard should cap it at â‰¤2", collapses)
 	}
 	if !paused {
 		t.Errorf("expected an auto-compaction-paused notice for the too-small window")
@@ -270,15 +270,15 @@ func TestCacheHitSurvivesTooSmallWindow(t *testing.T) {
 	// recovers to a high, stable hit rate instead of collapsing every step.
 	if n := len(sink.usages); n >= 6 {
 		if tail := tailAverage(usageRates(sink.usages), 5); tail < 85 {
-			t.Errorf("tail hit rate after the guard kicked in = %d%%, want â‰?5%%", tail)
+			t.Errorf("tail hit rate after the guard kicked in = %d%%, want â‰¥85%%", tail)
 		}
 	}
 }
 
 // TestReasoningRoundTripCost contrasts the hit-rate curve WITH vs WITHOUT the
 // reasoning_content round-trip (agent.go re-sends the assistant chain-of-thought
-// every turn). It quantifies how much that round-tripped CoT â€?assuming DeepSeek
-// counts it as uncached prompt â€?drags the hit rate down at each turn.
+// every turn). It quantifies how much that round-tripped CoT â€” assuming DeepSeek
+// counts it as uncached prompt â€” drags the hit rate down at each turn.
 func TestReasoningRoundTripCost(t *testing.T) {
 	curve := func(reasoning string) []int {
 		mock := &mockDeepSeek{t: t, reasoning: reasoning}

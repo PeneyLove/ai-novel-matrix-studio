@@ -19,7 +19,7 @@ func TestStreamedRowsBasic(t *testing.T) {
 		{"two lines no trailing", "hello\nworld", 80, 1},
 		{"two lines trailing", "hello\nworld\n", 80, 2},
 		{"empty", "", 80, 0},
-		{"single wrap", "abcdefghij", 5, 1}, // 10 cols / width 5 â†?1 wrap
+		{"single wrap", "abcdefghij", 5, 1}, // 10 cols / width 5 â†’ 1 wrap
 		{"two wraps no nl", "abcdefghijklmno", 5, 2},
 		{"line exactly width", strings.Repeat("a", 80), 80, 0}, // lazy wrap, no extra row
 	}
@@ -35,9 +35,9 @@ func TestStreamedRowsBasic(t *testing.T) {
 // TestStreamedRowsCJK proves CJK doubles the column footprint so a Chinese
 // line wraps at half the column count.
 func TestStreamedRowsCJK(t *testing.T) {
-	in := strings.Repeat("ä¸?, 6) // 12 cols at width 10 â†?1 wrap
+	in := strings.Repeat("ä¸­", 6) // 12 cols at width 10 â†’ 1 wrap
 	if got := streamedRows(in, 10); got != 1 {
-		t.Errorf("streamedRows(6Ã—ä¸? 10) = %d, want 1", got)
+		t.Errorf("streamedRows(6Ã—ä¸­, 10) = %d, want 1", got)
 	}
 }
 

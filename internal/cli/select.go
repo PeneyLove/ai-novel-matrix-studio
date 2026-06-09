@@ -30,14 +30,14 @@ func selectOne(label string, items []menuItem) (int, error) {
 	defer term.Restore(fd, old)
 
 	w := os.Stdout
-	fmt.Fprintf(w, "%s %s  %s\r\n\r\n", accent("‚ñ?), bold(label), dim(i18n.M.SelectOneHint))
+	fmt.Fprintf(w, "%s %s  %s\r\n\r\n", accent("‚ñå"), bold(label), dim(i18n.M.SelectOneHint))
 
 	sel := 0
 	render := func() {
 		for i, it := range items {
 			name := fmt.Sprintf("%-10s", it.name)
 			if i == sel {
-				fmt.Fprintf(w, "\r\033[K%s\r\n", reverse(fmt.Sprintf(" ‚ù?%s %s ", name, it.desc)))
+				fmt.Fprintf(w, "\r\033[K%s\r\n", reverse(fmt.Sprintf(" ‚ùØ %s %s ", name, it.desc)))
 			} else {
 				fmt.Fprintf(w, "\r\033[K   %s %s\r\n", name, dim(it.desc))
 			}
@@ -95,7 +95,7 @@ func selectMany(label string, items []menuItem) ([]int, error) {
 	defer term.Restore(fd, old)
 
 	w := os.Stdout
-	fmt.Fprintf(w, "%s %s  %s\r\n\r\n", accent("‚ñ?), bold(label), dim(i18n.M.SelectManyHint))
+	fmt.Fprintf(w, "%s %s  %s\r\n\r\n", accent("‚ñå"), bold(label), dim(i18n.M.SelectManyHint))
 
 	cur := 0
 	checked := make([]bool, len(items))
@@ -107,7 +107,7 @@ func selectMany(label string, items []menuItem) ([]int, error) {
 			}
 			name := fmt.Sprintf("%-14s", it.name)
 			if i == cur {
-				fmt.Fprintf(w, "\r\033[K%s\r\n", reverse(fmt.Sprintf(" ‚ù?%s %s %s ", box, name, it.desc)))
+				fmt.Fprintf(w, "\r\033[K%s\r\n", reverse(fmt.Sprintf(" ‚ùØ %s %s %s ", box, name, it.desc)))
 			} else {
 				fmt.Fprintf(w, "\r\033[K   %s %s %s\r\n", box, name, dim(it.desc))
 			}

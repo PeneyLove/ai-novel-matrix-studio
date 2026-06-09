@@ -226,7 +226,7 @@ func TestClipRunes(t *testing.T) {
 	if got := clipRunes("short", 10); got != "short" {
 		t.Errorf("clipRunes short = %q", got)
 	}
-	if got := clipRunes("hello world", 5); got != "helloâ€? {
+	if got := clipRunes("hello world", 5); got != "helloâ€¦" {
 		t.Errorf("clipRunes = %q", got)
 	}
 	if got := clipRunes("", 5); got != "" {

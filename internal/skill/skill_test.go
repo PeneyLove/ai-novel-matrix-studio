@@ -235,7 +235,7 @@ func containsString(ss []string, want string) bool {
 
 func TestInvalidNamesSkipped(t *testing.T) {
 	home := t.TempDir()
-	writeSkill(t, home, ".reasonix/skills/bad name.md", "---\ndescription: x\n---\nb") // space â†?invalid
+	writeSkill(t, home, ".reasonix/skills/bad name.md", "---\ndescription: x\n---\nb") // space â†’ invalid
 	st := New(Options{HomeDir: home, DisableBuiltins: true})
 	if len(st.List()) != 0 {
 		t.Errorf("invalid-named skill should be skipped, got %d", len(st.List()))
@@ -292,10 +292,10 @@ func TestApplyIndex(t *testing.T) {
 	if !strings.HasPrefix(out, "BASE\n\n# Skills") {
 		t.Error("index should append after the base")
 	}
-	if !strings.Contains(out, "- alpha â€?the alpha") {
+	if !strings.Contains(out, "- alpha â€” the alpha") {
 		t.Errorf("inline skill line missing: %s", out)
 	}
-	if !strings.Contains(out, "- beta [ðŸ§¬ subagent] â€?the beta") {
+	if !strings.Contains(out, "- beta [ðŸ§¬ subagent] â€” the beta") {
 		t.Errorf("subagent tag missing: %s", out)
 	}
 }

@@ -1,7 +1,7 @@
 // Package acp implements the Agent Client Protocol (https://agentclientprotocol.com)
 // transport: a stdio JSON-RPC 2.0 agent that editors and other host clients speak
 // to drive Reasonix. Many tools integrated with the v1 (main-branch) agent over
-// ACP, so v2 keeps the wire contract identical â€?the wire types in this file are a
+// ACP, so v2 keeps the wire contract identical â€” the wire types in this file are a
 // faithful port of main's src/acp/protocol.ts (ACP protocol version 1).
 //
 // The package is an adapter layer over the v2 kernel and depends only on stable
@@ -9,8 +9,8 @@
 // notifications (see dispatch.go), bridges permission.Approver onto
 // session/request_permission round-trips (see permission.go), and exposes the
 // whole thing over NDJSON JSON-RPC (see server.go). How a per-session agent is
-// actually assembled â€?provider, tools rooted at the session cwd, per-session MCP
-// â€?is left to a Factory the composition root supplies (see service.go), so this
+// actually assembled â€” provider, tools rooted at the session cwd, per-session MCP
+// â€” is left to a Factory the composition root supplies (see service.go), so this
 // package stays independent of the cli wiring.
 package acp
 
@@ -34,7 +34,7 @@ const (
 // --- initialize ---
 
 // InitializeParams is the client's handshake. We accept and ignore its
-// capabilities/info â€?the agent advertises a fixed capability set in reply.
+// capabilities/info â€” the agent advertises a fixed capability set in reply.
 type InitializeParams struct {
 	ProtocolVersion int             `json:"protocolVersion"`
 	ClientInfo      *Implementation `json:"clientInfo,omitempty"`
@@ -181,7 +181,7 @@ type SessionPromptResult struct {
 	TranscriptPath *string    `json:"transcriptPath,omitempty"`
 }
 
-// --- session/update (agent â†?client notifications) ---
+// --- session/update (agent â†’ client notifications) ---
 //
 // SessionUpdate is a tagged union discriminated by sessionUpdate. The variants
 // reuse the JSON key "content" with two incompatible shapes (a single block for
@@ -236,14 +236,14 @@ type toolContent struct {
 	Content ContentBlock `json:"content"`
 }
 
-// --- session/cancel (client â†?agent notification) ---
+// --- session/cancel (client â†’ agent notification) ---
 
 // SessionCancelParams cancels an in-progress turn.
 type SessionCancelParams struct {
 	SessionID string `json:"sessionId"`
 }
 
-// --- session/request_permission (agent â†?client request) ---
+// --- session/request_permission (agent â†’ client request) ---
 
 // PermissionOptionKind classifies an option for host UI styling. Matches main.
 type PermissionOptionKind string

@@ -206,7 +206,8 @@ func TestNotebookPreviewMatchesExecute(t *testing.T) {
 }
 
 // TestNotebookContentAlias accepts the write_file-style "content" field as an
-// alias for new_source, and defaults to the only cell when no target is given â€?// the near-miss shape a model reaches for, which should succeed not loop.
+// alias for new_source, and defaults to the only cell when no target is given â€”
+// the near-miss shape a model reaches for, which should succeed not loop.
 func TestNotebookContentAlias(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "one.ipynb")
@@ -214,7 +215,7 @@ func TestNotebookContentAlias(t *testing.T) {
 	if err := os.WriteFile(p, []byte(one), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	// {content, path} with no cell_number â€?the exact shape that looped before.
+	// {content, path} with no cell_number â€” the exact shape that looped before.
 	if _, err := runNotebookEdit(t, p, map[string]any{"content": "print(\"world\")\n"}); err != nil {
 		t.Fatalf("content-alias single-cell replace should succeed, got: %v", err)
 	}

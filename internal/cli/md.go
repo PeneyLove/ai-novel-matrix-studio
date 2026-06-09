@@ -17,8 +17,8 @@ import (
 
 // mdRenderer turns the model's markdown answer into ANSI-styled terminal text
 // using the brand palette. It implements only the constructs a chat-style
-// model reliably emits â€?headings, paragraphs, lists, fenced code, blockquotes,
-// strong/em/code-spans, links, thematic breaks â€?and degrades to plain text
+// model reliably emits â€” headings, paragraphs, lists, fenced code, blockquotes,
+// strong/em/code-spans, links, thematic breaks â€” and degrades to plain text
 // for anything else. Word-wrapping respects CJK widths and skips over ANSI
 // SGR codes when counting columns.
 type mdRenderer struct {
@@ -71,10 +71,10 @@ func (r *mdRenderer) Render(input string) string {
 
 // fixCJKEmphasis works around goldmark's CommonMark parser not recognising
 // CJK punctuation as Unicode punctuation: a closing ** is only right-flanking
-// when the char before it is punctuation, so **Xï¼?*Y (ï¼?= U+FF0C) is not bold.
+// when the char before it is punctuation, so **Xï¼Œ**Y (ï¼Œ = U+FF0C) is not bold.
 // Inserting a space after such a closer fixes the flanking. The space must go
-// only on a *closer* â€?putting it after an opener (ï¼?*X** â†?ï¼?* X**) would
-// instead break the left-flanking â€?so emphasis open/close is tracked by a
+// only on a *closer* â€” putting it after an opener (ï¼Œ**X** â†’ ï¼Œ** X**) would
+// instead break the left-flanking â€” so emphasis open/close is tracked by a
 // running toggle. Inline code spans and fenced blocks are passed through so
 // literal ** inside code is never touched.
 func fixCJKEmphasis(s string) string {
@@ -103,7 +103,7 @@ func fixCJKEmphasis(s string) string {
 			b.WriteRune(r)
 			continue
 		}
-		// Inside code â€?pass through verbatim.
+		// Inside code â€” pass through verbatim.
 		if inCode || inFenced {
 			b.WriteRune(r)
 			continue
@@ -251,7 +251,7 @@ func (r *mdRenderer) renderList(buf *strings.Builder, n *ast.List, src []byte, i
 			marker = fmt.Sprintf("%d.", idx)
 			idx++
 		} else {
-			marker = "â€?
+			marker = "â€¢"
 		}
 		buf.WriteString(strings.Repeat(" ", indent))
 		buf.WriteString(accent(marker) + " ")
@@ -283,7 +283,7 @@ func (r *mdRenderer) renderList(buf *strings.Builder, n *ast.List, src []byte, i
 }
 
 func (r *mdRenderer) renderFenced(buf *strings.Builder, n ast.Node, src []byte, indent int) {
-	prefix := strings.Repeat(" ", indent) + dim("â”?")
+	prefix := strings.Repeat(" ", indent) + dim("â”‚ ")
 	for i := 0; i < n.Lines().Len(); i++ {
 		l := n.Lines().At(i)
 		line := strings.TrimRight(string(l.Value(src)), "\n")
@@ -297,7 +297,7 @@ func (r *mdRenderer) renderFenced(buf *strings.Builder, n ast.Node, src []byte, 
 func (r *mdRenderer) renderBlockquote(buf *strings.Builder, n *ast.Blockquote, src []byte, indent int) {
 	var inner strings.Builder
 	r.renderBlocks(&inner, n, src, 0)
-	prefix := strings.Repeat(" ", indent) + dim("â–?")
+	prefix := strings.Repeat(" ", indent) + dim("â–Ž ")
 	for _, line := range strings.Split(strings.TrimRight(inner.String(), "\n"), "\n") {
 		buf.WriteString(prefix)
 		buf.WriteString(dim(line))
@@ -344,7 +344,7 @@ func (r *mdRenderer) appendInline(b *strings.Builder, n ast.Node, src []byte) {
 		case *ast.AutoLink:
 			b.WriteString(string(v.URL(src)))
 		case *ast.RawHTML:
-			// drop â€?rare in chat output and would print as literal escapes
+			// drop â€” rare in chat output and would print as literal escapes
 		case *mathNode:
 			b.WriteString(italic(v.value))
 		case *ast.String:
@@ -356,12 +356,12 @@ func (r *mdRenderer) appendInline(b *strings.Builder, n ast.Node, src []byte) {
 }
 
 // renderTable lays out a GFM table as terminal columns separated by dim
-// "â”? rails with a "â”€â”¼â”€" rule under the header. Column widths auto-fit the
+// "â”‚" rails with a "â”€â”¼â”€" rule under the header. Column widths auto-fit the
 // widest cell in each column and are capped to a fair share of the terminal
 // width so a wide table can't push the input off-screen. Long cells are
 // wrapped across multiple visual rows (the whole logical row inflates to
 // the tallest cell), not truncated, so no content is lost. Alignment is
-// left-only â€?Markdown's ":---:" hints are read but not honoured yet.
+// left-only â€” Markdown's ":---:" hints are read but not honoured yet.
 func (r *mdRenderer) renderTable(buf *strings.Builder, n *extast.Table, src []byte, indent int) {
 	var header []string
 	var rows [][]string
@@ -426,7 +426,7 @@ func (r *mdRenderer) renderTable(buf *strings.Builder, n *extast.Table, src []by
 	}
 
 	prefix := strings.Repeat(" ", indent)
-	sep := dim(" â”?")
+	sep := dim(" â”‚ ")
 
 	if len(header) > 0 {
 		r.renderTableRow(buf, prefix, sep, header, widths, true)
@@ -448,7 +448,7 @@ func (r *mdRenderer) renderTable(buf *strings.Builder, n *extast.Table, src []by
 // renderTableRow lays out one logical row across multiple visual rows when
 // any cell wraps. wrapAnsi handles per-cell word + hard-break wrapping; the
 // row's visual height = max wrapped lines across all cells. Cells that ran
-// out of content get padded with spaces so the rail "â”? stays aligned.
+// out of content get padded with spaces so the rail "â”‚" stays aligned.
 func (r *mdRenderer) renderTableRow(buf *strings.Builder, prefix, sep string, cells []string, widths []int, isHeader bool) {
 	cols := len(widths)
 	wrapped := make([][]string, cols)
@@ -507,7 +507,7 @@ func inlineCarrier(n ast.Node) ast.Node {
 }
 
 // wrapAnsi word-wraps text to width columns, hard-breaking any single word too
-// wide to fit on its own line â€?the path CJK takes, having no inter-word spaces.
+// wide to fit on its own line â€” the path CJK takes, having no inter-word spaces.
 // ANSI SGR escapes are preserved and counted as zero width; wide chars count as
 // two columns. Thin wrapper over x/ansi's Wrap (already in the dep tree).
 func wrapAnsi(text string, width int) string {

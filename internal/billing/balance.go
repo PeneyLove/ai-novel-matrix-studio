@@ -1,7 +1,7 @@
 // Package billing queries a provider's wallet balance for the status line. The
 // only documented shape today is DeepSeek's GET /user/balance, so Fetch speaks
 // that schema. Balance is strictly optional: a provider with no balance_url is
-// never queried â€?callers pass "" and get (nil, nil) back, and surfaces simply
+// never queried â€” callers pass "" and get (nil, nil) back, and surfaces simply
 // omit the readout. Kept tiny and dependency-free (net/http + encoding/json) so
 // every frontend can share one fetch.
 package billing
@@ -46,8 +46,8 @@ type deepseekResp struct {
 var httpClient = &http.Client{Timeout: 12 * time.Second}
 
 // Fetch queries url (a DeepSeek-style balance endpoint) with a Bearer apiKey and
-// returns the normalized balance. An empty url yields (nil, nil) â€?"not
-// configured", not an error â€?so callers can treat both the same and just omit
+// returns the normalized balance. An empty url yields (nil, nil) â€” "not
+// configured", not an error â€” so callers can treat both the same and just omit
 // the readout.
 func Fetch(ctx context.Context, url, apiKey string) (*Balance, error) {
 	return FetchWithClient(ctx, httpClient, url, apiKey)

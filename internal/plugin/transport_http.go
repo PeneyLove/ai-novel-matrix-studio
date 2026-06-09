@@ -24,7 +24,8 @@ const maxHTTPBody = 16 << 20 // 16 MiB
 //
 // The mutex serialises a request and its response. That means concurrent tool
 // calls to the *same* server run one at a time; calls to different servers use
-// different transports and stay concurrent. Correctness over latency for P1 â€?// it also keeps nextID and the session id race-free.
+// different transports and stay concurrent. Correctness over latency for P1 â€”
+// it also keeps nextID and the session id race-free.
 type httpTransport struct {
 	name    string
 	url     string

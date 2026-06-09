@@ -24,7 +24,7 @@ func withTempCache(t *testing.T) string {
 }
 
 // readStats reads the on-disk stats file for name directly (not through the
-// public API) so tests can assert raw file contents â€?what we wrote and in
+// public API) so tests can assert raw file contents â€” what we wrote and in
 // what order.
 func readStats(t *testing.T, name string) StartupStats {
 	t.Helper()
@@ -158,7 +158,7 @@ func TestRecommendAtBudgetDemotes(t *testing.T) {
 func TestRecommendMissingStatsNoDemote(t *testing.T) {
 	withTempCache(t)
 
-	// Never recorded anything â†?should not demote a brand-new plugin.
+	// Never recorded anything â†’ should not demote a brand-new plugin.
 	got := Recommend("never-seen", 1*time.Second, 3)
 	if got.Demote {
 		t.Fatalf("Demote = true on missing stats, want false (reason=%q)", got.Reason)
@@ -173,7 +173,7 @@ func TestRecommendOldFailuresFadeOut(t *testing.T) {
 
 	budget := 1 * time.Second
 	// Early samples were terrible (well above budget*2 == 2s), but the most
-	// recent three are quick â€?rolling window must let the plugin recover.
+	// recent three are quick â€” rolling window must let the plugin recover.
 	for _, ms := range []int64{5000, 6000, 7000, 8000, 500, 600, 700} {
 		if err := RecordStartup("recovered", time.Duration(ms)*time.Millisecond); err != nil {
 			t.Fatalf("RecordStartup: %v", err)
@@ -189,7 +189,7 @@ func TestRecommendOldFailuresFadeOut(t *testing.T) {
 
 // TestStatsPathLayout pins the on-disk location so Phase 4's integration code
 // can rely on it. We assert the path sits under config.CacheDir()/mcp and that
-// the slug strips raw separators â€?exact slug rule lives in cache.go.
+// the slug strips raw separators â€” exact slug rule lives in cache.go.
 func TestStatsPathLayout(t *testing.T) {
 	withTempCache(t)
 

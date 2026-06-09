@@ -29,8 +29,8 @@ const maxResultChars = 8000
 // main's dispatchKernelEvent: where main translated kernel events, we translate
 // the event.Event the v2 agent already emits.
 //
-// v2 has no separate "tool intent" event â€?a call goes ToolDispatch â†?ToolResult,
-// two states â€?so we emit a single pending tool_call on dispatch (already carrying
+// v2 has no separate "tool intent" event â€” a call goes ToolDispatch â†’ ToolResult,
+// two states â€” so we emit a single pending tool_call on dispatch (already carrying
 // rawInput, which main only had by the intent step) and a completed/failed
 // tool_call_update on result. Message/Usage/Phase/TurnStarted/TurnDone have no
 // place in main's update set and are dropped (TurnDone's outcome surfaces as the
@@ -122,7 +122,7 @@ func (s *updateSink) Emit(e event.Event) {
 		}
 
 	case event.ApprovalRequest:
-		// The run loop is now blocked awaiting Approve(id, â€?. Do the
+		// The run loop is now blocked awaiting Approve(id, â€¦). Do the
 		// client round-trip off the emit goroutine so Emit returns at once
 		// (the agent emits serially); the answer unblocks the loop.
 		go s.requestPermission(e.Approval)
@@ -236,7 +236,7 @@ func clip(text string) string {
 	if len(text) <= maxResultChars {
 		return text
 	}
-	return text[:maxResultChars] + "\nâ€?" +
+	return text[:maxResultChars] + "\nâ€¦(" +
 		strconv.Itoa(len(text)-maxResultChars) + " more chars truncated)"
 }
 

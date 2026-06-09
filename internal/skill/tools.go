@@ -43,7 +43,7 @@ func (*runSkillTool) Name() string { return "run_skill" }
 func (*runSkillTool) ReadOnly() bool { return false }
 
 func (*runSkillTool) Description() string {
-	return "Invoke a playbook from the Skills index pinned in the system prompt. For the built-in subagent skills (explore / research / review / security_review), prefer the dedicated top-level tools of the same name â€?they're easier to pick and do the same thing. Pass `name` as the BARE identifier (e.g. 'explore'), NOT the `[ðŸ§¬ subagent]` tag that follows it in the index. `[ðŸ§¬ subagent]` skills spawn an isolated subagent â€?only the final distilled answer returns; supply `arguments` describing the concrete task since the subagent has no other context. Untagged skills are inlined: the body becomes a tool result you read and follow."
+	return "Invoke a playbook from the Skills index pinned in the system prompt. For the built-in subagent skills (explore / research / review / security_review), prefer the dedicated top-level tools of the same name â€” they're easier to pick and do the same thing. Pass `name` as the BARE identifier (e.g. 'explore'), NOT the `[ðŸ§¬ subagent]` tag that follows it in the index. `[ðŸ§¬ subagent]` skills spawn an isolated subagent â€” only the final distilled answer returns; supply `arguments` describing the concrete task since the subagent has no other context. Untagged skills are inlined: the body becomes a tool result you read and follow."
 }
 
 func (*runSkillTool) Schema() json.RawMessage {
@@ -51,7 +51,7 @@ func (*runSkillTool) Schema() json.RawMessage {
 "type":"object",
 "properties":{
   "name":{"type":"string","description":"Skill identifier as it appears in the pinned Skills index (e.g. 'explore', 'review'). Case-sensitive. Just the identifier, not the [ðŸ§¬ subagent] tag."},
-  "arguments":{"type":"string","description":"Free-form arguments. For inline skills: appended as an 'Arguments:' line; the skill's own instructions decide how to use them. For subagent skills: REQUIRED â€?becomes the entire task the subagent receives."}
+  "arguments":{"type":"string","description":"Free-form arguments. For inline skills: appended as an 'Arguments:' line; the skill's own instructions decide how to use them. For subagent skills: REQUIRED â€” becomes the entire task the subagent receives."}
 },
 "required":["name"]
 }`)
@@ -71,7 +71,7 @@ func (t *runSkillTool) Execute(ctx context.Context, args json.RawMessage) (strin
 	}
 	sk, ok := t.store.Read(name)
 	if !ok {
-		return "", fmt.Errorf("unknown skill %q â€?available: %s", name, availableNames(t.store))
+		return "", fmt.Errorf("unknown skill %q â€” available: %s", name, availableNames(t.store))
 	}
 	rawArgs := strings.TrimSpace(p.Arguments)
 
@@ -80,7 +80,7 @@ func (t *runSkillTool) Execute(ctx context.Context, args json.RawMessage) (strin
 			return "", fmt.Errorf("run_skill: skill %q is runAs=subagent but no subagent runner is configured in this session", name)
 		}
 		if rawArgs == "" {
-			return "", fmt.Errorf("run_skill: skill %q is a subagent and requires 'arguments' â€?the subagent has no other context, so describe the concrete task", name)
+			return "", fmt.Errorf("run_skill: skill %q is a subagent and requires 'arguments' â€” the subagent has no other context, so describe the concrete task", name)
 		}
 		return t.runner(ctx, sk, rawArgs)
 	}
@@ -116,14 +116,14 @@ func (t *subagentSkillTool) Execute(ctx context.Context, args json.RawMessage) (
 	}
 	task := strings.TrimSpace(p.Task)
 	if task == "" {
-		return "", fmt.Errorf("%s requires a non-empty 'task' argument â€?describe the concrete question", t.toolName)
+		return "", fmt.Errorf("%s requires a non-empty 'task' argument â€” describe the concrete question", t.toolName)
 	}
 	sk, ok := t.store.Read(t.skillName)
 	if !ok {
 		return "", fmt.Errorf("%s: built-in skill %q is not registered", t.toolName, t.skillName)
 	}
 	// A user file overriding the built-in name with runAs:inline would lose
-	// isolation if dispatched here â€?bounce to run_skill where inline is defined.
+	// isolation if dispatched here â€” bounce to run_skill where inline is defined.
 	if sk.RunAs != RunSubagent {
 		return "", fmt.Errorf("%s: skill %q is overridden as inline; invoke it via run_skill instead", t.toolName, t.skillName)
 	}
@@ -142,16 +142,16 @@ func BuiltinSubagentTools(store *Store, runner SubagentRunner) []tool.Tool {
 		toolName, skillName, description, taskDesc string
 	}{
 		{"explore", "explore",
-			"Run a focused read-only codebase investigation in an isolated subagent. Use for broad survey questions across many files â€?'find all places that X', 'how does Y work across the project', 'audit Z'. Returns one distilled answer with file:line citations. Its reads + reasoning never enter your context, unlike chained read_file.",
-			"Concrete investigation question. The subagent has none of your context â€?write a self-contained prompt naming the symbol / pattern / behavior to survey."},
+			"Run a focused read-only codebase investigation in an isolated subagent. Use for broad survey questions across many files â€” 'find all places that X', 'how does Y work across the project', 'audit Z'. Returns one distilled answer with file:line citations. Its reads + reasoning never enter your context, unlike chained read_file.",
+			"Concrete investigation question. The subagent has none of your context â€” write a self-contained prompt naming the symbol / pattern / behavior to survey."},
 		{"research", "research",
-			"Combine web_fetch + code reading in an isolated subagent. Use when the answer needs both an external reference and local verification â€?'is X supported by lib Y', 'compare our impl against the spec'. Returns one synthesis citing code (file:line) and web (URL).",
-			"Concrete research question. The subagent has none of your context â€?name the external thing to look up and the local code to compare against."},
+			"Combine web_fetch + code reading in an isolated subagent. Use when the answer needs both an external reference and local verification â€” 'is X supported by lib Y', 'compare our impl against the spec'. Returns one synthesis citing code (file:line) and web (URL).",
+			"Concrete research question. The subagent has none of your context â€” name the external thing to look up and the local code to compare against."},
 		{"review", "review",
-			"Review the pending changes (current branch diff) in an isolated subagent â€?flags correctness / security / missing-tests / hidden behavior per file:line. Read-only; you decide what to act on. Use before suggesting a PR-shaped change or after finishing a multi-step edit.",
+			"Review the pending changes (current branch diff) in an isolated subagent â€” flags correctness / security / missing-tests / hidden behavior per file:line. Read-only; you decide what to act on. Use before suggesting a PR-shaped change or after finishing a multi-step edit.",
 			"What to focus the review on (e.g. 'focus on the auth changes' or 'general'). The subagent reads the diff itself."},
 		{"security_review", "security-review",
-			"Security-focused review of the current branch diff in an isolated subagent â€?injection / authz / secrets / deserialization / path-traversal / crypto, severity-tagged. Read-only. Use when shipping changes that touch auth, input parsing, file IO, or external requests.",
+			"Security-focused review of the current branch diff in an isolated subagent â€” injection / authz / secrets / deserialization / path-traversal / crypto, severity-tagged. Read-only. Use when shipping changes that touch auth, input parsing, file IO, or external requests.",
 			"Optional scope hint (e.g. 'focus on token handling in internal/auth/') or 'full' for everything in the diff."},
 	}
 	var out []tool.Tool
@@ -187,20 +187,20 @@ func (*installSkillTool) Name() string   { return "install_skill" }
 func (*installSkillTool) ReadOnly() bool { return false }
 
 func (t *installSkillTool) Description() string {
-	scope := "'global' (only option â€?no project workspace) writes to ~/.reasonix/skills/."
+	scope := "'global' (only option â€” no project workspace) writes to ~/.reasonix/skills/."
 	if t.store.HasProjectScope() {
 		scope = "'project' (default) writes to <repo>/.reasonix/skills/ (this workspace only); 'global' writes to ~/.reasonix/skills/ (every project)."
 	}
-	return "Author and save a new skill â€?a reusable playbook future turns invoke via run_skill (or /<name>). Runnable immediately this turn; appears in the pinned Skills index on the next launch. " + scope
+	return "Author and save a new skill â€” a reusable playbook future turns invoke via run_skill (or /<name>). Runnable immediately this turn; appears in the pinned Skills index on the next launch. " + scope
 }
 
 func (*installSkillTool) Schema() json.RawMessage {
 	return json.RawMessage(`{
 "type":"object",
 "properties":{
-  "name":{"type":"string","description":"Identifier â€?letters/digits/_/-/., 1-64 chars, starts alphanumeric. Becomes the filename."},
-  "description":{"type":"string","description":"â‰?20-char one-liner shown in the pinned Skills index â€?future agents read it to decide whether to invoke."},
-  "body":{"type":"string","description":"Markdown playbook. For subagent skills, write the subagent's persona/rules â€?it gets no context besides 'arguments' at runtime."},
+  "name":{"type":"string","description":"Identifier â€” letters/digits/_/-/., 1-64 chars, starts alphanumeric. Becomes the filename."},
+  "description":{"type":"string","description":"â‰¤120-char one-liner shown in the pinned Skills index â€” future agents read it to decide whether to invoke."},
+  "body":{"type":"string","description":"Markdown playbook. For subagent skills, write the subagent's persona/rules â€” it gets no context besides 'arguments' at runtime."},
   "scope":{"type":"string","enum":["project","global"],"description":"Where to write. Defaults to project when a workspace exists, else global."},
   "runAs":{"type":"string","enum":["inline","subagent"],"description":"inline (default) folds the body into the parent turn; subagent spawns an isolated child loop returning only its final answer (use for context-heavy work)."},
   "model":{"type":"string","description":"Optional model override for runAs=subagent (a configured provider/model name). Ignored otherwise."},
@@ -229,10 +229,10 @@ func (t *installSkillTool) Execute(_ context.Context, args json.RawMessage) (str
 		return "", fmt.Errorf("install_skill requires a non-empty 'name'")
 	}
 	if desc == "" {
-		return "", fmt.Errorf("install_skill requires a non-empty 'description' â€?it is what appears in the Skills index")
+		return "", fmt.Errorf("install_skill requires a non-empty 'description' â€” it is what appears in the Skills index")
 	}
 	if strings.TrimSpace(p.Body) == "" {
-		return "", fmt.Errorf("install_skill requires a non-empty 'body' â€?the playbook the skill executes")
+		return "", fmt.Errorf("install_skill requires a non-empty 'body' â€” the playbook the skill executes")
 	}
 
 	scope := ScopeGlobal
@@ -247,7 +247,7 @@ func (t *installSkillTool) Execute(_ context.Context, args json.RawMessage) (str
 		}
 	}
 	if scope == ScopeProject && !t.store.HasProjectScope() {
-		return "", fmt.Errorf("install_skill: scope='project' requires a workspace â€?use scope='global'")
+		return "", fmt.Errorf("install_skill: scope='project' requires a workspace â€” use scope='global'")
 	}
 
 	runAs := RunInline
@@ -353,7 +353,7 @@ func collapseSpaces(s string) string {
 func availableNames(store *Store) string {
 	skills := store.List()
 	if len(skills) == 0 {
-		return "(none â€?no skills defined)"
+		return "(none â€” no skills defined)"
 	}
 	names := make([]string, len(skills))
 	for i, s := range skills {

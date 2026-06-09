@@ -37,7 +37,7 @@ func (d Decision) String() string {
 }
 
 // ParseDecision maps a config string to a Decision. Unknown / empty input
-// defaults to Ask â€?the conservative posture for a writer fallback.
+// defaults to Ask â€” the conservative posture for a writer fallback.
 func ParseDecision(s string) Decision {
 	switch strings.ToLower(strings.TrimSpace(s)) {
 	case "allow":
@@ -64,7 +64,8 @@ type Rule struct {
 
 // ParseRule parses "ToolName", "ToolName(glob)", or "ToolName=literal".
 // Surrounding whitespace is trimmed. The "=literal" form (taken when the '='
-// precedes any '(') matches the rest of the string verbatim â€?no globbing â€?// which is how remembered approvals are stored so a command's punctuation can't
+// precedes any '(') matches the rest of the string verbatim â€” no globbing â€”
+// which is how remembered approvals are stored so a command's punctuation can't
 // widen the rule. ok is false for a malformed entry (empty tool name) so the
 // caller can warn rather than silently install a rule that matches nothing.
 func ParseRule(s string) (Rule, bool) {
@@ -170,7 +171,7 @@ func matchAny(rules []Rule, toolName, subject string) bool {
 }
 
 // subjectKeys are the JSON argument keys, in priority order, that carry a tool
-// call's "subject" â€?the thing a Subject glob matches against. Generic so tools
+// call's "subject" â€” the thing a Subject glob matches against. Generic so tools
 // need not implement a permission-specific method: bash exposes command, the
 // file tools expose path / file_path, grep & glob expose pattern.
 var subjectKeys = []string{"command", "file_path", "path", "pattern"}
@@ -263,7 +264,7 @@ func (g *Gate) Check(ctx context.Context, toolName string, args json.RawMessage,
 	}
 	switch g.Policy.Decide(toolName, readOnly, args) {
 	case Deny:
-		return false, "denied by permission policy â€?this tool/command is on the deny list. Do not retry it; choose another approach or stop and explain.", nil
+		return false, "denied by permission policy â€” this tool/command is on the deny list. Do not retry it; choose another approach or stop and explain.", nil
 	case Ask:
 		if g.Approver == nil {
 			return true, "", nil // non-interactive: preserve autonomy
@@ -274,7 +275,7 @@ func (g *Gate) Check(ctx context.Context, toolName string, args json.RawMessage,
 			return false, "approval aborted", err
 		}
 		if !allow {
-			return false, "the user declined this tool call â€?do not retry it; ask how they would like to proceed or choose another approach.", nil
+			return false, "the user declined this tool call â€” do not retry it; ask how they would like to proceed or choose another approach.", nil
 		}
 		if remember && g.OnRemember != nil {
 			g.OnRemember(rememberRule(toolName, subject))

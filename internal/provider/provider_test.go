@@ -9,7 +9,7 @@ import (
 // --- SanitizeToolPairing ---
 
 // toolIDsAnswered reports whether every assistant tool_call id has a following
-// tool message answering it â€?the contract the OpenAI/DeepSeek API enforces.
+// tool message answering it â€” the contract the OpenAI/DeepSeek API enforces.
 func toolIDsAnswered(msgs []Message) bool {
 	answered := map[string]bool{}
 	for _, m := range msgs {

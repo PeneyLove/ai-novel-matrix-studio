@@ -85,7 +85,7 @@ func (t *thinkSplitter) drainPassthrough() string {
 }
 
 // markerSuffixLen returns the length of the longest proper suffix of s that is a
-// prefix of marker â€?the tail to hold back in case the rest of the tag arrives
+// prefix of marker â€” the tail to hold back in case the rest of the tag arrives
 // in the next delta.
 func markerSuffixLen(s, marker string) int {
 	max := len(marker) - 1

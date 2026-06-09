@@ -21,7 +21,7 @@ import (
 
 // argsJSON marshals m into the JSON form a tool expects. Tests must not build
 // the JSON by concatenating Go strings: on Windows, t.TempDir() returns a path
-// like C:\Users\�?and the embedded backslashes are interpreted as JSON string
+// like C:\Users\… and the embedded backslashes are interpreted as JSON string
 // escapes (\U triggers a parse error). json.Marshal handles the escaping.
 func argsJSON(t *testing.T, m map[string]any) json.RawMessage {
 	t.Helper()
@@ -54,7 +54,7 @@ func TestBuiltinsRegistered(t *testing.T) {
 // parallelise. Flipping a writer (write_file, edit_file, bash) to ReadOnly
 // would re-order writes against reads in the same turn; this test fails fast
 // if that ever happens. bash specifically must stay non-ReadOnly even though
-// many invocations are pure reads �?args aren't introspected.
+// many invocations are pure reads — args aren't introspected.
 func TestBuiltinReadOnlyClassification(t *testing.T) {
 	readOnly := map[string]bool{
 		"read_file": true, "ls": true, "glob": true, "grep": true, "web_fetch": true,
@@ -79,7 +79,7 @@ func TestReadFile(t *testing.T) {
 
 	out := runTool(t, readFile{}, map[string]any{"path": f})
 	// Line numbers must be present, right-aligned, with the arrow separator.
-	for _, want := range []string{"1→package main", "2�?, "3→func main"} {
+	for _, want := range []string{"1→package main", "2→", "3→func main"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("missing %q in:\n%s", want, out)
 		}
@@ -203,7 +203,7 @@ func TestMultiEdit(t *testing.T) {
 	body := "package old\n\nfunc old() {\n\told()\n}\n"
 	os.WriteFile(f, []byte(body), 0o644)
 
-	// Two edits: rename the package (unique) then sweep every old �?new.
+	// Two edits: rename the package (unique) then sweep every old → new.
 	out := runTool(t, multiEdit{}, map[string]any{
 		"path": f,
 		"edits": []map[string]any{
@@ -411,14 +411,14 @@ func TestGlobNoMatches(t *testing.T) {
 
 func TestReadFileGB18030(t *testing.T) {
 	f := filepath.Join(t.TempDir(), "gbk.txt")
-	gb, err := simplifiedchinese.GB18030.NewEncoder().String("你好世界\n第二�?)
+	gb, err := simplifiedchinese.GB18030.NewEncoder().String("你好世界\n第二行")
 	if err != nil {
 		t.Fatalf("encode: %v", err)
 	}
 	os.WriteFile(f, []byte(gb), 0o644)
 
 	out := runTool(t, readFile{}, map[string]any{"path": f})
-	if !strings.Contains(out, "你好世界") || !strings.Contains(out, "第二�?) {
+	if !strings.Contains(out, "你好世界") || !strings.Contains(out, "第二行") {
 		t.Errorf("expected decoded Chinese text, got:\n%s", out)
 	}
 }
@@ -430,8 +430,8 @@ func TestEditFileGB18030RoundTrip(t *testing.T) {
 
 	runTool(t, editFile{}, map[string]any{
 		"path":       f,
-		"old_string": "第二�?,
-		"new_string": "新的�?,
+		"old_string": "第二行",
+		"new_string": "新的行",
 	})
 
 	got, _ := os.ReadFile(f)

@@ -24,8 +24,8 @@ func (s stubTool) Execute(context.Context, json.RawMessage) (string, error) { re
 func (s stubTool) ReadOnly() bool                                           { return true }
 
 // TestRegistryRemovePrefix proves an MCP server's namespaced tools are dropped as
-// a group on disconnect, leaving built-ins and other servers' tools â€?and their
-// insertion order â€?intact.
+// a group on disconnect, leaving built-ins and other servers' tools â€” and their
+// insertion order â€” intact.
 func TestRegistryRemovePrefix(t *testing.T) {
 	r := NewRegistry()
 	r.Add(stubTool{name: "bash"})
@@ -65,7 +65,7 @@ func TestRegistryRemovePrefix(t *testing.T) {
 // TestRegistrySchemasSorted proves Schemas() emits tool definitions in
 // deterministic alphabetical order regardless of insertion order, so a logically
 // identical tool set produces a stable provider-facing request prefix (prompt
-// cache reuse). Names() must stay in insertion order â€?only the provider export
+// cache reuse). Names() must stay in insertion order â€” only the provider export
 // is sorted.
 func TestRegistrySchemasSorted(t *testing.T) {
 	r := NewRegistry()

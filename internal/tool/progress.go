@@ -15,7 +15,7 @@ func WithProgress(ctx context.Context, fn ProgressFunc) context.Context {
 }
 
 // ProgressFrom returns the progress sink, if one was stamped (ok is false for a
-// plain context â€?headless tests or calls outside the run loop).
+// plain context â€” headless tests or calls outside the run loop).
 func ProgressFrom(ctx context.Context) (ProgressFunc, bool) {
 	fn, ok := ctx.Value(progressKey{}).(ProgressFunc)
 	return fn, ok && fn != nil

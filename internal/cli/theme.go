@@ -196,7 +196,8 @@ func defaultCLIThemeStyle(mode string) cliThemeStyle {
 	return cliThemeStyles[0]
 }
 
-// withoutTerminalProbe resolves a theme with the OSC background probe disabled â€?// for callers running while something else (the live TUI) owns stdin, where a
+// withoutTerminalProbe resolves a theme with the OSC background probe disabled â€”
+// for callers running while something else (the live TUI) owns stdin, where a
 // raw-mode read would fight the TUI's input reader. "auto" then falls back to the
 // COLORFGBG heuristic.
 func withoutTerminalProbe(fn func()) {
@@ -490,7 +491,7 @@ func describeCLIThemes() string {
 	for _, st := range cliThemeStyles {
 		marker := "  "
 		if st.name == activeCLITheme.style {
-			marker = accent("â€?")
+			marker = accent("â€º ")
 		}
 		fmt.Fprintf(&b, "%s%-10s %s  %s\n", marker, st.name, dim(st.mode), dim(st.description))
 	}

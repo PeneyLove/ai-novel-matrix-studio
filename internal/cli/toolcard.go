@@ -1,5 +1,5 @@
-// Formats a tool call as a Claude-style card line: a "‚ó?Verb(primary arg)"
-// header instead of the raw "-> name {json}", plus the "‚é? continuation gutter.
+// Formats a tool call as a Claude-style card line: a "‚óè Verb(primary arg)"
+// header instead of the raw "-> name {json}", plus the "‚éø" continuation gutter.
 package cli
 
 import (
@@ -10,11 +10,11 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tool"
 )
 
-// connector is the Claude-style "‚é? gutter that ties a continuation block (tool
+// connector is the Claude-style "‚éø" gutter that ties a continuation block (tool
 // output, streamed thinking) to the header line above it.
-const connector = "  ‚é? "
+const connector = "  ‚éø  "
 
-// connectorBlock renders lines under the connector: the first carries the "‚é?
+// connectorBlock renders lines under the connector: the first carries the "‚éø"
 // gutter, the rest align beneath it. Returns "" for no lines.
 func connectorBlock(lines []string) string {
 	if len(lines) == 0 {
@@ -51,7 +51,7 @@ var toolVerb = map[string]string{
 }
 
 // toolArgKey is the JSON field shown in parentheses for each tool (wait is
-// special-cased ‚Ä?it carries a job_ids array, not a scalar).
+// special-cased ‚Äî it carries a job_ids array, not a scalar).
 var toolArgKey = map[string]string{
 	"bash":          "command",
 	"bash_output":   "job_id",
@@ -72,7 +72,7 @@ var toolArgKey = map[string]string{
 	"task":          "description",
 }
 
-// toolDot returns the "‚ó? status glyph coloured by the tool's category so the eye
+// toolDot returns the "‚óè" status glyph coloured by the tool's category so the eye
 // can tell reads (cyan) from writes (green), shell (yellow), process control
 // (magenta), and everything else (copper) at a glance.
 func toolDot(name string) string {
@@ -89,7 +89,7 @@ func toolDot(name string) string {
 	default:
 		c = activeCLITheme.accent
 	}
-	return themeFg(c, "‚ó?)
+	return themeFg(c, "‚óè")
 }
 
 var toolCategory = map[string]string{
@@ -152,7 +152,7 @@ func argList(v any) string {
 	return strings.Join(parts, ", ")
 }
 
-// toolCard renders the dispatch line: "  ‚è?Verb(arg)", arg clamped to width.
+// toolCard renders the dispatch line: "  ‚è∫ Verb(arg)", arg clamped to width.
 func toolCard(name, args string, width int) string {
 	return "  " + toolDot(name) + " " + toolHead(name, toolArg(name, args), width)
 }

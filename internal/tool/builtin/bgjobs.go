@@ -13,8 +13,8 @@ import (
 
 // bash_output / kill_shell / wait operate the background jobs registered by
 // bash(run_in_background) and task(run_in_background). They reach the session's
-// job manager through the call context (jobs.FromContext) â€?the agent stamps it
-// onto every tool call â€?and degrade to a clear error when it isn't available
+// job manager through the call context (jobs.FromContext) â€” the agent stamps it
+// onto every tool call â€” and degrade to a clear error when it isn't available
 // (a headless context with no manager). Together they poll a job's new output,
 // terminate a job, and block until jobs finish.
 

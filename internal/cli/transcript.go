@@ -27,7 +27,8 @@ func wrapTranscript(s string, width int) string {
 var clipboardWriteAll = clipboard.WriteAll
 
 // copyToClipboard writes text to the system clipboard. It first tries the
-// platform tool (xclip / xsel / wl-copy / pbcopy) via atotto; when that fails â€?// typically inside tmux or over SSH where the display server is unreachable â€?it
+// platform tool (xclip / xsel / wl-copy / pbcopy) via atotto; when that fails â€”
+// typically inside tmux or over SSH where the display server is unreachable â€” it
 // falls back to OSC 52, which tmux and modern terminals forward to the host
 // clipboard. tea.SetClipboard's command is *run* here so the message it yields
 // (handled by the runtime) reaches the event loop; returning the command itself
@@ -92,7 +93,7 @@ var (
 // renderTranscript draws the viewport's visible window with a scrollbar in the
 // last column and the active selection reverse-highlighted. The content lines
 // (m.wrappedLines) are already padded to cw by wrapTranscript, so this stays
-// cheap per frame â€?important because a drag re-renders on every mouse move.
+// cheap per frame â€” important because a drag re-renders on every mouse move.
 func (m chatTUI) renderTranscript() string {
 	h := m.viewport.Height()
 	if h <= 0 {
@@ -174,7 +175,7 @@ func (m chatTUI) selectedText() string {
 // of `height` rows showing `total` content lines scrolled to `yoff`.
 func scrollbarThumb(height, yoff, total int) (start, size int) {
 	if total <= height {
-		return 0, 0 // no overflow â†?no thumb
+		return 0, 0 // no overflow â†’ no thumb
 	}
 	size = height * height / total
 	if size < 1 {
@@ -193,9 +194,9 @@ func scrollbarCell(row, total, height, thumbStart, thumbSize int) string {
 		return " "
 	}
 	if row >= thumbStart && row < thumbStart+thumbSize {
-		return scrollThumbStyle.Render("â–?)
+		return scrollThumbStyle.Render("â–ˆ")
 	}
-	return scrollTrackStyle.Render("â”?)
+	return scrollTrackStyle.Render("â”‚")
 }
 
 // transcriptCaret maps a screen cell (x, y) in the transcript region to an

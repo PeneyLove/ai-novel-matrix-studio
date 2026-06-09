@@ -37,7 +37,7 @@ func rstAfter(t *testing.T, w http.ResponseWriter, prelude string) {
 // TestStreamReconnectsOnEarlyConnReset reproduces issue #3148: a local proxy
 // (v2rayN/sing-box) forcibly closes the idle SSE connection during a reasoner's
 // first-token gap, before any token is emitted. The drop must be replayed
-// transparently â€?the caller sees one clean stream, never an error.
+// transparently â€” the caller sees one clean stream, never an error.
 func TestStreamReconnectsOnEarlyConnReset(t *testing.T) {
 	var reqs int
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

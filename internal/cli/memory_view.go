@@ -10,7 +10,7 @@ import (
 
 func renderMemory(width int, set *memory.Set) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n", viewHeader("%s", strings.TrimRight(i18n.M.MemoryLoaded, ":ï¼?)))
+	fmt.Fprintf(&b, "%s\n", viewHeader("%s", strings.TrimRight(i18n.M.MemoryLoaded, ":ï¼š")))
 	if len(set.Docs) > 0 {
 		b.WriteString(viewSubhead("docs") + "\n")
 		for _, d := range set.Docs {
@@ -23,7 +23,7 @@ func renderMemory(width int, set *memory.Set) string {
 		if len(set.Docs) > 0 {
 			b.WriteByte('\n')
 		}
-		header := strings.TrimRight(strings.TrimSpace(i18n.M.MemorySavedHeader), ":ï¼?)
+		header := strings.TrimRight(strings.TrimSpace(i18n.M.MemorySavedHeader), ":ï¼š")
 		b.WriteString(viewSubhead(viewCompactText(header, viewBudget(width, 2))) + "\n")
 		for _, f := range facts {
 			label := f.Title

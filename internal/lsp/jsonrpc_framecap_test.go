@@ -7,7 +7,7 @@ import (
 )
 
 // TestReadFrameRejectsOversizeContentLength proves a corrupt or hostile
-// Content-Length is rejected before the body is allocated â€?a gigabyte length
+// Content-Length is rejected before the body is allocated â€” a gigabyte length
 // must not trigger a gigabyte make([]byte). The reader holds no body, so the only
 // way this returns without hanging or OOMing is the cap check.
 func TestReadFrameRejectsOversizeContentLength(t *testing.T) {

@@ -1,6 +1,6 @@
 // Package hook runs user-configured shell-command hooks around the agent loop:
 // PreToolUse / PostToolUse fire around each tool call, UserPromptSubmit before a
-// turn, Stop after it. Hooks come from settings.json â€?a project
+// turn, Stop after it. Hooks come from settings.json â€” a project
 // (.reasonix/settings.json, only when the project is trusted) and a global
 // (~/.reasonix/settings.json) file. A hook's exit
 // code is its verdict: 0 = pass, 2 = block (only on the gating events), other =
@@ -38,7 +38,7 @@ const (
 	// PostLLMCall fires after every model turn completes (streaming finishes) but
 	// before the reasoning_content is stored in the session. The hook receives the
 	// raw reasoning text in the payload; its stdout, if non-empty on exit 0,
-	// replaces the reasoning stored and displayed to the user. It can't block â€?a
+	// replaces the reasoning stored and displayed to the user. It can't block â€” a
 	// non-zero exit or empty stdout leaves the reasoning unchanged.
 	PostLLMCall Event = "PostLLMCall"
 	// SessionStart fires once when a session becomes active (fresh, resumed, or
@@ -53,7 +53,7 @@ const (
 	PreCompact   Event = "PreCompact"
 )
 
-// Events is every event, in a stable order â€?drives loading and `/hooks`.
+// Events is every event, in a stable order â€” drives loading and `/hooks`.
 var Events = []Event{
 	PreToolUse, PostToolUse, UserPromptSubmit, Stop,
 	PostLLMCall,
@@ -88,7 +88,7 @@ const (
 // HookConfig is one hook as written in settings.json.
 type HookConfig struct {
 	// Match is an anchored regex selecting tools (Pre/PostToolUse only); "" or
-	// "*" = every tool. Anchored: "file" won't match "read_file" â€?use ".*file".
+	// "*" = every tool. Anchored: "file" won't match "read_file" â€” use ".*file".
 	Match string `json:"match,omitempty"`
 	// Command is the shell command to run (spawned through the platform shell).
 	Command string `json:"command"`
@@ -146,7 +146,7 @@ type LoadOptions struct {
 
 // Load resolves hooks: project first (only when trusted), then global; within a
 // scope, settings.json array order. A malformed file yields no hooks (never an
-// error â€?a typo shouldn't take down the CLI).
+// error â€” a typo shouldn't take down the CLI).
 func Load(opts LoadOptions) []ResolvedHook {
 	var out []ResolvedHook
 	if opts.ProjectRoot != "" && opts.Trusted {
@@ -163,7 +163,7 @@ func Load(opts LoadOptions) []ResolvedHook {
 }
 
 // ProjectDefinesHooks reports whether a project's settings.json exists and
-// declares at least one hook â€?regardless of trust. Frontends use this to decide
+// declares at least one hook â€” regardless of trust. Frontends use this to decide
 // whether to prompt the user to trust the project.
 func ProjectDefinesHooks(projectRoot string) bool {
 	s := readSettings(ProjectSettingsPath(projectRoot))
@@ -187,7 +187,7 @@ func readSettings(path string) *Settings {
 	}
 	var s Settings
 	if err := json.Unmarshal(b, &s); err != nil {
-		return nil // malformed â†?treat as no hooks, don't crash
+		return nil // malformed â†’ treat as no hooks, don't crash
 	}
 	return &s
 }
@@ -246,7 +246,7 @@ const (
 	DecisionPass  Decision = "pass"
 	DecisionBlock Decision = "block"
 	DecisionWarn  Decision = "warn"
-	DecisionError Decision = "error" // spawn failed (ENOENT, EACCES, â€?
+	DecisionError Decision = "error" // spawn failed (ENOENT, EACCES, â€¦)
 )
 
 // Outcome records one hook invocation.

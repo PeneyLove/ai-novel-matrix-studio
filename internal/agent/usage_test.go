@@ -9,7 +9,7 @@ import (
 )
 
 // renderUsage drives a Usage event through a fresh TextSink (no renderer) and
-// returns what it wrote â€?the usage line, exercised through the event path.
+// returns what it wrote â€” the usage line, exercised through the event path.
 func renderUsage(u *provider.Usage, p *provider.Pricing, d ...*event.CacheDiagnostics) string {
 	var b strings.Builder
 	var diag *event.CacheDiagnostics
@@ -53,7 +53,7 @@ func TestUsageLineDerivesMissFromHit(t *testing.T) {
 		CompletionTokens: 378,
 		TotalTokens:      3918,
 		CacheHitTokens:   1133,
-		// CacheMissTokens deliberately 0 â€?provider only reported the hit
+		// CacheMissTokens deliberately 0 â€” provider only reported the hit
 	}
 	if out := renderUsage(u, nil); !strings.Contains(out, "1133 cached / 2407 new") {
 		t.Errorf("usage line = %q (want 1133 cached / 2407 new)", out)

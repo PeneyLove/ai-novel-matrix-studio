@@ -18,7 +18,7 @@ import (
 // renderer, when non-nil, replaces the streamed raw answer text with styled
 // markdown once the text stream completes (a Message event). termWidth is the
 // column count used to count how many rows the raw stream occupied before the
-// redraw moves the cursor back. A nil renderer keeps the raw stream â€?correct
+// redraw moves the cursor back. A nil renderer keeps the raw stream â€” correct
 // for piped output and for the chat TUI, which renders markdown itself.
 type TextSink struct {
 	out       io.Writer
@@ -58,7 +58,7 @@ func (s *TextSink) Emit(e event.Event) {
 
 	case event.Reasoning:
 		if !s.wroteReasoningHeader {
-			fmt.Fprintln(s.out, dimText("  â–?thinking"))
+			fmt.Fprintln(s.out, dimText("  â–Ž thinking"))
 			s.wroteReasoningHeader = true
 		}
 		if s.showReasoning && e.Text != "" {
@@ -79,7 +79,7 @@ func (s *TextSink) Emit(e event.Event) {
 		s.closeTextStream(e.Text, e.Reasoning)
 
 	case event.ToolDispatch:
-		// The early (Partial) dispatch carries no args â€?the full one prints the
+		// The early (Partial) dispatch carries no args â€” the full one prints the
 		// line. Without this the headless stream shows every call twice.
 		if e.Tool.Partial {
 			break
@@ -89,9 +89,9 @@ func (s *TextSink) Emit(e event.Event) {
 
 	case event.ToolResult:
 		// A successful result is silent (it only feeds the model); a blocked
-		// call surfaces the same "âŠ?name <reason>" line the agent used to print.
+		// call surfaces the same "âŠ˜ name <reason>" line the agent used to print.
 		if e.Tool.Err != "" {
-			fmt.Fprintf(s.out, "  âŠ?%s %s\n", e.Tool.Name, e.Tool.Err)
+			fmt.Fprintf(s.out, "  âŠ˜ %s %s\n", e.Tool.Name, e.Tool.Err)
 			s.wroteAnything = true
 		}
 
@@ -120,15 +120,15 @@ func (s *TextSink) Emit(e event.Event) {
 		s.wroteAnything = true
 
 	case event.CompactionStarted:
-		fmt.Fprintln(s.out, dimText("  â‹?compacting conversationâ€?))
+		fmt.Fprintln(s.out, dimText("  â‹¯ compacting conversationâ€¦"))
 		s.wroteAnything = true
 
 	case event.CompactionDone:
 		c := e.Compaction
 		if c.Summary == "" {
-			break // aborted pass â€?the caller's Notice already explained why
+			break // aborted pass â€” the caller's Notice already explained why
 		}
-		fmt.Fprintln(s.out, dimText(fmt.Sprintf("  â‹?compacted %d messages (%s)", c.Messages, c.Trigger)))
+		fmt.Fprintln(s.out, dimText(fmt.Sprintf("  â‹¯ compacted %d messages (%s)", c.Messages, c.Trigger)))
 		for _, ln := range strings.Split(strings.TrimRight(c.Summary, "\n"), "\n") {
 			fmt.Fprintln(s.out, dimText("    "+ln))
 		}
@@ -174,8 +174,8 @@ func (s *TextSink) usageLine(u *provider.Usage, p *provider.Pricing, d *event.Ca
 	}
 }
 
-// FormatUsageLine renders the per-turn token/cache summary â€?the key signal for
-// the cache-first design â€?as a single line (no trailing newline), or "" when
+// FormatUsageLine renders the per-turn token/cache summary â€” the key signal for
+// the cache-first design â€” as a single line (no trailing newline), or "" when
 // usage is unset or empty. Cache is reported as absolute "(N cached / M new)"
 // so a turn that adds a lot of fresh content doesn't read as "cache broke" the
 // way a falling percentage would; the cached prefix is still hitting, the

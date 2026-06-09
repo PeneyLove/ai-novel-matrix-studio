@@ -113,7 +113,7 @@ func (s *acpSession) abort() {
 // initialize advertises the agent's capability set: sessions can be resumed via
 // session/load (transcripts are keyed by session id under the session dir),
 // prompts carry inline resource text (embeddedContext) but not image/audio, and
-// MCP is stdio-only (no http/sse) â€?the latter three matching main.
+// MCP is stdio-only (no http/sse) â€” the latter three matching main.
 func (s *service) initialize(_ context.Context, _ json.RawMessage) (any, error) {
 	return InitializeResult{
 		ProtocolVersion: ProtocolVersion,
@@ -229,7 +229,7 @@ func (s *service) sessionLoad(ctx context.Context, raw json.RawMessage) (any, er
 	return SessionLoadResult{}, nil
 }
 
-// transcriptPath is where a session's transcript lives â€?keyed by id so
+// transcriptPath is where a session's transcript lives â€” keyed by id so
 // session/load can recover it. Distinct from the cli's timestamp-labelled
 // chat/run session files (those are addressed by a picker, not by id).
 func transcriptPath(dir, id string) string {

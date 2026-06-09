@@ -10,7 +10,7 @@ import (
 )
 
 // TestDiffTabExpansion proves tab-indented code (Go) renders with no literal tabs
-// and a bar that runs exactly to width â€?a tab has zero StringWidth but the
+// and a bar that runs exactly to width â€” a tab has zero StringWidth but the
 // terminal expands it, which would otherwise overflow the background bar.
 func TestDiffTabExpansion(t *testing.T) {
 	defer func(prev bool) { colorEnabled = prev }(colorEnabled)

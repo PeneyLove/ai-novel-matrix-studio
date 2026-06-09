@@ -42,9 +42,9 @@ func TestSelSpan(t *testing.T) {
 		wantLo, wHi int
 	}{
 		{0, false, 0, 0}, // above
-		{1, true, 3, cw}, // first line: anchor col â†?right edge
+		{1, true, 3, cw}, // first line: anchor col â†’ right edge
 		{2, true, 0, cw}, // middle line: full width
-		{3, true, 0, 5},  // last line: left edge â†?head col
+		{3, true, 0, 5},  // last line: left edge â†’ head col
 		{4, false, 0, 0}, // below
 	} {
 		lo, hi, ok := selSpan(tc.idx, start, end, cw)
@@ -87,7 +87,8 @@ func TestCopyToClipboardOSC52Fallback(t *testing.T) {
 	defer func(fn func(string) error) { clipboardWriteAll = fn }(clipboardWriteAll)
 	clipboardWriteAll = func(string) error { return errors.New("no display (tmux/ssh)") }
 
-	// On failure the command must return the *message* tea.SetClipboard yields â€?	// the runtime handles it by emitting OSC 52 (bubbletea tea.go: setClipboardMsg
+	// On failure the command must return the *message* tea.SetClipboard yields â€”
+	// the runtime handles it by emitting OSC 52 (bubbletea tea.go: setClipboardMsg
 	// -> ansi.SetSystemClipboard). Returning the command itself would be dropped.
 	got := copyToClipboard("copied text")()
 	want := tea.SetClipboard("copied text")()

@@ -7,10 +7,10 @@ import (
 
 // TestClampWidth guards the inline-overflow fix: scrollback lines wider than the
 // viewport get hard-broken (so the renderer's scroll estimate stays exact), while
-// lines within width â€?including space-padded table rows â€?are left untouched.
+// lines within width â€” including space-padded table rows â€” are left untouched.
 func TestClampWidth(t *testing.T) {
 	// Within width: byte-for-byte identical (runs of spaces must NOT collapse).
-	row := "â”?a    â”?bb â”?
+	row := "â”‚ a    â”‚ bb â”‚"
 	if got := clampWidth(row, 80); got != row {
 		t.Errorf("within-width line altered: %q -> %q", row, got)
 	}

@@ -1,6 +1,6 @@
 // Package testutil provides reusable test helpers for the agent package.
 // MockProvider replaces a real LLM backend in agent tests with scripted
-// responses, request recording, and error injection â€?so the harness
+// responses, request recording, and error injection â€” so the harness
 // loop, cache behaviour, and tool dispatch can be verified without
 // network calls.
 package testutil
@@ -60,7 +60,7 @@ func NewMock(name string, turns ...Turn) *MockProvider {
 func (p *MockProvider) Name() string { return p.name }
 
 // Stream replays the next scripted turn. It records the request, then
-// sends chunks in order (reasoning â†?text â†?tool calls â†?usage â†?done).
+// sends chunks in order (reasoning â†’ text â†’ tool calls â†’ usage â†’ done).
 // If the Turn has StreamError set it is returned immediately.
 func (p *MockProvider) Stream(ctx context.Context, req provider.Request) (<-chan provider.Chunk, error) {
 	if err := ctx.Err(); err != nil {

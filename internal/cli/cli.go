@@ -1,5 +1,6 @@
 // Package cli implements reasonix's command-line entry: subcommand routing, flag
-// parsing, assembly from config, and exit codes. The core is config-driven ‚Ä?// providers and tools are resolved from configuration, not hardcoded.
+// parsing, assembly from config, and exit codes. The core is config-driven ‚Äî
+// providers and tools are resolved from configuration, not hardcoded.
 package cli
 
 import (
@@ -71,7 +72,7 @@ func Run(args []string, version string) int {
 		configureCLIThemeFromConfigNoProbe()
 		return configCommand(rest)
 	case "init":
-		// Project memory (AGENTS.md) is model-generated in-session ‚Ä?`/init` runs
+		// Project memory (AGENTS.md) is model-generated in-session ‚Äî `/init` runs
 		// the codebase analysis. This CLI entry just points there (and to `setup`
 		// for config), so `reasonix init` isn't a dead end.
 		configureCLIThemeFromConfigNoProbe()
@@ -142,7 +143,7 @@ func configureCLIThemeFromConfigNoProbe() {
 // Coordinator) lives in internal/boot, shared with the desktop frontend.
 // requireKey forces the executor's API key to be present (used by run); chat
 // passes false so the session UI is reachable before a key is set. sink receives
-// the agent's typed event stream ‚Ä?runAgent passes a TextSink that renders to
+// the agent's typed event stream ‚Äî runAgent passes a TextSink that renders to
 // stdout, the TUI passes an event-channel sink so events become tea.Msgs.
 func setup(ctx context.Context, modelName string, maxStepsOverride int, requireKey bool, sink event.Sink) (*control.Controller, error) {
 	return boot.Build(ctx, boot.Options{
@@ -248,7 +249,7 @@ func runAgent(args []string) int {
 
 // runServe exposes the controller over HTTP+SSE: events stream to the browser,
 // commands arrive as JSON POSTs. The Broadcaster is the controller's event sink,
-// so the same typed stream the chat TUI consumes reaches web clients ‚Ä?the
+// so the same typed stream the chat TUI consumes reaches web clients ‚Äî the
 // transport-agnostic controller driven by a second frontend.
 func runServe(args []string) int {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
@@ -269,7 +270,7 @@ func runServe(args []string) int {
 	}
 	defer ctrl.Close()
 
-	// Auto-save target: reuse the resumed file, else a fresh one ‚Ä?same as chat.
+	// Auto-save target: reuse the resumed file, else a fresh one ‚Äî same as chat.
 	if *resume != "" {
 		loaded, err := agent.LoadSession(*resume)
 		if err != nil {
@@ -281,7 +282,7 @@ func runServe(args []string) int {
 		ctrl.SetSessionPath(agent.NewSessionPath(ctrl.SessionDir(), ctrl.Label()))
 	}
 
-	fmt.Printf("reasonix serve ‚Ä?%s on http://%s\n", ctrl.Label(), *addr)
+	fmt.Printf("reasonix serve ‚Äî %s on http://%s\n", ctrl.Label(), *addr)
 	// Use graceful shutdown so SIGINT/SIGTERM drain active connections.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
@@ -350,7 +351,7 @@ func chatREPL(args []string) int {
 	ctrl, err := setup(ctx, *model, *maxSteps, false, sink)
 	if err != nil && errors.Is(err, boot.ErrUnknownModel) && isInteractive() && config.SourcePath() == "" {
 		// True first run whose default model can't resolve: guide setup, then retry.
-		// With a config present, fall through to the descriptive error ‚Ä?re-running
+		// With a config present, fall through to the descriptive error ‚Äî re-running
 		// the wizard would overwrite the user's config (#2856).
 		fmt.Fprintln(os.Stderr, i18n.M.ReconfigureOnUnknownModel)
 		if rc := interactiveSetup(defaultConfigTarget(), defaultEnvTarget()); rc != 0 {
@@ -390,7 +391,7 @@ func chatREPL(args []string) int {
 		}
 	}
 
-	// Initial terminal width ‚Ä?the TUI re-flows on every WindowSizeMsg so
+	// Initial terminal width ‚Äî the TUI re-flows on every WindowSizeMsg so
 	// this is just a starting estimate before the first resize event lands.
 	termW := 80
 	if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
@@ -399,7 +400,7 @@ func chatREPL(args []string) int {
 
 	// Route "ask" decisions to the TUI: the controller emits an ApprovalRequest
 	// event and blocks until the user answers via ctrl.Approve. Sub-agents (the
-	// task tool) keep their headless gate from setup ‚Ä?no UI to prompt through.
+	// task tool) keep their headless gate from setup ‚Äî no UI to prompt through.
 	ctrl.EnableInteractiveApproval()
 	// YOLO: skip every approval prompt for the session (deny rules still apply).
 	if *yolo {
@@ -413,7 +414,8 @@ func chatREPL(args []string) int {
 	}
 
 	// /model support: a pure builder the TUI calls to rebuild on a different
-	// model (carrying the conversation). It must NOT touch the running model ‚Ä?	// runModelSubcommand performs the swap on the live copy. The same stable sink
+	// model (carrying the conversation). It must NOT touch the running model ‚Äî
+	// runModelSubcommand performs the swap on the live copy. The same stable sink
 	// feeds the new controller, so events keep flowing to this TUI.
 	m.buildController = func(ref string, carry []provider.Message, resumePath string) (*control.Controller, error) {
 		c, err := setupQuiet(ctx, ref, *maxSteps, false, sink)
@@ -447,13 +449,13 @@ func chatREPL(args []string) int {
 
 	// No alt-screen: finalized transcript lines are committed to the terminal's
 	// normal buffer (via tea.Println) so native scrollback, the wheel, and copy
-	// all work ‚Ä?the bubbletea-managed region is just the bottom input/status.
+	// all work ‚Äî the bubbletea-managed region is just the bottom input/status.
 	p := tea.NewProgram(m)
 	final, runErr := p.Run()
 	// Close the active controller plus any retired ones from /model switches.
 	// Retired controllers were stashed rather than closed at switch time
 	// because Controller.Close() runs SessionEnd hooks and kills plugin
-	// subprocesses ‚Ä?operations that corrupt bubbletea's terminal raw mode
+	// subprocesses ‚Äî operations that corrupt bubbletea's terminal raw mode
 	// when executed while the TUI is alive.
 	if fm, ok := final.(chatTUI); ok {
 		for _, oc := range fm.oldControllers {
@@ -516,7 +518,7 @@ func resolveSetupTargets(args []string) setupTargets {
 	return t
 }
 
-// displayPath shortens a home-relative path to ~/‚Ä?for readable wizard output.
+// displayPath shortens a home-relative path to ~/‚Ä¶ for readable wizard output.
 func displayPath(p string) string {
 	if home, err := os.UserHomeDir(); err == nil && home != "" && strings.HasPrefix(p, home) {
 		return "~" + p[len(home):]
@@ -526,8 +528,8 @@ func displayPath(p string) string {
 
 // setupConfig runs the configuration wizard (the `reasonix setup` command),
 // writing config.toml to the user-global dir (or ./reasonix.toml under --local)
-// and API keys to the reasonix-owned global .env ‚Ä?never a project's own .env.
-// Project memory is a separate concern ‚Ä?the in-session `/init` skill generates
+// and API keys to the reasonix-owned global .env ‚Äî never a project's own .env.
+// Project memory is a separate concern ‚Äî the in-session `/init` skill generates
 // AGENTS.md (see initHint).
 func setupConfig(args []string) int {
 	t := resolveSetupTargets(args)
@@ -613,7 +615,7 @@ func interactiveSetup(configPath, envPath string) int {
 	// in their language before any substantive prompt.
 	fmt.Println()
 	fmt.Print(boxed([]string{
-		accent("‚ó?) + " " + fmt.Sprintf(i18n.M.WelcomeTitleFmt, bold("reasonix")),
+		accent("‚óÜ") + " " + fmt.Sprintf(i18n.M.WelcomeTitleFmt, bold("reasonix")),
 		"",
 		dim(i18n.M.NoConfigYet),
 	}))
@@ -642,17 +644,17 @@ func interactiveSetup(configPath, envPath string) int {
 		fmt.Fprintln(os.Stderr, i18n.M.WriteConfigErr, err)
 		return 1
 	}
-	fmt.Printf("\n%s %s\n", green("‚ú?), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(configPath)))
+	fmt.Printf("\n%s %s\n", green("‚úì"), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(configPath)))
 
 	if len(envLines) > 0 {
 		if err := appendEnv(envPath, envLines); err != nil {
 			fmt.Fprintln(os.Stderr, i18n.M.WriteEnvErr, err)
 			return 1
 		}
-		fmt.Printf("%s %s\n", green("‚ú?), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(envPath)))
+		fmt.Printf("%s %s\n", green("‚úì"), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(envPath)))
 	}
 
-	fmt.Printf("\n%s %s\n", accent("‚ó?), i18n.M.SetupComplete)
+	fmt.Printf("\n%s %s\n", accent("‚óÜ"), i18n.M.SetupComplete)
 	return 0
 }
 
@@ -703,7 +705,7 @@ func pickSessionToResume() (string, int) {
 // label is bilingual because we don't yet know which catalogue to trust.
 func selectLanguage() (string, error) {
 	detected := i18n.DetectLanguage("")
-	items := []menuItem{{name: "English"}, {name: "‰∏≠Êñá (ÁÆÄ‰Ω?"}}
+	items := []menuItem{{name: "English"}, {name: "‰∏≠Êñá (ÁÆÄ‰Ωì)"}}
 	tags := []string{"en", "zh"}
 	if detected == "zh" {
 		items[0], items[1] = items[1], items[0]
@@ -717,11 +719,11 @@ func selectLanguage() (string, error) {
 }
 
 // selectEnabledProviders prompts a single multi-select of provider families
-// (DeepSeek / MiMo / custom / ‚Ä? and returns one ProviderEntry per chosen
+// (DeepSeek / MiMo / custom / ‚Ä¶) and returns one ProviderEntry per chosen
 // family, carrying the models the user picked. Built-in families try the
 // OpenAI-compatible GET /models endpoint first (so the user sees the real
 // list, not a stale hard-coded one) and fall back to the preset's static
-// model list when the call fails ‚Ä?offline first-run, missing key, or a
+// model list when the call fails ‚Äî offline first-run, missing key, or a
 // vendor that doesn't expose /models. All paths funnel through the same
 // fetchOrFallback / buildFamilyEntry helpers, so adding a new family only
 // requires a familyOf case.
@@ -774,7 +776,7 @@ func selectEnabledProviders(providers []config.ProviderEntry) ([]config.Provider
 		famName := famInfo[familyKey].name
 
 		// Seed the probe's static list with every member of the family (e.g. the
-		// flash and pro SKUs), not just the first ‚Ä?so a failed /models probe
+		// flash and pro SKUs), not just the first ‚Äî so a failed /models probe
 		// falls back to the whole family instead of collapsing to one model.
 		probe.Models = familyStaticModels(providers, famMembers[familyKey])
 
@@ -832,7 +834,7 @@ func familyStaticModels(providers []config.ProviderEntry, idxs []int) []string {
 // ensureProbeKey prompts once for the family's API key when it isn't already in
 // the environment, so the /models probe can run and return the live SKU list.
 // The value is set in the env for the probe; configureKeys persists it to .env
-// later and skips re-asking. A blank entry is fine ‚Ä?the static fallback covers it.
+// later and skips re-asking. A blank entry is fine ‚Äî the static fallback covers it.
 func ensureProbeKey(probe *config.ProviderEntry, famName string) {
 	if probe.APIKeyEnv == "" || os.Getenv(probe.APIKeyEnv) != "" {
 		return
@@ -846,8 +848,8 @@ func ensureProbeKey(probe *config.ProviderEntry, famName string) {
 
 // fetchOrFallback tries the OpenAI-compatible GET /models endpoint
 // (honoring the entry's ModelsURL when set) and returns the live model IDs.
-// On any failure ‚Ä?no base URL, no key set yet (the key is collected in a
-// later wizard step), network/auth error, or a vendor without /models ‚Ä?it
+// On any failure ‚Äî no base URL, no key set yet (the key is collected in a
+// later wizard step), network/auth error, or a vendor without /models ‚Äî it
 // silently returns the preset's static model list so the wizard can always
 // present something. The fetch has a 10s timeout and is best-effort.
 func fetchOrFallback(probe *config.ProviderEntry, famName string) []string {
@@ -870,12 +872,12 @@ func fetchOrFallback(probe *config.ProviderEntry, famName string) []string {
 
 // buildFamilyEntry returns a single ProviderEntry exposing the user's
 // selected models under one entry. It preserves the preset's API key env,
-// base URL, kind, context window, pricing, and effort ‚Ä?the things that
+// base URL, kind, context window, pricing, and effort ‚Äî the things that
 // vary per vendor but not per model. The Default pointer is reset to the
 // first selected model if it would otherwise reference a model the user
 // didn't pick (or was empty).
 // buildFamilyEntries splits the user's selection back across the family's preset
-// members so each model keeps its own entry ‚Ä?and therefore its own pricing,
+// members so each model keeps its own entry ‚Äî and therefore its own pricing,
 // context window, and balance URL. A family like DeepSeek ships flash and pro as
 // separate presets with different prices; collapsing them into one entry would
 // bill pro at flash's rate. Models the live /models list returned that match no
@@ -1032,7 +1034,7 @@ func promptCustomProviderManual() ([]config.ProviderEntry, error) {
 // Pre-filled values (baseURL, keyEnv, apiKey) are reused as-is when non-empty
 // so the URL-fetch flow can fall through to manual entry without re-asking
 // the user for information they've already typed. An empty apiKey is allowed
-// ‚Ä?the key step happens later in the wizard and .env is updated then.
+// ‚Äî the key step happens later in the wizard and .env is updated then.
 func promptCustomProviderManualWith(in *bufio.Scanner, baseURL, keyEnv, apiKey string) ([]config.ProviderEntry, error) {
 	fmt.Println()
 	if baseURL == "" {
@@ -1169,7 +1171,7 @@ func promptAnthropicProviderManualWith(in *bufio.Scanner, baseURL, keyEnv, apiKe
 
 // promptAnthropicProviderFromURL tries the OpenAI-compatible GET /models
 // endpoint (some Anthropic-compatible proxies do expose one). Most don't
-// ‚Ä?Anthropic's own API has no public model list ‚Ä?so on any failure the
+// ‚Äî Anthropic's own API has no public model list ‚Äî so on any failure the
 // flow falls through to manual entry with the URL/key already filled in,
 // rather than aborting the wizard.
 func promptAnthropicProviderFromURL() ([]config.ProviderEntry, error) {
@@ -1236,7 +1238,7 @@ func groupByFamily(providers []config.ProviderEntry) ([]string, map[string][]int
 }
 
 // withBuiltinFamilies guarantees the wizard always offers the built-in provider
-// families (DeepSeek, MiMo) even when the loaded config replaced them ‚Ä?a
+// families (DeepSeek, MiMo) even when the loaded config replaced them ‚Äî a
 // reasonix.toml that defines only [[providers]] for deepseek otherwise hides
 // MiMo from setup, since [[providers]] replaces the presets wholesale. Families
 // already present are left untouched (the user's customizations win); only the
@@ -1257,7 +1259,7 @@ func withBuiltinFamilies(providers []config.ProviderEntry) []config.ProviderEntr
 // promptMissingKeys re-runs the wizard's key-entry step for any enabled
 // provider whose api_key_env is unset. Newly entered values are appended to the
 // reasonix-owned global .env so the chat session that follows picks them up via
-// config.Load. The user can hit Enter to skip ‚Ä?the chat banner falls back to a
+// config.Load. The user can hit Enter to skip ‚Äî the chat banner falls back to a
 // one-line warning so they still see what's missing. Returns a non-zero exit
 // code only when writing the env file fails.
 func promptMissingKeys(cfg *config.Config) int {
@@ -1276,7 +1278,7 @@ func promptMissingKeys(cfg *config.Config) int {
 		fmt.Fprintln(os.Stderr, i18n.M.WriteEnvErr, err)
 		return 1
 	}
-	fmt.Printf("%s %s\n", green("‚ú?), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(envPath)))
+	fmt.Printf("%s %s\n", green("‚úì"), fmt.Sprintf(i18n.M.WroteFileFmt, displayPath(envPath)))
 	return 0
 }
 
@@ -1295,9 +1297,9 @@ func providersWithMissingKeys(cfg *config.Config) []config.ProviderEntry {
 
 // configureKeys reconciles each enabled provider's API key with the
 // environment. For every distinct api_key_env: if the variable is already
-// set ‚Ä?either by loadDotEnv from .env, or by an earlier wizard step that
+// set ‚Äî either by loadDotEnv from .env, or by an earlier wizard step that
 // called os.Setenv (the URL-fetch flow asks for the key once so it can call
-// /models) ‚Ä?the existing value is reused and a single-line confirmation is
+// /models) ‚Äî the existing value is reused and a single-line confirmation is
 // printed so the user can see why no prompt appeared. Otherwise the user is
 // asked once per env var (deduped across providers that share one, e.g.
 // both DeepSeek models). Returns KEY=value lines to append to .env: any
@@ -1322,7 +1324,7 @@ func configureKeys(selected []config.ProviderEntry, r io.Reader, w io.Writer) []
 		// before the /models probe; that value is the user's "real" key
 		// and we'd be wrong to discard it by asking again.
 		if cur := os.Getenv(p.APIKeyEnv); cur != "" {
-			fmt.Fprintf(w, "  %s %s\n", green("‚ú?), fmt.Sprintf(i18n.M.APIKeyAlreadySetFmt, p.APIKeyEnv))
+			fmt.Fprintf(w, "  %s %s\n", green("‚úì"), fmt.Sprintf(i18n.M.APIKeyAlreadySetFmt, p.APIKeyEnv))
 			envLines = append(envLines, p.APIKeyEnv+"="+cur)
 			continue
 		}
@@ -1351,7 +1353,7 @@ func ask(in *bufio.Scanner, w io.Writer, label, def string) string {
 }
 
 // isInteractive reports whether we're attached to a real terminal on both
-// stdin and stdout ‚Ä?required for prompting. Redirected or piped I/O is not
+// stdin and stdout ‚Äî required for prompting. Redirected or piped I/O is not
 // interactive, so wizards never block or auto-default in scripts and CI.
 func isInteractive() bool {
 	return isTTY(os.Stdin) && isTTY(os.Stdout)
@@ -1363,7 +1365,7 @@ func isTTY(f *os.File) bool {
 
 // appendEnv merges KEY=value lines into a .env file. Existing assignments of
 // any key that's about to be written are dropped first, then the new values
-// are appended ‚Ä?so re-running `reasonix setup` with a corrected key replaces the
+// are appended ‚Äî so re-running `reasonix setup` with a corrected key replaces the
 // stale one instead of stacking duplicates (loadDotEnv is first-wins, so a
 // naive append would leave the old key in effect). The new values are also
 // pinned into the current process env so a chat session started right after
@@ -1460,7 +1462,7 @@ func welcome(version string) int {
 
 	// A real config source exists (cwd-local or user-global) on a terminal: go into
 	// chat. If any enabled provider's key isn't set yet, re-run the wizard's key-entry
-	// step inline ‚Ä?first run already chose language and providers, so we don't
+	// step inline ‚Äî first run already chose language and providers, so we don't
 	// re-ask those. Skipping the prompts is still fine; the chat banner falls back
 	// to a one-line warning. Do not do this for the built-in defaults alone: that
 	// would ask for every default provider key even though the user has not opted
@@ -1474,7 +1476,7 @@ func welcome(version string) int {
 
 	var b strings.Builder
 	b.WriteString(boxed([]string{
-		accent("‚ó?) + " " + bold("reasonix") + "  " + dim(version),
+		accent("‚óÜ") + " " + bold("reasonix") + "  " + dim(version),
 		dim(i18n.M.Subtitle),
 	}))
 
@@ -1493,15 +1495,15 @@ func welcome(version string) int {
 		if i > 0 {
 			label = ""
 		}
-		dot, status := yellow("‚ó?), dim(i18n.M.NoKey)
+		dot, status := yellow("‚óè"), dim(i18n.M.NoKey)
 		if p.APIKey() != "" {
-			dot, status = green("‚ó?), green(i18n.M.Ready)
+			dot, status = green("‚óè"), green(i18n.M.Ready)
 			ready++
 		}
 		fmt.Fprintf(&b, "  %s %s %s%s\n", padRight(label, 8), dot, padRight(p.Name, 16), status)
 	}
 
-	fmt.Fprintf(&b, "\n  %s %s\n", accent("‚ñ?), bold(i18n.M.GetStarted))
+	fmt.Fprintf(&b, "\n  %s %s\n", accent("‚ñå"), bold(i18n.M.GetStarted))
 	n := 1
 	step := func(cmd, desc string) {
 		fmt.Fprintf(&b, "    %s  %s %s\n", accent(fmt.Sprint(n)), padRight(cmd, 16), dim(desc))

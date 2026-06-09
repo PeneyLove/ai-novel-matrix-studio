@@ -202,7 +202,7 @@ func FormatOutcome(o Outcome) string {
 	if o.Truncated {
 		trunc = " (output truncated)"
 	}
-	head := fmt.Sprintf("hook [%s] %s â€?%s%s", tag, cmd, o.Decision, trunc)
+	head := fmt.Sprintf("hook [%s] %s â€” %s%s", tag, cmd, o.Decision, trunc)
 	if detail != "" {
 		return head + ": " + detail
 	}
@@ -217,5 +217,5 @@ func clipRunes(s string, max int) string {
 	if max < 1 {
 		return ""
 	}
-	return string(r[:max]) + "â€?
+	return string(r[:max]) + "â€¦"
 }

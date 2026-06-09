@@ -55,7 +55,7 @@ func diffPath(args string) string {
 	return p.Path
 }
 
-// diffBlock renders a writer call as a header line ("âœ?name path  +A -B") plus
+// diffBlock renders a writer call as a header line ("âœŽ name path  +A -B") plus
 // the highlighted, folded diff body. Returns nil when there's no textual diff.
 func diffBlock(name, args string, d event.FileDiff, width, maxLines int) []string {
 	if d.Diff == "" {
@@ -70,14 +70,14 @@ func diffBlock(name, args string, d event.FileDiff, width, maxLines int) []strin
 }
 
 // diffBody renders the hunks with a line-number gutter, dropping the file and
-// "@@" headers (a dim "â‹? marks each hunk jump) and folding past maxLines to a
+// "@@" headers (a dim "â‹®" marks each hunk jump) and folding past maxLines to a
 // "+N more" footer. path selects the syntax lexer.
 func diffBody(d event.FileDiff, path string, width, maxLines int) []string {
 	if d.Diff == "" {
 		return nil
 	}
 	src := strings.Split(strings.TrimRight(d.Diff, "\n"), "\n")
-	// Drop the "--- a/â€?/ +++ b/â€? header pair positionally â€?matching the prefix
+	// Drop the "--- a/â€¦ / +++ b/â€¦" header pair positionally â€” matching the prefix
 	// on every line would eat real content (a deleted SQL "-- x" renders "--- x",
 	// an added "++ y" renders "+++ y").
 	if len(src) >= 2 && strings.HasPrefix(src[0], "--- ") && strings.HasPrefix(src[1], "+++ ") {
@@ -97,7 +97,7 @@ func diffBody(d event.FileDiff, path string, width, maxLines int) []string {
 				oldNo, newNo = atoi(m[1]), atoi(m[3])
 			}
 			if hunks > 0 {
-				rows = append(rows, "  "+dim("â‹?))
+				rows = append(rows, "  "+dim("â‹®"))
 			}
 			hunks++
 		case '+':
@@ -128,8 +128,8 @@ func diffBody(d event.FileDiff, path string, width, maxLines int) []string {
 }
 
 // diffBar draws one added/removed row on a full-width coloured background. The
-// bg is re-applied after every chroma reset â€?\033[0m would otherwise end the
-// bar mid-line â€?and padded to the bar width so it runs edge to edge.
+// bg is re-applied after every chroma reset â€” \033[0m would otherwise end the
+// bar mid-line â€” and padded to the bar width so it runs edge to edge.
 func diffBar(sign byte, code, path string, width int, bg, signFg string, lineNo, gw int) string {
 	gutter := dim(lpad(strconv.Itoa(lineNo), gw))
 	barW := width - 2 - gw - 1
@@ -209,7 +209,7 @@ func clampPlain(s string, w int) string {
 
 // expandTabs replaces tabs with spaces to the next tabWidth stop. A literal tab
 // has zero StringWidth but the terminal advances it to a tab stop, so leaving
-// tabs in a background-bar row overflows the bar â€?expand them so the measured
+// tabs in a background-bar row overflows the bar â€” expand them so the measured
 // width matches what's drawn.
 func expandTabs(s string) string {
 	if !strings.ContainsRune(s, '\t') {

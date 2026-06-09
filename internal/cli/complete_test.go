@@ -63,7 +63,7 @@ func TestSlashCompletionIncludesCustomCommands(t *testing.T) {
 func TestCompletionClosesOnSpaceAndNonMatch(t *testing.T) {
 	m := newTestChatTUI()
 
-	m.input.SetValue("/compact ") // space â†?typing args, not naming a command
+	m.input.SetValue("/compact ") // space â†’ typing args, not naming a command
 	m.updateCompletion()
 	if m.completion.active {
 		t.Error("menu should close once a space is typed (now entering args)")
@@ -105,7 +105,7 @@ func TestActiveAtToken(t *testing.T) {
 		{"@", "", true, 0},
 		{"look at @src/m", "src/m", true, 8},
 		{"@internal/agent/", "internal/agent/", true, 0},
-		{"a@b.com", "", false, 0},  // '@' not whitespace-preceded â†?not a ref
+		{"a@b.com", "", false, 0},  // '@' not whitespace-preceded â†’ not a ref
 		{"@foo bar", "", false, 0}, // cursor token after the space isn't an @ref
 		{"plain text", "", false, 0},
 	}
@@ -212,7 +212,7 @@ func TestFileItemsHiddenWhenDotTyped(t *testing.T) {
 	dir := t.TempDir()
 	writeAt(t, dir, ".hidden", "z")
 	m := newTestChatTUI()
-	items := m.fileItems(dir + "/.") // frag = "." â†?show hidden
+	items := m.fileItems(dir + "/.") // frag = "." â†’ show hidden
 	if !hasLabel(items, ".hidden") {
 		t.Errorf("hidden file should appear when frag starts with '.': %v", labels(items))
 	}

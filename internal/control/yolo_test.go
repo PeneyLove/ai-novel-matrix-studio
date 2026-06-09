@@ -16,10 +16,10 @@ import (
 // TestBypassSkipsAutoPlan drives the same complex request that
 // TestAutoPlanGateEndToEnd uses to enter plan mode, but with YOLO/bypass on. It
 // must NOT enter plan mode, NOT prefix the plan marker, NOT emit an approval, and
-// run a single execution turn �?proving bypass suppresses the auto-plan gate.
+// run a single execution turn — proving bypass suppresses the auto-plan gate.
 func TestBypassSkipsAutoPlan(t *testing.T) {
 	prov := &scriptedTurns{turns: [][]provider.Chunk{
-		textTurn("Done �?implemented directly."),
+		textTurn("Done — implemented directly."),
 	}}
 	ag := agent.New(prov, tool.NewRegistry(), agent.NewSession(""), agent.Options{}, event.Discard)
 
@@ -36,7 +36,7 @@ func TestBypassSkipsAutoPlan(t *testing.T) {
 	})
 	c.SetBypass(true)
 
-	input := "实现 issue #2395：新增配置项、自动判断复杂任务、补测试和文�?
+	input := "实现 issue #2395：新增配置项、自动判断复杂任务、补测试和文档"
 	if err := c.runTurnWithRaw(context.Background(), input, input); err != nil {
 		t.Fatalf("runTurnWithRaw: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestBypassSkipsAutoPlan(t *testing.T) {
 // TestRequestApprovalHonorsBypass guards the underlying gate: the plan-approval
 // path routes through requestApproval, which used to emit an ApprovalRequest and
 // block even in bypass. Under bypass it must return allow immediately without
-// emitting anything �?otherwise a YOLO session stalls on plan approval.
+// emitting anything — otherwise a YOLO session stalls on plan approval.
 func TestRequestApprovalHonorsBypass(t *testing.T) {
 	var approvalRequested bool
 	c := New(Options{

@@ -65,7 +65,7 @@ func (e *APIError) Error() string {
 
 // RetryableStatus reports whether a backoff can plausibly recover from status s:
 // 408 (request timeout), 429 (rate limit) and 5xx (incl. Anthropic's 529). Other
-// 4xx (400/401/402/422, â€? are caller/config problems retrying can't fix.
+// 4xx (400/401/402/422, â€¦) are caller/config problems retrying can't fix.
 func RetryableStatus(s int) bool {
 	return s == http.StatusRequestTimeout || s == http.StatusTooManyRequests || (s >= 500 && s <= 599)
 }
@@ -131,7 +131,7 @@ func parseRetryAfter(resp *http.Response) time.Duration {
 // transient network errors and retryable statuses with capped exponential
 // backoff + jitter, honoring Retry-After. 401/403 become *AuthError; other
 // non-OK statuses become *APIError. A RetryNotify in ctx fires before each
-// sleep. Retries cover only the header phase â€?once the body streams, mid-stream
+// sleep. Retries cover only the header phase â€” once the body streams, mid-stream
 // failures are not retried (the model has already emitted tokens).
 func SendWithRetry(ctx context.Context, httpClient *http.Client, provName, keyEnv string, newReq func(context.Context) (*http.Request, error)) (*http.Response, error) {
 	notify := retryNotifyFromContext(ctx)

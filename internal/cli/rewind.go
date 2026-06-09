@@ -118,7 +118,7 @@ func (m chatTUI) applyRewind() (tea.Model, tea.Cmd) {
 	act := rewindActions[r.scope]
 	m.rewind = nil
 	// The controller emits a notice for the outcome (success or failure) of each of
-	// these, so the picker doesn't add its own â€?it would double on the CLI.
+	// these, so the picker doesn't add its own â€” it would double on the CLI.
 	switch act.kind {
 	case "fork":
 		if _, err := m.ctrl.Fork(meta.Turn); err == nil {
@@ -138,7 +138,7 @@ func (m chatTUI) applyRewind() (tea.Model, tea.Cmd) {
 	// The controller emits a notice marking the rewind point; the committed
 	// transcript stays in terminal scrollback (v2 has no managed viewport), so for a
 	// conversation/both rewind we prefill the composer with that turn's prompt to
-	// re-send or edit â€?Claude Code's behavior â€?while the model's context is
+	// re-send or edit â€” Claude Code's behavior â€” while the model's context is
 	// truncated underneath.
 	if act.scope != control.RewindCode && strings.TrimSpace(meta.Prompt) != "" {
 		m.input.SetValue(meta.Prompt)
@@ -208,5 +208,5 @@ func oneLine(s string, n int) string {
 	if s == "" {
 		return i18n.M.RewindEmpty
 	}
-	return ansi.Truncate(s, n, "â€?)
+	return ansi.Truncate(s, n, "â€¦")
 }

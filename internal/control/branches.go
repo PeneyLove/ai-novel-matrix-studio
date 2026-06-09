@@ -67,7 +67,7 @@ func FormatBranchTree(branches []agent.BranchInfo, currentID string) string {
 		}
 		seen[b.ID] = true
 		joint := "├─"
-		childPrefix := prefix + "�? "
+		childPrefix := prefix + "│  "
 		if last {
 			joint = "└─"
 			childPrefix = prefix + "   "

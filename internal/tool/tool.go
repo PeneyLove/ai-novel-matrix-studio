@@ -34,7 +34,7 @@ type Tool interface {
 
 // Previewer is an optional capability a writer Tool may implement: given the
 // same raw JSON args Execute would receive, compute the file change the call
-// *would* make â€?without touching disk. A front-end uses it to show an approval
+// *would* make â€” without touching disk. A front-end uses it to show an approval
 // card or a changed-files panel before the call runs (the permission gate, not
 // Preview, decides whether it may proceed). Type-assert a Tool to Previewer to
 // discover support; the file-writing built-ins implement it, most tools do not.
@@ -110,7 +110,7 @@ func NewRegistry() *Registry {
 }
 
 // Add inserts (or replaces) a tool, preserving first-seen order. The schema is
-// canonicalized once here â€?it never changes after registration, so Schemas()
+// canonicalized once here â€” it never changes after registration, so Schemas()
 // (called every turn) reuses the result instead of re-marshaling.
 func (r *Registry) Add(t Tool) {
 	r.mu.Lock()
@@ -143,8 +143,8 @@ func SplitMCPName(name string) (server, tool string, ok bool) {
 	return parts[0], parts[1], true
 }
 
-// RemovePrefix unregisters every tool whose name starts with prefix â€?used to
-// drop an MCP server's "mcp__<server>__" namespace when it's disconnected â€?and
+// RemovePrefix unregisters every tool whose name starts with prefix â€” used to
+// drop an MCP server's "mcp__<server>__" namespace when it's disconnected â€” and
 // returns the count removed.
 func (r *Registry) RemovePrefix(prefix string) int {
 	r.mu.Lock()

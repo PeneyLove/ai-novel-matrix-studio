@@ -50,7 +50,7 @@ func TestSlashArgItems(t *testing.T) {
 	if has(items, "list") {
 		t.Errorf("/skills should hide redundant list subcommand; got %v", labelsOf(items))
 	}
-	// /skills show â†?skill names
+	// /skills show â†’ skill names
 	items, _ = SlashArgItems("/skills show ", data)
 	if !has(items, "explore") || !has(items, "review") {
 		t.Errorf("/skills show should list skill names; got %v", labelsOf(items))
@@ -77,7 +77,7 @@ func TestSlashArgItems(t *testing.T) {
 	if len(items) != 1 || items[0].Label != "remove" {
 		t.Errorf("/mcp re should filter to remove; got %v", labelsOf(items))
 	}
-	// /mcp remove â†?server names
+	// /mcp remove â†’ server names
 	items, _ = SlashArgItems("/mcp remove ", data)
 	if !has(items, "fs") || !has(items, "git") {
 		t.Errorf("/mcp remove should list servers; got %v", labelsOf(items))
@@ -96,7 +96,7 @@ func TestSlashArgItems(t *testing.T) {
 	if !has(items, "git") || !has(items, "linear") {
 		t.Errorf("/mcp tools should list known servers; got %v", labelsOf(items))
 	}
-	// /model â†?refs, current marked
+	// /model â†’ refs, current marked
 	items, _ = SlashArgItems("/model ", data)
 	if !has(items, "deepseek-pro/deepseek-v4-pro") {
 		t.Errorf("/model should list refs; got %v", labelsOf(items))
@@ -131,7 +131,7 @@ func TestSlashArgItems(t *testing.T) {
 		t.Errorf("/help should have no arg items; got %v", labelsOf(items))
 	}
 	// a fully-typed terminal subcommand offers nothing (no lingering no-op) so the
-	// caller can submit instead of "accepting" a no-op â€?the /skills list bug.
+	// caller can submit instead of "accepting" a no-op â€” the /skills list bug.
 	if items, _ := SlashArgItems("/skills list", data); len(items) != 0 {
 		t.Errorf("/skills list (token complete) should offer no suggestion; got %v", labelsOf(items))
 	}

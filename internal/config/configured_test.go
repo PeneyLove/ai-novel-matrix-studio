@@ -3,7 +3,7 @@ package config
 import "testing"
 
 // TestProviderConfigured verifies Configured tracks whether the api_key_env
-// resolves to a non-empty value â€?the same key check Validate enforces at build
+// resolves to a non-empty value â€” the same key check Validate enforces at build
 // time, so model pickers can filter on it.
 func TestProviderConfigured(t *testing.T) {
 	t.Setenv("REASONIX_TEST_KEY", "secret")

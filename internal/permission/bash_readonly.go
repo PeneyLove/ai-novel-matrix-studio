@@ -2,7 +2,7 @@ package permission
 
 import "strings"
 
-// readOnlyBashCommands is the set of commands considered read-only â€?they
+// readOnlyBashCommands is the set of commands considered read-only â€” they
 // don't modify filesystem state, network state, or process state. Each
 // entry is the first word of a bash command (lowercased). Commands not in
 // this set that might also be read-only (e.g. "git log") are handled
@@ -59,7 +59,7 @@ var readOnlyBashPrefixes = map[string]map[string]bool{
 
 // isReadOnlyBashSubject returns true when a bash command is a known
 // read-only operation. The subject is the JSON arg value extracted by
-// Subject() â€?for bash it is the raw command string.
+// Subject() â€” for bash it is the raw command string.
 func isReadOnlyBashSubject(subject string) bool {
 	cmd := strings.TrimSpace(subject)
 	if cmd == "" {
@@ -145,7 +145,7 @@ func hasAnyArg(args []string, unsafe ...string) bool {
 }
 
 // dangerousBashPatterns are glob-like patterns that match destructive
-// commands. Used only for a UI warning â€?the deny list is the actual
+// commands. Used only for a UI warning â€” the deny list is the actual
 // enforcement mechanism.
 var dangerousBashPatterns = []struct {
 	pattern string
@@ -170,7 +170,7 @@ var dangerousBashPatterns = []struct {
 
 // BashDangerWarning returns a short label if subject matches a known
 // dangerous pattern, or "" when the command looks safe. This is a visual
-// hint only â€?the Policy rules are the authority.
+// hint only â€” the Policy rules are the authority.
 func BashDangerWarning(subject string) string {
 	s := strings.TrimSpace(subject)
 	for _, d := range dangerousBashPatterns {

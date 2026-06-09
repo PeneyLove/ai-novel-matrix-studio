@@ -68,7 +68,7 @@ func TestBashPowerShellAllowsQuotedOperator(t *testing.T) {
 	if runtime.GOOS != "windows" {
 		t.Skip("runs a real powershell command")
 	}
-	// "&&" inside a string literal is data, not chaining �?must not be rejected.
+	// "&&" inside a string literal is data, not chaining — must not be rejected.
 	out, err := runPS(t, `Write-Output "a && b"`)
 	if err != nil {
 		t.Fatalf("quoted && should run: %v (out=%q)", err, out)
@@ -79,7 +79,7 @@ func TestBashPowerShellAllowsQuotedOperator(t *testing.T) {
 }
 
 func TestBashPwshAllowsChaining(t *testing.T) {
-	// pwsh (PowerShell 7+) parses && �?the guard must not block it.
+	// pwsh (PowerShell 7+) parses && — the guard must not block it.
 	b := bash{shell: sandbox.Shell{Kind: sandbox.ShellPowerShell, Path: "pwsh"}}
 	args, _ := json.Marshal(map[string]string{"command": "echo a && echo b"})
 	_, err := b.Execute(context.Background(), args)
@@ -97,7 +97,7 @@ func TestBashPowerShellOutputIsUTF8(t *testing.T) {
 		t.Fatalf("command failed: %v (out=%q)", err, out)
 	}
 	if !strings.Contains(out, "中文") {
-		t.Fatalf("non-ASCII output mojibake �?got %q (want it to contain 中文)", out)
+		t.Fatalf("non-ASCII output mojibake — got %q (want it to contain 中文)", out)
 	}
 }
 

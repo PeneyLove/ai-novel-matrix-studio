@@ -6,7 +6,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/i18n"
 )
 
-// showMemory reports what memory is loaded and where it lives â€?the TUI analog
+// showMemory reports what memory is loaded and where it lives â€” the TUI analog
 // of Claude Code's /memory. It surfaces the doc files and the auto-memory store
 // path so the user can open and edit them directly, since the in-terminal UI
 // doesn't shell out to an editor.

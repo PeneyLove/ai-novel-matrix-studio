@@ -88,7 +88,7 @@ func TestGrepExplicitHiddenRootSearched(t *testing.T) {
 }
 
 // repo scaffolds a fake git repo: a .git marker, a .gitignore, and files both
-// kept and ignored â€?enough for the native grep walk to exercise .gitignore.
+// kept and ignored â€” enough for the native grep walk to exercise .gitignore.
 func gitignoreRepo(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
@@ -120,7 +120,7 @@ func TestGrepSkipsGitignored(t *testing.T) {
 
 func TestGrepExplicitIgnoredRootStillSearched(t *testing.T) {
 	dir := gitignoreRepo(t)
-	// Pointing grep straight at a gitignored directory still searches it â€?the
+	// Pointing grep straight at a gitignored directory still searches it â€” the
 	// walk root is never pruned.
 	out := runTool(t, grepTool{}, map[string]any{"pattern": "NEEDLE", "path": filepath.Join(dir, "build")})
 	if !strings.Contains(out, "out.txt") {

@@ -19,7 +19,7 @@ type Runner interface {
 // DefaultPlannerPrompt steers the planner toward concise plans, not execution.
 const DefaultPlannerPrompt = `You are the planner in a two-model coding agent.
 Given a task, produce a concise, ordered plan for the executor model to carry out.
-Do not write full implementations or call tools â€?outline the steps, which files
+Do not write full implementations or call tools â€” outline the steps, which files
 to touch, and the key decisions. Keep it short and actionable.`
 
 // Coordinator runs two models in separate sessions to keep each one's prompt

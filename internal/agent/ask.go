@@ -10,8 +10,8 @@ import (
 )
 
 // AskTool lets the model put a structured multiple-choice question (or a few) to
-// the user mid-task and get the answer back â€?for genuine forks the model can't
-// resolve from the request or the code (which library, which approach, â€? rather
+// the user mid-task and get the answer back â€” for genuine forks the model can't
+// resolve from the request or the code (which library, which approach, â€¦) rather
 // than guessing or asking in prose. The frontend renders selectable options, the
 // user picks, and the choices come back as the tool result. It reaches the user
 // through the Asker carried on the call
@@ -24,7 +24,7 @@ func NewAskTool() *AskTool { return &AskTool{} }
 func (*AskTool) Name() string { return "ask" }
 
 func (*AskTool) Description() string {
-	return "Ask the user one or more multiple-choice questions when you hit a decision that is genuinely theirs to make â€?one you can't resolve from the request, the code, or sensible defaults. The frontend shows the options for the user to pick; their choices are returned to you. Prefer this over asking in prose for any real fork (which approach, which library, scope). Don't use it for decisions with an obvious default â€?pick the sensible option and proceed. Each question has a short `header` (a tab label), the `question` text, 2-4 `options` (each a `label` and optional `description`), and `multiSelect` when more than one may apply."
+	return "Ask the user one or more multiple-choice questions when you hit a decision that is genuinely theirs to make â€” one you can't resolve from the request, the code, or sensible defaults. The frontend shows the options for the user to pick; their choices are returned to you. Prefer this over asking in prose for any real fork (which approach, which library, scope). Don't use it for decisions with an obvious default â€” pick the sensible option and proceed. Each question has a short `header` (a tab label), the `question` text, 2-4 `options` (each a `label` and optional `description`), and `multiSelect` when more than one may apply."
 }
 
 func (*AskTool) Schema() json.RawMessage {

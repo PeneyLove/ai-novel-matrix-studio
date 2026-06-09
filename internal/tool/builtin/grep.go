@@ -36,7 +36,7 @@ func (grepTool) Name() string { return "grep" }
 
 func (g grepTool) Description() string {
 	if g.rg != "" {
-		return "Search for a regular expression in a file, or recursively under a directory â€?ripgrep-backed, so it honors .gitignore. Returns matching lines as path:line:text, capped at 200 matches."
+		return "Search for a regular expression in a file, or recursively under a directory â€” ripgrep-backed, so it honors .gitignore. Returns matching lines as path:line:text, capped at 200 matches."
 	}
 	return "Search for a regular expression in a file, or recursively under a directory (skips hidden files and files matched by .gitignore). Returns matching lines as path:line:text, capped at 200 matches."
 }
@@ -95,7 +95,7 @@ func (g grepTool) Execute(ctx context.Context, args json.RawMessage) (string, er
 			}
 		}
 
-		// Detect encoding from the peek alone â€?sufficient for the
+		// Detect encoding from the peek alone â€” sufficient for the
 		// UTF-8 vs GB18030 distinction (utf8.Valid on 8 KiB is reliable).
 		// Then stream the rest through a decoder so the 200-match cap can
 		// stop reading early instead of buffering the entire file.
@@ -125,7 +125,7 @@ func (g grepTool) Execute(ctx context.Context, args json.RawMessage) (string, er
 				}()
 				src = transform.NewReader(pr, dec)
 			} else {
-				// UTF-8 or LossyUTF8 â€?no transformation needed.
+				// UTF-8 or LossyUTF8 â€” no transformation needed.
 				src = io.MultiReader(bytes.NewReader(peek), f)
 			}
 		}
@@ -159,7 +159,7 @@ func (g grepTool) Execute(ctx context.Context, args json.RawMessage) (string, er
 		ig := newWalkIgnorer(p.Path)
 		_ = filepath.WalkDir(p.Path, func(path string, d os.DirEntry, err error) error {
 			if ctx.Err() != nil {
-				return ctx.Err() // abort promptly on cancel â€?a huge tree is interruptible
+				return ctx.Err() // abort promptly on cancel â€” a huge tree is interruptible
 			}
 			if err != nil {
 				return nil

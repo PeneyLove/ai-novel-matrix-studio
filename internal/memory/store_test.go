@@ -137,7 +137,8 @@ func TestStoreDelete(t *testing.T) {
 	}
 }
 
-// TestStoreDeleteMissingIsNoError treats deleting an absent memory as success â€?// the goal state (gone) already holds.
+// TestStoreDeleteMissingIsNoError treats deleting an absent memory as success â€”
+// the goal state (gone) already holds.
 func TestStoreDeleteMissingIsNoError(t *testing.T) {
 	s := Store{Dir: t.TempDir()}
 	if err := s.Delete("never-saved"); err != nil {

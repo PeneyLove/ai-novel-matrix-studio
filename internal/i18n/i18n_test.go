@@ -25,7 +25,7 @@ func TestCatalogsComplete(t *testing.T) {
 }
 
 // TestCatalogsAgreeOnPlaceholders catches translations that silently drop or
-// gain %s/%d/%q placeholders â€?a class of bug that only blows up when the
+// gain %s/%d/%q placeholders â€” a class of bug that only blows up when the
 // affected message is rendered. Compares the count per format verb across
 // languages for any field whose name ends in "Fmt".
 func TestCatalogsAgreeOnPlaceholders(t *testing.T) {
@@ -44,7 +44,7 @@ func TestCatalogsAgreeOnPlaceholders(t *testing.T) {
 	}
 }
 
-// countVerbs counts unescaped fmt placeholders (%s, %d, %q, %v, â€?. %% does
+// countVerbs counts unescaped fmt placeholders (%s, %d, %q, %v, â€¦). %% does
 // not count.
 func countVerbs(s string) int {
 	n := 0

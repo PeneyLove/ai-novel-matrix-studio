@@ -19,7 +19,7 @@ func TestReadFileStreamsLargeGB18030(t *testing.T) {
 	path := filepath.Join(dir, "big.gbk")
 	var sb strings.Builder
 	for i := 0; i < 20000; i++ {
-		sb.WriteString("第一行中�?line one 你好世界\n")
+		sb.WriteString("第一行中文 line one 你好世界\n")
 	}
 	sb.WriteString("终点标记 THE-END\n")
 	enc, err := simplifiedchinese.GB18030.NewEncoder().String(sb.String())
@@ -62,7 +62,7 @@ func TestReadFileLargeBoundedMemory(t *testing.T) {
 		t.Fatal(err)
 	}
 	if alloc := m1.TotalAlloc - m0.TotalAlloc; alloc > 4<<20 {
-		t.Fatalf("read allocated %d bytes for a 5-line read of an ~8MB file �?slurp regression", alloc)
+		t.Fatalf("read allocated %d bytes for a 5-line read of an ~8MB file — slurp regression", alloc)
 	}
 	if !strings.Contains(out, "1→a line") {
 		t.Fatalf("unexpected output: %q", out[:min(80, len(out))])

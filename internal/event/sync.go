@@ -7,7 +7,7 @@ import (
 )
 
 // Sync wraps a Sink so concurrent Emit calls are serialized. The base Sink
-// contract assumes serial emission â€?the agent's run loop emits one event at a
+// contract assumes serial emission â€” the agent's run loop emits one event at a
 // time. Background jobs (internal/jobs) emit from their own goroutines, which can
 // overlap a running turn's emission; wrapping the session sink once in Sync keeps
 // the serial-Emit invariant every sink relies on (an SSE writer, a webview

@@ -1,7 +1,7 @@
 // Package jobs is the session-scoped background-job registry behind the agent's
 // background tools (bash run_in_background, task run_in_background) and the
 // bash_output / kill_shell / wait tools. A Manager owns a context whose lifetime
-// is the session, NOT a single turn â€?so a job started in one turn keeps running
+// is the session, NOT a single turn â€” so a job started in one turn keeps running
 // across turns and is cancelled only when the controller closes (or kill_shell is
 // called). Tools reach the Manager through the call context (WithManager /
 // FromContext), the same injection pattern the `ask` tool uses for the asker.
@@ -141,7 +141,7 @@ func (m *Manager) Start(kind, label string, run func(ctx context.Context, out io
 		j.mu.Unlock()
 		// Record completion (queue the drain note + emit the closing Notice) BEFORE
 		// signalling done, so a Wait that unblocks on j.done sees the note already
-		// queued â€?otherwise DrainCompletedNote can race ahead of the bookkeeping.
+		// queued â€” otherwise DrainCompletedNote can race ahead of the bookkeeping.
 		m.recordCompletion(id, kind, label, st, err)
 		close(j.done)
 	}()
@@ -156,13 +156,13 @@ func (m *Manager) recordCompletion(id, kind, label string, st Status, err error)
 		tag = fmt.Sprintf("%s (%s)", id, label)
 	}
 	m.mu.Lock()
-	m.completed = append(m.completed, fmt.Sprintf("%s â€?%s", tag, st))
+	m.completed = append(m.completed, fmt.Sprintf("%s â€” %s", tag, st))
 	m.mu.Unlock()
 
 	level, text := event.LevelInfo, fmt.Sprintf("background %s finished: %s", kind, id)
 	switch st {
 	case Failed:
-		level, text = event.LevelWarn, fmt.Sprintf("background %s failed: %s â€?%v", kind, id, err)
+		level, text = event.LevelWarn, fmt.Sprintf("background %s failed: %s â€” %v", kind, id, err)
 	case Killed:
 		text = fmt.Sprintf("background %s killed: %s", kind, id)
 	}
@@ -187,7 +187,7 @@ func (m *Manager) Output(id string) (text string, status Status, ok bool) {
 	full := j.buf.String()
 	text = full[j.readOffset:]
 	j.readOffset = len(full)
-	// A task job streams nothing to the buffer â€?its answer lands in result. Once
+	// A task job streams nothing to the buffer â€” its answer lands in result. Once
 	// it is terminal with no buffered output, surface that result once so a task's
 	// answer is visible here too (bash_output's description promises task support).
 	if text == "" && j.status != Running && j.result != "" && !j.resultRead {

@@ -12,7 +12,7 @@ import (
 )
 
 // resumePicker is an in-chat overlay for "/resume" that lets the user pick a
-// saved session by navigating with â†?â†?and confirming with Enter. It mirrors
+// saved session by navigating with â†‘/â†“ and confirming with Enter. It mirrors
 // the rewindPicker pattern: keys route through handleResumePickerKey and it
 // renders via renderResumePicker while m.resumePick is set.
 type resumePicker struct {
@@ -118,5 +118,5 @@ func sessionPickerLabel(s agent.SessionInfo) string {
 	if preview == "" {
 		preview = "(no user message yet)"
 	}
-	return fmt.Sprintf("%d turns Â· %s", s.Turns, ansi.Truncate(preview, 60, "â€?))
+	return fmt.Sprintf("%d turns Â· %s", s.Turns, ansi.Truncate(preview, 60, "â€¦"))
 }

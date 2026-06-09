@@ -51,19 +51,19 @@ func TestCacheRateLabelKeepsTwoDecimals(t *testing.T) {
 func TestIngestSeparatesReasoningFromAnswer(t *testing.T) {
 	m := newTestChatTUI()
 
-	m.ingestEvent(event.Event{Kind: event.Reasoning, Text: "â€¦reasoningâ€?}) // thinking â†?marker + live text
+	m.ingestEvent(event.Event{Kind: event.Reasoning, Text: "â€¦reasoningâ€¦"}) // thinking â†’ marker + live text
 	if len(m.transcript) != 2 || !strings.Contains(m.transcript[0], "thinking") {
 		t.Fatalf("thinking marker should appear at once, transcript=%v", m.transcript)
 	}
-	if !strings.Contains(m.transcript[1], "â€¦reasoningâ€?) {
+	if !strings.Contains(m.transcript[1], "â€¦reasoningâ€¦") {
 		t.Fatalf("reasoning text should stream live below the marker, transcript=%v", m.transcript)
 	}
 
-	m.ingestEvent(event.Event{Kind: event.Text, Text: "Hello answer"}) // answer begins â†?block collapses
+	m.ingestEvent(event.Event{Kind: event.Text, Text: "Hello answer"}) // answer begins â†’ block collapses
 	if len(m.transcript) != 1 || !strings.Contains(m.transcript[0], "thought for") {
 		t.Fatalf("block should collapse to a duration summary, transcript=%v", m.transcript)
 	}
-	if strings.Contains(strings.Join(m.transcript, "\n"), "â€¦reasoningâ€?) {
+	if strings.Contains(strings.Join(m.transcript, "\n"), "â€¦reasoningâ€¦") {
 		t.Fatalf("collapsed reasoning text should be removed, transcript=%v", m.transcript)
 	}
 	if m.pending.String() != "Hello answer" {
@@ -154,7 +154,7 @@ func TestStreamAnswerFlushesCompletedParagraphs(t *testing.T) {
 }
 
 // TestFlushableMarkdownPrefixKeepsOpenFence proves a blank line inside an unclosed
-// fenced code block is not a flush boundary â€?the half-written block stays buffered
+// fenced code block is not a flush boundary â€” the half-written block stays buffered
 // so it never renders mangled, while prose before the fence does flush.
 func TestFlushableMarkdownPrefixKeepsOpenFence(t *testing.T) {
 	open := "intro line\n\n```go\nfunc f() {\n\n\t// still typing"
@@ -173,7 +173,7 @@ func TestFlushableMarkdownPrefixKeepsOpenFence(t *testing.T) {
 }
 
 // TestToolProgressStreamsThenCollapses proves a running tool's output streams
-// live under its card via the âŽ?connector, then collapses to a line-count
+// live under its card via the âŽ¿ connector, then collapses to a line-count
 // summary when the result lands.
 func TestToolProgressStreamsThenCollapses(t *testing.T) {
 	m := newTestChatTUI()
@@ -185,8 +185,8 @@ func TestToolProgressStreamsThenCollapses(t *testing.T) {
 	if !strings.Contains(joined, "ok pkg/a") || !strings.Contains(joined, "ok pkg/b") {
 		t.Fatalf("live output should be visible while running:\n%s", joined)
 	}
-	if !strings.Contains(joined, "âŽ?) {
-		t.Fatalf("live output should use the âŽ?connector:\n%s", joined)
+	if !strings.Contains(joined, "âŽ¿") {
+		t.Fatalf("live output should use the âŽ¿ connector:\n%s", joined)
 	}
 
 	m.ingestEvent(event.Event{Kind: event.ToolResult, Tool: event.Tool{ID: "b1", Name: "bash", Output: "ok pkg/a\nok pkg/b\n"}})
@@ -209,7 +209,7 @@ func TestToolWorkingLineThenClears(t *testing.T) {
 
 	m.tickToolRunning() // one elapsed tick fills the placeholder
 	joined := strings.Join(m.transcript, "\n")
-	if !strings.Contains(joined, "âŽ?) || !strings.Contains(joined, "working") {
+	if !strings.Contains(joined, "âŽ¿") || !strings.Contains(joined, "working") {
 		t.Fatalf("a running tool should show a 'working' progress line:\n%s", joined)
 	}
 
@@ -262,7 +262,7 @@ func TestToolProgressTailCap(t *testing.T) {
 }
 
 // TestReasoningViewBounded proves the live thinking view stays bounded under a
-// long stream â€?the fix for the O(nÂ²)/multi-GB re-render of the full thought.
+// long stream â€” the fix for the O(nÂ²)/multi-GB re-render of the full thought.
 func TestReasoningViewBounded(t *testing.T) {
 	m := newTestChatTUI()
 	for i := 0; i < 5000; i++ {

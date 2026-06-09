@@ -8,7 +8,7 @@ import (
 )
 
 // setShellKillTree makes a cancelled shell command kill its whole process group,
-// not just the shell leader â€?otherwise a timed-out pipeline (e.g.
+// not just the shell leader â€” otherwise a timed-out pipeline (e.g.
 // !find / -name foo | grep bar) orphans the children. The child gets its own
 // group (Setpgid) so the negative-pid signal reaches every descendant.
 func setShellKillTree(cmd *exec.Cmd) {

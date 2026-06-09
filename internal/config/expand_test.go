@@ -8,10 +8,10 @@ func TestExpandVars(t *testing.T) {
 
 	cases := []struct{ in, want string }{
 		{"Bearer ${REASONIX_TEST_TOKEN}", "Bearer sk-123"},
-		{"${REASONIX_TEST_MISSING}", ""},                                   // unset, no default â†?empty
-		{"${REASONIX_TEST_MISSING:-fallback}", "fallback"},                 // unset â†?default
-		{"${REASONIX_TEST_EMPTY:-fallback}", "fallback"},                   // set-but-empty â†?default
-		{"${REASONIX_TEST_TOKEN:-fallback}", "sk-123"},                     // set â†?value, default ignored
+		{"${REASONIX_TEST_MISSING}", ""},                                   // unset, no default â†’ empty
+		{"${REASONIX_TEST_MISSING:-fallback}", "fallback"},                 // unset â†’ default
+		{"${REASONIX_TEST_EMPTY:-fallback}", "fallback"},                   // set-but-empty â†’ default
+		{"${REASONIX_TEST_TOKEN:-fallback}", "sk-123"},                     // set â†’ value, default ignored
 		{"no vars here", "no vars here"},                                   // untouched
 		{"a${REASONIX_TEST_TOKEN}b${REASONIX_TEST_MISSING}c", "ask-123bc"}, // multiple refs
 	}

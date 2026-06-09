@@ -22,7 +22,7 @@ func tarGzWithSymlink(link, dest string) []byte {
 }
 
 // TestExtractRejectsEscapingSymlink proves a symlink pointing outside the
-// extraction dir is refused â€?otherwise a later entry written through it escapes
+// extraction dir is refused â€” otherwise a later entry written through it escapes
 // (tar-slip via symlink), letting a malicious third-party release plant files
 // outside the cache. Relative escapes resolve the same on every host.
 func TestExtractRejectsEscapingSymlink(t *testing.T) {

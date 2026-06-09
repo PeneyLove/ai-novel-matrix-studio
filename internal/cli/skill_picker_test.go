@@ -675,7 +675,7 @@ func TestClampSel(t *testing.T) {
 func TestSkillRowLabelHasSubagentTag(t *testing.T) {
 	s := skill.Skill{Name: "review", Description: "Review code", Scope: skill.ScopeProject, RunAs: skill.RunSubagent}
 	row := renderSkillRow(1, false, s, true, 80)
-	if !strings.Contains(row, "subagent") && !strings.Contains(row, "子代�?) {
+	if !strings.Contains(row, "subagent") && !strings.Contains(row, "子代理") {
 		t.Fatalf("subagent skill missing tag: %q", row)
 	}
 	if !strings.Contains(row, "review") {
@@ -686,7 +686,7 @@ func TestSkillRowLabelHasSubagentTag(t *testing.T) {
 func TestRenderSkillRowSelected(t *testing.T) {
 	s := skill.Skill{Name: "test", Description: "A test skill", Scope: skill.ScopeGlobal, RunAs: skill.RunInline}
 	row := renderSkillRow(5, true, s, true, 80)
-	if !strings.Contains(row, "�?) {
+	if !strings.Contains(row, "›") {
 		t.Fatalf("selected row missing arrow: %q", row)
 	}
 	// Selected row differs from unselected: has arrow, no dim prefix.
@@ -714,8 +714,8 @@ func TestRenderSkillRowLongNameTruncated(t *testing.T) {
 		Scope:       skill.ScopeBuiltin,
 	}
 	row := renderSkillRow(1, false, s, true, 80)
-	if !strings.Contains(row, "�?) {
-		t.Fatalf("long name not truncated with �? %q", row)
+	if !strings.Contains(row, "…") {
+		t.Fatalf("long name not truncated with …: %q", row)
 	}
 }
 

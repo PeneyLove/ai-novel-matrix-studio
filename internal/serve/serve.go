@@ -1,6 +1,6 @@
 // Package serve exposes a control.Controller over HTTP: the typed event stream
 // as Server-Sent Events, and the commands as small JSON POST endpoints. It is a
-// second frontend alongside the chat TUI â€?proof that the controller is
+// second frontend alongside the chat TUI â€” proof that the controller is
 // transport-agnostic, and the basis for a browser/desktop client. One server
 // drives one session; multiple browser tabs share it.
 package serve
@@ -57,7 +57,7 @@ func (s *Server) ctl() *control.Controller {
 }
 
 // initTitleProvider builds a lightweight flash-model provider used solely to
-// generate short session titles. Errors are silently swallowed â€?title
+// generate short session titles. Errors are silently swallowed â€” title
 // generation is best-effort, and the server works fine without it.
 func (s *Server) initTitleProvider() {
 	cfg, err := config.Load()
@@ -176,7 +176,7 @@ func applyEffortEdit(edit *config.Config, entry *config.ProviderEntry, effort st
 
 // Handler returns the HTTP routes: GET / (a minimal browser client), GET /events
 // (SSE), GET /history, GET /context, and POST command endpoints.
-// CORS is NOT applied by default â€?same-origin policy protects the unauthenticated
+// CORS is NOT applied by default â€” same-origin policy protects the unauthenticated
 // agent endpoints. Call HandlerWithCORS to opt in for local development.
 func (s *Server) Handler() http.Handler {
 	return s.handler()
@@ -184,7 +184,7 @@ func (s *Server) Handler() http.Handler {
 
 // HandlerWithCORS returns the same routes as Handler but adds permissive CORS
 // headers so a dev frontend on a different origin (e.g. Vite on :5173) can
-// reach the server. Do NOT use in production â€?the server has no auth.
+// reach the server. Do NOT use in production â€” the server has no auth.
 func (s *Server) HandlerWithCORS(origin string) http.Handler {
 	return corsMiddleware(s.handler(), origin)
 }
@@ -219,7 +219,7 @@ func (s *Server) handler() http.Handler {
 // csrfGuard rejects state-changing requests that don't carry a JSON content type.
 // The command endpoints have no auth and bind to localhost, so a page the user
 // visits could otherwise drive them with a simple cross-origin POST (text/plain,
-// no preflight) â€?submitting prompts or auto-approving tool calls. Requiring
+// no preflight) â€” submitting prompts or auto-approving tool calls. Requiring
 // application/json forces a CORS preflight the unauthenticated server never
 // answers, blocking cross-site requests; the same-origin frontend (which always
 // sends JSON) is unaffected.
@@ -282,7 +282,7 @@ func (s *Server) index(w http.ResponseWriter, _ *http.Request) {
 
 // sseKeepaliveInterval is how often the /events handler emits a `: ping`
 // SSE comment. Most reverse proxies (nginx, ALB, Cloudflare) close idle
-// upstream connections after 30â€?0 s; a long quiet turn (the agent
+// upstream connections after 30â€“60 s; a long quiet turn (the agent
 // thinking, the model generating a single long response) easily hits
 // that window. The comment is one byte on the wire and is dropped by
 // the EventSource client, so it's a no-op for the consumer while it
@@ -334,7 +334,7 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 }
 
 // submit runs raw user input as a turn (slash commands and @-references
-// resolved by the controller). Returns 202 â€?output arrives on the event stream.
+// resolved by the controller). Returns 202 â€” output arrives on the event stream.
 func (s *Server) submit(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Input string `json:"input"`
@@ -345,7 +345,7 @@ func (s *Server) submit(w http.ResponseWriter, r *http.Request) {
 	}
 	trimmed := strings.TrimSpace(body.Input)
 	// Intercept /model <ref> for runtime model switching (the controller's
-	// Submit path only lists models â€?switching is frontend-specific).
+	// Submit path only lists models â€” switching is frontend-specific).
 	if strings.HasPrefix(trimmed, "/model ") {
 		ref := strings.TrimSpace(strings.TrimPrefix(trimmed, "/model"))
 		if ref != "" {
@@ -410,7 +410,7 @@ func (s *Server) compact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	// Persist the compacted session to disk â€?ctrl.Compact() only mutates in-memory.
+	// Persist the compacted session to disk â€” ctrl.Compact() only mutates in-memory.
 	if err := s.ctl().Snapshot(); err != nil {
 		slog.Warn("serve: snapshot after compact", "err", err)
 	}
@@ -477,7 +477,7 @@ func writeJSONCached(w http.ResponseWriter, r *http.Request, v any) {
 }
 
 // corsMiddleware adds CORS headers for a specific allowed origin. Only use for
-// local development â€?the server has no auth, so broad CORS would let any site
+// local development â€” the server has no auth, so broad CORS would let any site
 // drive the agent. origin is the exact origin to allow (e.g.
 // "http://localhost:5173"); empty origin skips CORS entirely.
 func corsMiddleware(next http.Handler, origin string) http.Handler {
@@ -721,7 +721,7 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 const titlePrompt = `Generate a very short title (3-5 words max) for this conversation based on the user's first message. Reply with ONLY the title, no quotes, no punctuation at the end.`
 
 // generateTitle calls a lightweight LLM to produce a short session title.
-// Returns empty string on any error â€?callers should fall back to a preview.
+// Returns empty string on any error â€” callers should fall back to a preview.
 func (s *Server) generateTitle(ctx context.Context, firstMsg string) string {
 	if nilutil.IsNil(s.titleProv) || strings.TrimSpace(firstMsg) == "" {
 		return ""

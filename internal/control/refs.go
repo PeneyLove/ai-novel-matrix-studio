@@ -143,7 +143,7 @@ func resolveBareNames(refs []ref) []ref {
 }
 
 // FileRefLine reports whether a submitted line is nothing but a path to an
-// existing file â€?a dragged or pasted file lands as its bare path, which on
+// existing file â€” a dragged or pasted file lands as its bare path, which on
 // POSIX starts with '/' and would otherwise be misread as a slash command. The
 // returned string is that path turned into an @reference so it attaches.
 func FileRefLine(line string) (string, bool) {
@@ -170,14 +170,14 @@ func (c *Controller) ResolveRefs(ctx context.Context, line string) (block string
 		case refResource:
 			text, err := c.host.ReadResource(ctx, r.server, r.uri)
 			if err != nil {
-				errs = append(errs, "@"+r.raw+" â€?"+err.Error())
+				errs = append(errs, "@"+r.raw+" â€” "+err.Error())
 				continue
 			}
 			appendRefBlock(&b, "resource", `ref="@`+r.raw+`"`, text)
 		case refFile:
 			text, isDir, err := readFileRef(r.path)
 			if err != nil {
-				errs = append(errs, "@"+r.raw+" â€?"+err.Error())
+				errs = append(errs, "@"+r.raw+" â€” "+err.Error())
 				continue
 			}
 			tag := "file"
@@ -245,7 +245,7 @@ func readFileRef(path string) (content string, isDir bool, err error) {
 			return nil
 		})
 		if n >= maxDirEntries {
-			b.WriteString("\nâ€¦[truncated; directory has more entries]â€?)
+			b.WriteString("\nâ€¦[truncated; directory has more entries]â€¦")
 		}
 		if err != nil {
 			return "", true, err
@@ -267,13 +267,13 @@ func readFileRef(path string) (content string, isDir bool, err error) {
 	data := buf[:n]
 
 	if mime := imageMime(data, path); mime != "" {
-		return fmt.Sprintf("[image file %s, mime=%s, %d bytes â€?image bytes are not inlined. Use an available MCP image/OCR/vision tool with this path when visual understanding is needed.]", path, mime, info.Size()), false, nil
+		return fmt.Sprintf("[image file %s, mime=%s, %d bytes â€” image bytes are not inlined. Use an available MCP image/OCR/vision tool with this path when visual understanding is needed.]", path, mime, info.Size()), false, nil
 	}
 	if bytes.IndexByte(data[:min(n, 8192)], 0) >= 0 {
-		return fmt.Sprintf("[binary file %s, %d bytes â€?not shown]", path, info.Size()), false, nil
+		return fmt.Sprintf("[binary file %s, %d bytes â€” not shown]", path, info.Size()), false, nil
 	}
 	if n > maxFileRefBytes {
-		return string(data[:maxFileRefBytes]) + fmt.Sprintf("\nâ€¦[truncated; file is %d bytes]â€?, info.Size()), false, nil
+		return string(data[:maxFileRefBytes]) + fmt.Sprintf("\nâ€¦[truncated; file is %d bytes]â€¦", info.Size()), false, nil
 	}
 	return string(data), false, nil
 }

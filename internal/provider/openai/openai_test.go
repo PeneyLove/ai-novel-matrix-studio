@@ -128,13 +128,13 @@ func TestStreamAuthError(t *testing.T) {
 // TestBuildRequestAlwaysSerializesContent guards the DeepSeek 400 regression:
 // an assistant turn that is pure tool_calls (no preamble text) has empty
 // content, and DeepSeek rejects a message missing the `content` field. Every
-// message â€?including that one â€?must serialize a content field.
+// message â€” including that one â€” must serialize a content field.
 func TestBuildRequestAlwaysSerializesContent(t *testing.T) {
 	c := &client{model: "deepseek-v4"}
 	req := c.buildRequest(provider.Request{
 		Messages: []provider.Message{
 			{Role: provider.RoleUser, Content: "list the files"},
-			// Assistant turn with no text, only a tool call â€?the offending shape.
+			// Assistant turn with no text, only a tool call â€” the offending shape.
 			{Role: provider.RoleAssistant, ToolCalls: []provider.ToolCall{
 				{ID: "call_1", Name: "ls", Arguments: `{"path":"."}`},
 			}},
@@ -215,7 +215,7 @@ func TestStreamRepairsDanglingToolCalls(t *testing.T) {
 	}
 
 	// An assistant tool_calls turn whose tool result never landed (an interrupted
-	// turn), followed by a fresh user message â€?the exact shape that 400s.
+	// turn), followed by a fresh user message â€” the exact shape that 400s.
 	ch, err := p.Stream(context.Background(), provider.Request{
 		Messages: []provider.Message{
 			{Role: provider.RoleUser, Content: "list the files"},
@@ -307,7 +307,7 @@ func TestBuildRequestDropsReasoningContent(t *testing.T) {
 	if strings.Contains(string(b), "SECRET-CHAIN-OF-THOUGHT") {
 		t.Errorf("the assistant chain-of-thought leaked into the request: %s", b)
 	}
-	// The visible answer must survive â€?we only drop reasoning, not content.
+	// The visible answer must survive â€” we only drop reasoning, not content.
 	if !strings.Contains(string(b), "the answer") {
 		t.Errorf("assistant content was dropped along with reasoning: %s", b)
 	}
@@ -432,7 +432,7 @@ func TestBuildRequestPreservesEmptyIDToolResults(t *testing.T) {
 		t.Fatalf("want 2 tool results in request, got %d: %v", len(toolContents), toolContents)
 	}
 	if toolContents[0] == toolContents[1] {
-		t.Errorf("tool results collapsed to %q â€?a result was dropped from the model's context", toolContents[0])
+		t.Errorf("tool results collapsed to %q â€” a result was dropped from the model's context", toolContents[0])
 	}
 }
 

@@ -113,7 +113,7 @@ func TestSlashToolEmptyRegistry(t *testing.T) {
 }
 
 func TestSlashToolNameClashCommandWins(t *testing.T) {
-	// Skills added first, command second â€?command should win the name.
+	// Skills added first, command second â€” command should win the name.
 	tl := NewSlashCommandTool([]SlashEntry{
 		{Name: "dup", Render: func([]string) string { return "FROM-SKILL" }},
 		{Name: "dup", Render: func([]string) string { return "FROM-COMMAND" }},

@@ -89,7 +89,7 @@ func TestSaveLoadLargeMessage(t *testing.T) {
 }
 
 // TestListSessionsOrdersByMTime makes sure the picker shows the most
-// recently used conversation first â€?that's what users reach for when they
+// recently used conversation first â€” that's what users reach for when they
 // hit `reasonix chat --continue`.
 func TestListSessionsOrdersByMTime(t *testing.T) {
 	dir := t.TempDir()

@@ -30,7 +30,7 @@ func recentSessions(dir string) []agent.SessionInfo {
 
 // runResumeCommand handles "/resume": with no argument it lists the most recent
 // saved sessions (newest first, active one marked); "/resume <n>" loads that
-// session into the running controller in place â€?keeping the current model and
+// session into the running controller in place â€” keeping the current model and
 // replaying the transcript into scrollback.
 func (m *chatTUI) runResumeCommand(input string) {
 	sessions := recentSessions(m.ctrl.SessionDir())
@@ -79,7 +79,7 @@ func (m *chatTUI) showSessions(sessions []agent.SessionInfo) {
 	for i, s := range sessions {
 		marker := "  "
 		if s.Path == active {
-			marker = accent("â€?")
+			marker = accent("â€º ")
 		}
 		fmt.Fprintf(&b, "%s%d  %s  %s\n", marker, i+1,
 			s.ModTime.Local().Format("01-02 15:04"), dim(sessionSummary(s)))

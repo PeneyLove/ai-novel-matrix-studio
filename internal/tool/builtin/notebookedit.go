@@ -38,7 +38,7 @@ func (notebookEdit) Description() string {
 		"source; \"insert\" adds a new cell after cell_number (use -1 to prepend at the " +
 		"top), taking cell_type and new_source; \"delete\" removes the cell. cell_type is " +
 		"\"code\" or \"markdown\" (required for insert). Editing a code cell clears its " +
-		"outputs. Prefer this over edit_file for notebooks â€?it keeps the JSON valid."
+		"outputs. Prefer this over edit_file for notebooks â€” it keeps the JSON valid."
 }
 
 func (notebookEdit) Schema() json.RawMessage {
@@ -66,7 +66,7 @@ type notebookArgs struct {
 }
 
 // notebook is the minimal .ipynb shape we touch. Unknown top-level keys
-// (metadata, nbformat, â€? and unknown per-cell keys are preserved verbatim via
+// (metadata, nbformat, â€¦) and unknown per-cell keys are preserved verbatim via
 // json.RawMessage round-tripping.
 type notebook struct {
 	rest  map[string]json.RawMessage
@@ -108,7 +108,7 @@ func (n notebookEdit) Execute(ctx context.Context, raw json.RawMessage) (string,
 
 // Preview implements tool.Previewer so a checkpoint can snapshot the notebook's
 // before/after for rewind. It mirrors Execute's transformation exactly but never
-// writes â€?same arg parsing and targeting rules, so the previewed change equals
+// writes â€” same arg parsing and targeting rules, so the previewed change equals
 // what Execute would persist.
 func (n notebookEdit) Preview(raw json.RawMessage) (diff.Change, error) {
 	a, err := parseNotebookArgs(raw)
@@ -187,7 +187,7 @@ func applyNotebookEdit(nb *notebook, a notebookArgs) (int, string, error) {
 			return 0, "", fmt.Errorf("cell_number %d out of range for insert (notebook has %d cells; use -1 to prepend)", after, len(nb.cells))
 		}
 		cell := newCell(a.CellType, a.NewSource)
-		at := after + 1 // insert after `after`; -1 â†?prepend at 0
+		at := after + 1 // insert after `after`; -1 â†’ prepend at 0
 		nb.cells = append(nb.cells[:at], append([]map[string]json.RawMessage{cell}, nb.cells[at:]...)...)
 		return at, "inserted " + a.CellType + " cell", nil
 	}
@@ -244,7 +244,7 @@ func parseNotebook(data []byte) (*notebook, error) {
 	}
 	rawCells, ok := top["cells"]
 	if !ok {
-		return nil, fmt.Errorf("no \"cells\" array â€?not a notebook")
+		return nil, fmt.Errorf("no \"cells\" array â€” not a notebook")
 	}
 	var cells []map[string]json.RawMessage
 	if err := json.Unmarshal(rawCells, &cells); err != nil {

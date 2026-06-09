@@ -102,7 +102,7 @@ func InstallWithClient(ctx context.Context, client *http.Client, log func(string
 		return "", fmt.Errorf("codegraph: no cache directory available")
 	}
 	asset := assetName()
-	logf(log, "codegraph: downloading %s (%s, one-time)â€?, asset, Version)
+	logf(log, "codegraph: downloading %s (%s, one-time)â€¦", asset, Version)
 
 	base := fmt.Sprintf("https://github.com/%s/releases/download/%s", cgRepo, Version)
 	sums, err := httpGet(ctx, client, base+"/SHA256SUMS")
@@ -152,7 +152,7 @@ func InstallWithClient(ctx context.Context, client *http.Client, log func(string
 		if p, ok := cached(); ok {
 			return p, nil // a concurrent winner landed during our retries
 		}
-		return "", fmt.Errorf("codegraph: install to %s failed: %w â€?the cache directory may be read-only or locked by antivirus; set REASONIX_CACHE_DIR to a writable location to relocate it", dir, err)
+		return "", fmt.Errorf("codegraph: install to %s failed: %w â€” the cache directory may be read-only or locked by antivirus; set REASONIX_CACHE_DIR to a writable location to relocate it", dir, err)
 	}
 	p, ok := cached()
 	if !ok {
@@ -208,7 +208,7 @@ func sha256For(sums, name string) (string, error) {
 }
 
 // safeJoin joins dir and a (possibly hostile) archive entry name, rejecting any
-// path that would escape dir â€?the zip-slip / tar-slip guard.
+// path that would escape dir â€” the zip-slip / tar-slip guard.
 func safeJoin(dir, name string) (string, error) {
 	p := filepath.Join(dir, name)
 	if p != dir && !strings.HasPrefix(p, dir+string(os.PathSeparator)) {
@@ -220,7 +220,7 @@ func safeJoin(dir, name string) (string, error) {
 // safeSymlink rejects a symlink whose destination escapes dir. linkPath is the
 // symlink's own (already safeJoin'd) location; linkname is its raw target. Without
 // this a symlink to ../../etc lets a later archive entry written "through" it land
-// outside dir â€?the tar-slip-via-symlink the path check alone misses.
+// outside dir â€” the tar-slip-via-symlink the path check alone misses.
 func safeSymlink(dir, linkPath, linkname string) error {
 	dest := linkname
 	if !filepath.IsAbs(dest) {

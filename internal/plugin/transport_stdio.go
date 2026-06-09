@@ -21,7 +21,7 @@ import (
 const closeWaitBudget = 5 * time.Second
 
 // stdioTransport speaks newline-delimited JSON-RPC 2.0 over a subprocess's
-// stdin/stdout â€?the MCP stdio convention (one JSON message per line, no
+// stdin/stdout â€” the MCP stdio convention (one JSON message per line, no
 // embedded newlines). A dedicated reader goroutine owns stdout and demuxes each
 // response to the waiting call by id, so a call can abandon a blocking read the
 // moment its context is cancelled (the subprocess is bound to the session, not
@@ -321,7 +321,7 @@ func (t *stdioTransport) readLoop() {
 		}
 		var resp rpcResponse
 		if err := json.Unmarshal(line, &resp); err != nil {
-			continue // unparseable line with no id â€?can't route it, skip
+			continue // unparseable line with no id â€” can't route it, skip
 		}
 		t.mu.Lock()
 		ch := t.pending[resp.ID]

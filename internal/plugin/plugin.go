@@ -3,7 +3,7 @@
 // tools and built-ins uniformly. The wire protocol is JSON-RPC 2.0 in every
 // case; only the transport differs (stdio subprocess, Streamable HTTP, or the
 // legacy HTTP+SSE). A transport interface hides that difference so the MCP-level
-// logic â€?handshake, tools/list, tools/call â€?is written once.
+// logic â€” handshake, tools/list, tools/call â€” is written once.
 package plugin
 
 import (
@@ -40,7 +40,7 @@ type Spec struct {
 	// Dir, when set, is the working directory of a stdio subprocess. Empty means
 	// inherit reasonix's cwd (the default for user-configured plugins). It exists
 	// for cwd-aware servers like CodeGraph, which detect the project from the
-	// directory they are launched in â€?they must be pinned to the project root.
+	// directory they are launched in â€” they must be pinned to the project root.
 	Dir string
 	// Stderr optionally mirrors plugin subprocess stderr output. Stderr is always
 	// captured in a bounded buffer for failure diagnostics; nil keeps it out of
@@ -55,7 +55,7 @@ type Spec struct {
 // transport carries JSON-RPC messages to and from one MCP server. call sends a
 // request and returns its result (correlating by id internally); notify sends a
 // fire-and-forget notification; close releases resources. Server-initiated
-// messages (notifications, requests like roots/list) are ignored â€?Reasonix is a
+// messages (notifications, requests like roots/list) are ignored â€” Reasonix is a
 // tools/prompts/resources consumer, not a sampling/roots provider (see SPEC Â§9).
 type transport interface {
 	call(ctx context.Context, method string, params any) (json.RawMessage, error)
@@ -107,7 +107,7 @@ func (h *Host) ServerNames() []string {
 }
 
 // ReadResource reads a resource uri from the named server. It is how the chat
-// UI resolves an @server:uri reference â€?the uri need not be one listed by
+// UI resolves an @server:uri reference â€” the uri need not be one listed by
 // resources/list (servers may expose templated uris), so we read it directly.
 func (h *Host) ReadResource(ctx context.Context, server, uri string) (string, error) {
 	h.mu.RLock()
@@ -148,7 +148,7 @@ type StartPolicy struct {
 
 // defaultStartConcurrency caps parallel handshakes for the batch-start wrappers.
 // Eight is the standard "process storm" guardrail (Bazel's --jobs=auto, most LSP
-// managers) â€?large enough to mask single-plugin latency, small enough to spare
+// managers) â€” large enough to mask single-plugin latency, small enough to spare
 // a workstation with 20+ configured MCP servers from fork-bombing itself.
 const defaultStartConcurrency = 8
 
@@ -207,7 +207,7 @@ func Start(ctx context.Context, specs []Spec, p StartPolicy) (*Host, []tool.Tool
 	}
 
 	// A buffered channel acts as a counting semaphore. Capacity 0/negative
-	// means no cap â€?we still launch one goroutine per spec, but they all run
+	// means no cap â€” we still launch one goroutine per spec, but they all run
 	// immediately. Capped, the extra goroutines block on the semaphore until a
 	// slot frees up; collection order is still by idx so /mcp status is stable.
 	concurrency := p.Concurrency
@@ -280,7 +280,7 @@ func Start(ctx context.Context, specs []Spec, p StartPolicy) (*Host, []tool.Tool
 			}()
 
 			// Prompts and resources are deferred to StartPhaseB so the boot path
-			// can return as soon as tools are ready â€?the slow-to-list surfaces
+			// can return as soon as tools are ready â€” the slow-to-list surfaces
 			// stream in later and fan out an MCPSurfaceReady event each.
 			ch <- result{idx: idx, spec: spec, client: c, tools: ts}
 		}(i, s)
@@ -334,7 +334,7 @@ func (h *Host) Close() {
 // returns, on a session-scoped ctx, so the agent becomes responsive as soon as
 // tools are ready and the slower list calls stream in afterwards. Each finished
 // surface fires an MCPSurfaceReady event on sink so UIs (e.g. /mcp status) can
-// refresh without polling. A nil sink is tolerated â€?the merge still happens.
+// refresh without polling. A nil sink is tolerated â€” the merge still happens.
 // Errors are logged and swallowed: prompts/resources are non-essential and must
 // not break the session over one slow server.
 func (h *Host) StartPhaseB(ctx context.Context, sink event.Sink) {
@@ -407,8 +407,8 @@ func (h *Host) fetchResources(ctx context.Context, c *Client, sink event.Sink) {
 }
 
 // Client is one MCP server connection: a name plus the transport carrying its
-// JSON-RPC. The MCP-level methods (initialize, listTools, â€? are transport-
-// agnostic â€?they go through t.
+// JSON-RPC. The MCP-level methods (initialize, listTools, â€¦) are transport-
+// agnostic â€” they go through t.
 type Client struct {
 	name string
 	t    transport
@@ -524,7 +524,8 @@ func (h *Host) ClearFailure(name string) {
 	h.clearFailure(name)
 }
 
-// clearFailure drops the failure record for name. The caller holds h.mu (Lock) â€?// it runs inside addConnected / Remove, which already mutate under the lock.
+// clearFailure drops the failure record for name. The caller holds h.mu (Lock) â€”
+// it runs inside addConnected / Remove, which already mutate under the lock.
 func (h *Host) clearFailure(name string) {
 	kept := h.failures[:0]
 	for _, f := range h.failures {
@@ -535,8 +536,8 @@ func (h *Host) clearFailure(name string) {
 	h.failures = kept
 }
 
-// NewHost returns an empty Host. Boot always constructs one â€?even with no
-// plugins configured â€?so servers can be hot-added later via Add (the `/mcp add`
+// NewHost returns an empty Host. Boot always constructs one â€” even with no
+// plugins configured â€” so servers can be hot-added later via Add (the `/mcp add`
 // command), which keeps the controller's host pointer stable for the session.
 func NewHost() *Host { return &Host{} }
 
@@ -555,8 +556,8 @@ func (h *Host) has(name string) bool {
 // Add connects one server live: it performs the MCP handshake, discovers the
 // server's tools (and prompts/resources when advertised), appends it to the
 // host, and returns its namespaced tools for the caller to register. ctx bounds a
-// stdio child's lifetime, so pass the session-scoped context â€?not a per-turn one
-// â€?or the subprocess dies when that turn ends. Errors if the name is taken.
+// stdio child's lifetime, so pass the session-scoped context â€” not a per-turn one
+// â€” or the subprocess dies when that turn ends. Errors if the name is taken.
 func (h *Host) Add(ctx context.Context, s Spec) ([]tool.Tool, error) {
 	if h.has(s.Name) {
 		return nil, fmt.Errorf("server %q is already connected", s.Name)
@@ -582,7 +583,7 @@ func (h *Host) addConnected(ctx context.Context, s Spec) ([]tool.Tool, error) {
 	// Prompts and resources stream in on the long ctx the caller passed (Host.Add
 	// uses the session-scoped PluginCtx, not a per-turn ctx), so the slow list
 	// calls cannot starve a /mcp add of its return value. nil sink keeps hot-add
-	// quiet â€?the chat UI re-queries Host.Prompts()/Resources() on demand.
+	// quiet â€” the chat UI re-queries Host.Prompts()/Resources() on demand.
 	if c.hasPrompts {
 		go h.fetchPrompts(ctx, c, nil)
 	}
@@ -668,10 +669,10 @@ func newTransport(ctx context.Context, s Spec) (transport, error) {
 		return newHTTPTransport(s)
 	case "sse":
 		// The legacy 2024-11-05 HTTP+SSE transport needs a persistent GET stream
-		// with a background dispatcher â€?deprecated upstream ("avoid for new
+		// with a background dispatcher â€” deprecated upstream ("avoid for new
 		// work"). Use type="http" (Streamable HTTP), which most remote servers
 		// now speak. Tracked for later (SPEC Â§9).
-		return nil, fmt.Errorf("plugin %q: legacy sse transport not yet supported â€?use type=\"http\" (Streamable HTTP)", s.Name)
+		return nil, fmt.Errorf("plugin %q: legacy sse transport not yet supported â€” use type=\"http\" (Streamable HTTP)", s.Name)
 	default:
 		return nil, fmt.Errorf("unknown transport type %q (want stdio|http|sse)", s.Type)
 	}
@@ -717,7 +718,7 @@ type mcpTool struct {
 	// Annotations carries MCP's optional tool hints. We read readOnlyHint: a
 	// plugin that declares a tool read-only opts it into Reasonix's parallel-dispatch
 	// path and the permission layer's "readers default to allow". Absent
-	// annotations stay false â€?opaque by default, never trusted implicitly.
+	// annotations stay false â€” opaque by default, never trusted implicitly.
 	Annotations *struct {
 		ReadOnlyHint bool `json:"readOnlyHint"`
 	} `json:"annotations"`

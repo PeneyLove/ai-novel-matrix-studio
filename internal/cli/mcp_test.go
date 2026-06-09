@@ -114,7 +114,7 @@ func TestRenderMCPStatusGroupsAndCompactsResources(t *testing.T) {
 		"/mcp__docs__summarize",
 		"resources",
 		"@docs:file:///",
-		"â€?,
+		"â€¦",
 		"Resource manual [text/markdown]",
 	} {
 		if !strings.Contains(got, want) {

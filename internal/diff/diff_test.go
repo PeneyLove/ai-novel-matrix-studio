@@ -142,10 +142,10 @@ func TestApplyOpsReconstruct(t *testing.T) {
 			}
 		}
 		if strings.Join(gotOld, "\n") != strings.Join(oldLines, "\n") {
-			t.Errorf("old reconstruction mismatch for %qâ†?q", tc[0], tc[1])
+			t.Errorf("old reconstruction mismatch for %qâ†’%q", tc[0], tc[1])
 		}
 		if strings.Join(gotNew, "\n") != strings.Join(newLines, "\n") {
-			t.Errorf("new reconstruction mismatch for %qâ†?q", tc[0], tc[1])
+			t.Errorf("new reconstruction mismatch for %qâ†’%q", tc[0], tc[1])
 		}
 	}
 }

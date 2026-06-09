@@ -10,7 +10,7 @@ import (
 // Broadcaster is the event.Sink the controller emits to in server mode. It
 // marshals each event once and fans it out to every connected SSE subscriber.
 // A slow subscriber's buffer is allowed to drop rather than back-pressure the
-// agent goroutine â€?a browser that can't keep up loses intermediate frames, not
+// agent goroutine â€” a browser that can't keep up loses intermediate frames, not
 // the whole session (it can refetch /history).
 type Broadcaster struct {
 	mu   sync.Mutex
@@ -24,7 +24,7 @@ func NewBroadcaster() *Broadcaster {
 
 // Emit marshals the event to JSON and delivers it to every subscriber. Drops to
 // a subscriber whose buffer is full rather than blocking. A marshal failure is
-// dropped silently â€?one bad event shouldn't stall the stream.
+// dropped silently â€” one bad event shouldn't stall the stream.
 func (b *Broadcaster) Emit(e event.Event) {
 	data, err := json.Marshal(toWire(e))
 	if err != nil {

@@ -20,7 +20,7 @@ func echoRegistry() *tool.Registry {
 
 // TestRunMultiToolRoundEmptyIDsSurvivePairing drives the real loop through a turn
 // that fans out two tool calls carrying no id (a gateway that streams by index),
-// then asserts both results still pair back after SanitizeToolPairing â€?the repair
+// then asserts both results still pair back after SanitizeToolPairing â€” the repair
 // that runs on every send. Keying on tool_call_id alone collapsed them into one,
 // dropping a result from the model's context on the very next turn.
 func TestRunMultiToolRoundEmptyIDsSurvivePairing(t *testing.T) {
@@ -47,7 +47,7 @@ func TestRunMultiToolRoundEmptyIDsSurvivePairing(t *testing.T) {
 		t.Fatalf("want 2 tool results after pairing, got %d: %v", len(results), results)
 	}
 	if results[0] == results[1] {
-		t.Fatalf("both results collapsed to %q â€?one was lost from the model's context", results[0])
+		t.Fatalf("both results collapsed to %q â€” one was lost from the model's context", results[0])
 	}
 	if !strings.Contains(results[0], "alpha") || !strings.Contains(results[1], "beta") {
 		t.Errorf("results lost their identity: %v", results)

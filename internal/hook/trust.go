@@ -10,7 +10,7 @@ import (
 // arbitrary shell commands, so cloning a repo must not silently execute its
 // hooks: project hooks load only after the user explicitly trusts that project
 // root. The trust flag lives in user-global state (~/.reasonix/trust.json),
-// NOT in the project file itself â€?an attacker controls the latter. Global
+// NOT in the project file itself â€” an attacker controls the latter. Global
 // hooks (~/.reasonix/settings.json) are the user's own and always run.
 
 // TrustFilename is the user-global trust store under ~/.reasonix.
@@ -60,7 +60,7 @@ func readTrust(homeDir string) trustFile {
 	if err != nil {
 		return tf
 	}
-	_ = json.Unmarshal(b, &tf) // malformed â†?empty (untrusted), don't crash
+	_ = json.Unmarshal(b, &tf) // malformed â†’ empty (untrusted), don't crash
 	return tf
 }
 
