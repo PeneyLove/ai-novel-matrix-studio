@@ -25,7 +25,7 @@
 
 ## 是什么
 
-**AI Novel Agent** = [Reasonix](https://github.com/esengine/reasonix) 编程 Agent 底座 + 网文创作专用 Skill 系统 + 本地 RAG 参考知识库。
+**AI Novel Agent** =  编程 Agent 底座 + 网文创作专用 Skill 系统 + 本地 RAG 参考知识库。
 
 一个 Go 编译的单一二进制文件，不依赖外部数据库、不绑定特定平台、不需要 Docker。所有数据存储在你本地的 `.txt`/`.md` 文件中。
 
@@ -104,9 +104,9 @@ novel-agent
 ├─────────────────────────────────────┤
 │           Agent 底座                │  ← agent 循环 / TUI / provider / tools
 │  ├─ Bubble Tea TUI                  │     (reasonix 同款终端 UI)
-│  ├─ config-driven (reasonix.toml)   │     提供者/工具/技能全部配置化
+│  ├─ config-driven (novel-agent.toml)   │     提供者/工具/技能全部配置化
 │  ├─ 20+ 内置工具                    │     write_file / read_file / bash / grep / glob / ask ...
-│  └─ Skill 系统                      │     .reasonix/skills/novel/*.md
+│  └─ Skill 系统                      │     .novel-agent/skills/novel/*.md
 ├─────────────────────────────────────┤
 │  Novel 专用                         │
 │  ├─ 56 个网文 Skill (Markdown)     │     6 类型 × 9 子技能 + init + continue
@@ -121,10 +121,10 @@ novel-agent
 
 ### 56 个 Skill（6 类型 × 9 子技能 + 2）
 
-Skills 定义在 `.reasonix/skills/novel/` 下，使用 Reasonix 标准的 Markdown + frontmatter 格式。
+Skills 定义在 `.novel-agent/skills/novel/` 下，使用标准的 Markdown + frontmatter 格式。
 
 ```
-.reasonix/skills/novel/
+.novel-agent/skills/novel/
 ├── init.md                  # 初始化小说项目结构
 ├── continue.md              # 续写下一章（自动读取进度/大纲/伏笔）
 ├── xuanhuan/                # 玄幻修仙
@@ -288,7 +288,7 @@ Tab 补全支持 `/rag` 的所有子命令（`init`/`remote`/`enable`/`disable`/
 
 ## 配置参考
 
-配置文件 `reasonix.toml`（项目根目录），完整语法参见 [reasonix.example.toml](./reasonix.example.toml)。
+配置文件 `novel-agent.toml`（项目根目录），完整语法参见 [novel-agent.example.toml](./novel-agent.example.toml)。
 
 ```toml
 default_model = "deepseek-flash"
@@ -327,7 +327,7 @@ top_k       = 5
 ### 项目结构
 
 ```
-cmd/novel-agent/main.go          # 入口：调用 cli.Run() (Reasonix 底座)
+cmd/novel-agent/main.go          # 入口：调用 cli.Run() (Agent 底座)
 internal/
   cli/                            # TUI 聊天界面 (Bubble Tea)
   agent/                          # Agent 循环 (reasoning / compaction / tool dispatch)
@@ -340,7 +340,7 @@ internal/
   permission/                     # 权限门控
   sandbox/                        # 沙箱约束
   ... (40 个模块)
-.reasonix/
+.nocel-agent/
   skills/novel/                   # 56 个网文 Skill (Markdown)
   commands/                       # 自定义斜杠命令模板
 npm/                              # npm 发布脚本
@@ -361,7 +361,7 @@ go test ./...
 
 ### 添加新 Skill
 
-在 `.reasonix/skills/novel/<genre>/` 下新建 `.md` 文件：
+在 `.novel-agent/skills/novel/<genre>/` 下新建 `.md` 文件：
 
 ```markdown
 ---
@@ -382,7 +382,7 @@ runAs: inline
 
 | 分支 | 版本 | 基底 | 状态 |
 |------|------|------|------|
-| **v1.x** (当前) | 2.0.0-alpha | Reasonix harness | 活跃开发 |
+| **v1.x** (当前) | 2.0.0-alpha | Novel-agent harness | 活跃开发 |
 | [v0.x](https://gitee.com/penney-101/ai-novel-matrix-studio/tree/v0.x/) | 0.9.0 | 自研 Go 引擎 | 冻结 — 仅修 bug |
 
 ---

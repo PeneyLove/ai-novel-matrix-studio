@@ -1,5 +1,5 @@
 // Package config loads Reasonix's runtime configuration from TOML. Resolution order:
-// flag > project ./reasonix.toml > user ~/.config/reasonix/config.toml > built-in defaults.
+// flag > project ./novel-agent.toml > user ~/.config/novel-agent/config.toml > built-in defaults.
 // Secrets come from the environment via api_key_env and are never stored in
 // config files.
 package config
@@ -547,7 +547,7 @@ type PermissionsConfig struct {
 // static Headers. String fields support ${VAR} / ${VAR:-default} expansion so
 // secrets (bearer tokens, keys) come from the environment, not the file. The
 // fields mirror Claude Code's mcpServers spec, so entries can come from either
-// reasonix.toml's [[plugins]] or a project-root .mcp.json (see loadMCPJSON).
+// novel-agent.toml's [[plugins]] or a project-root .mcp.json (see loadMCPJSON).
 type PluginEntry struct {
 	Name    string            `toml:"name"`
 	Type    string            `toml:"type"` // "stdio" (default) | "http" | "sse"
@@ -684,16 +684,16 @@ func Load() (*Config, error) {
 // LoadForRoot builds the configuration with project files resolved from root
 // instead of the current working directory. When root is "" or ".", it behaves
 // like Load(). This is the workspace-aware entry point: desktop tabs use it so
-// each project's reasonix.toml + .env + .mcp.json are resolved independently
+// each project's novel-agent.toml + .env + .mcp.json are resolved independently
 // without changing the process cwd.
 func LoadForRoot(root string) (*Config, error) {
 	root = resolveRoot(root)
 	loadDotEnvForRoot(root)
 	cfg := Default()
 
-	projectTOML := "reasonix.toml"
+	projectTOML := "novel-agent.toml"
 	if root != "." {
-		projectTOML = filepath.Join(root, "reasonix.toml")
+		projectTOML = filepath.Join(root, "novel-agent.toml")
 	}
 
 	var tomlSources []string
@@ -712,7 +712,7 @@ func LoadForRoot(root string) (*Config, error) {
 	}
 	// toml.DecodeFile replaces [[plugins]] wholesale, so cfg.Plugins now holds
 	// only the last file's. Re-merge by name across all sources (later wins) so a
-	// project reasonix.toml doesn't drop the global config's MCP servers.
+	// project novel-agent.toml doesn't drop the global config's MCP servers.
 	plugins, err := mergeTOMLPlugins(tomlSources)
 	if err != nil {
 		return nil, err
@@ -721,7 +721,7 @@ func LoadForRoot(root string) (*Config, error) {
 
 	// Claude Code's .mcp.json (project root) is read last and merged into
 	// [[plugins]], so a server configured for Claude works here unchanged.
-	// reasonix.toml wins on a name collision (see mergeMCPJSON).
+	// novel-agent.toml wins on a name collision (see mergeMCPJSON).
 	mcpFile := mcpJSONFile
 	if root != "." {
 		mcpFile = filepath.Join(root, mcpJSONFile)
@@ -859,7 +859,7 @@ func userConfigPath() string {
 	return filepath.Join(dir, "reasonix", "config.toml")
 }
 
-// UserConfigPath is the user-global config file (~/.config/reasonix/config.toml),
+// UserConfigPath is the user-global config file (~/.config/novel-agent/config.toml),
 // or "" when the user config dir can't be resolved.
 func UserConfigPath() string { return userConfigPath() }
 
@@ -980,9 +980,9 @@ func SourcePath() string {
 // root, or "" if none. Equivalent to SourcePath() when root is ".".
 func SourcePathForRoot(root string) string {
 	root = resolveRoot(root)
-	projectTOML := "reasonix.toml"
+	projectTOML := "novel-agent.toml"
 	if root != "." {
-		projectTOML = filepath.Join(root, "reasonix.toml")
+		projectTOML = filepath.Join(root, "novel-agent.toml")
 	}
 	if _, err := os.Stat(projectTOML); err == nil {
 		return projectTOML

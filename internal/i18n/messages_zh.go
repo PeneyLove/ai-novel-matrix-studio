@@ -16,7 +16,7 @@ var Chinese = Messages{
 	NoKey:           "未设置 key",
 	Ready:           "已就绪",
 	GetStarted:      "开始使用",
-	StepScaffold:    "生成 reasonix.toml（novel-agent 配置）",
+	StepScaffold:    "生成 novel-agent.toml（novel-agent 配置）",
 	StepSetKey:      "设置 API key",
 
 	InitHint:       "进入小说创作：运行 `novel-agent`，然后 `/novel-init` 初始化项目结构 —— Agent 会为你创建章节目录、大纲模板等。",
@@ -68,7 +68,7 @@ var Chinese = Messages{
 
 	OutputStyleNone:    "没有可用的输出风格",
 	OutputStyleHeader:  "输出风格：",
-	OutputStyleHint:    "在 reasonix.toml 中设置 agent.output_style 即可启用（下次会话生效）",
+	OutputStyleHint:    "在 novel-agent.toml 中设置 agent.output_style 即可启用（下次会话生效）",
 	ThemeHeader:        "主题：",
 	ThemeHint:          "使用 /theme <auto|light|dark|style> 切换",
 	ThemeChangedFmt:    "已切换主题为 %s / %s",
@@ -137,7 +137,7 @@ var Chinese = Messages{
 	SkillPickerStatusNotDir:      "非目录",
 	SkillPickerStatusUnreadable:  "无权限",
 	SlashPromptEmpty:             "该 MCP prompt 没有返回可发送的内容",
-	SlashMCPNone:                 "没有配置 MCP 服务器 — 在 reasonix.toml 中添加 [[plugins]] 条目",
+	SlashMCPNone:                 "没有配置 MCP 服务器 — 在 novel-agent.toml 中添加 [[plugins]] 条目",
 	CtrlCQuitHint:                "再按一次 Ctrl+C 退出",
 	CompHintSlash:                "↑/↓ 移动 · Tab/Enter 选中 · Esc 关闭",
 	CompHintFile:                 "↑/↓ 移动 · Tab/Enter 进入文件夹或选中文件 · Esc 关闭",
@@ -203,7 +203,7 @@ var Chinese = Messages{
 	ListHooksHeaderFmt:  "hooks（生效 %d 个）",
 	ListHooksNone:       "无生效 hooks — 在 .novel-agent/settings.json（项目，需信任后）或 ~/.novel-agent/settings.json（全局）配置",
 	ListMcpHeader:       "MCP 服务器",
-	ListMcpNone:         "未连接 MCP 服务器 — 在 reasonix.toml（[[plugins]]）或项目 .mcp.json 中添加",
+	ListMcpNone:         "未连接 MCP 服务器 — 在 novel-agent.toml（[[plugins]]）或项目 .mcp.json 中添加",
 
 	MemoryNone:             "还没有加载任何记忆 — 输入 “/remember 内容” 可快速记录，也可以在项目根目录创建 REASONIX.md",
 	MemoryLoaded:           "当前已加载的记忆：",
@@ -255,7 +255,7 @@ var Chinese = Messages{
 	NoModelsAvailableFmt:       "%s: 没有可用模型，跳过",
 	CustomFetchEmpty:           "/models 返回为空，回退到手动输入",
 	AnthropicFetchEmpty:        "/models 返回为空 — Anthropic 兼容服务通常不提供此端点，回退到手动输入",
-	SkipStaleCustomEntryFmt:    "跳过 reasonix.toml 里的旧 %q 条目（指向 %s）— 请手动从 [[providers]] 里删除",
+	SkipStaleCustomEntryFmt:    "跳过 novel-agent.toml 里的旧 %q 条目（指向 %s）— 请手动从 [[providers]] 里删除",
 	APIKeyAlreadySetFmt:        "复用已设置的 %s",
 
 	// custom provider
@@ -312,7 +312,7 @@ var Chinese = Messages{
   novel-agent serve [--model NAME] [--addr HOST:PORT]      通过 HTTP+SSE 提供会话（浏览器客户端在 /）
   novel-agent setup [path]                                 交互式配置向导；生成配置文件
   novel-agent config auto-plan [off|on]                    配置自动计划模式
-  novel-agent mcp <add|remove|list>                        管理 reasonix.toml 里的 MCP 服务器
+  novel-agent mcp <add|remove|list>                        管理 novel-agent.toml 里的 MCP 服务器
   novel-agent doctor [--json]                              输出脱敏的本地诊断信息
   novel-agent version
   novel-agent help
@@ -325,7 +325,7 @@ var Chinese = Messages{
   echo "给主角加一个金手指" | novel-agent run
 
 配置：
-  优先级：flag > ./reasonix.toml > ~/.config/reasonix/config.toml > 内置默认值
+  优先级：flag > ./novel-agent.toml > ~/.config/novel-agent/config.toml > 内置默认值
   密钥通过 api_key_env 从环境变量注入（如 DEEPSEEK_API_KEY）。
   初次运行自动进入配置向导；详见 README.md。
 `,

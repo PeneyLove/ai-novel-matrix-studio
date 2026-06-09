@@ -1,5 +1,5 @@
 # Reasonix configuration.
-# Resolution order: flag > ./reasonix.toml > ~/.config/reasonix/config.toml > built-in defaults.
+# Resolution order: flag > ./novel-agent.toml > ~/.config/novel-agent/config.toml > built-in defaults.
 # Secrets come from the environment via api_key_env; never put keys here.
 
 default_model = "deepseek"   # a provider name (→ its default model) or "provider/model"

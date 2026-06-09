@@ -25,7 +25,7 @@ func RenderTOML(c *Config) string {
 
 // RenderTOMLForScope renders an annotated TOML file for a specific persistence
 // target. User configs can carry desktop and account-level preferences; project
-// reasonix.toml stays focused on project behavior and intentionally excludes
+// novel-agent.toml stays focused on project behavior and intentionally excludes
 // desktop-only preferences.
 func RenderTOMLForScope(c *Config, scope RenderScope) string {
 	if c == nil {
@@ -40,7 +40,7 @@ func RenderTOMLForScope(c *Config, scope RenderScope) string {
 	var b strings.Builder
 
 	b.WriteString("# Reasonix configuration.\n")
-	b.WriteString("# Resolution order: flag > ./reasonix.toml > ~/.config/reasonix/config.toml > built-in defaults.\n")
+	b.WriteString("# Resolution order: flag > ./novel-agent.toml > ~/.config/novel-agent/config.toml > built-in defaults.\n")
 	b.WriteString("# Secrets come from the environment via api_key_env; never put keys here.\n\n")
 
 	fmt.Fprintf(&b, "config_version = %d   # schema marker for diagnostics; old versions may ignore it\n", configVersion(c))

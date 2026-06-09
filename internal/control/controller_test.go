@@ -153,7 +153,7 @@ func TestDisconnectMCPServerRemovesLazyPlaceholder(t *testing.T) {
 func TestRemoveMCPServerRemovesUnconnectedLazyPlaceholder(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	if err := os.WriteFile("reasonix.toml", []byte(`
+	if err := os.WriteFile("novel-agent.toml", []byte(`
 [[plugins]]
 name = "mock"
 command = "mock-mcp"

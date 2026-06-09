@@ -34,7 +34,7 @@ func TestBuildFoldsProjectMemoryIntoSystemPrompt(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
 
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -86,7 +86,7 @@ func TestBuildDiscoversSkills(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 	t.Chdir(dir)
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -138,7 +138,7 @@ func TestBuildOmitsDisabledSkillsFromPromptAndRuntimeList(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 	t.Chdir(dir)
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -188,7 +188,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 func TestBuildRecordsMCPStartupFailure(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -243,7 +243,7 @@ tier = "eager"
 func TestBuildWithoutMemoryLeavesPromptUnchanged(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -287,7 +287,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 func TestBuildLanguagePolicyIsAppended(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]
@@ -352,11 +352,11 @@ func TestRememberPermissionRuleUsesWorkspaceRoot(t *testing.T) {
 	cwd := t.TempDir()
 	workspace := t.TempDir()
 	t.Chdir(cwd)
-	writeFile(t, cwd, "reasonix.toml", `
+	writeFile(t, cwd, "novel-agent.toml", `
 [permissions]
 allow = ["bash(cwd*)"]
 `)
-	writeFile(t, workspace, "reasonix.toml", `
+	writeFile(t, workspace, "novel-agent.toml", `
 [permissions]
 allow = ["bash(workspace*)"]
 `)
@@ -364,11 +364,11 @@ allow = ["bash(workspace*)"]
 	const rule = "bash=go test ./..."
 	rememberPermissionRule(workspace, rule)
 
-	cwdCfg := config.LoadForEdit(filepath.Join(cwd, "reasonix.toml"))
+	cwdCfg := config.LoadForEdit(filepath.Join(cwd, "novel-agent.toml"))
 	if hasPermissionRule(cwdCfg.Permissions.Allow, rule) {
 		t.Fatalf("remembered rule was written to cwd config: %v", cwdCfg.Permissions.Allow)
 	}
-	workspaceCfg := config.LoadForEdit(filepath.Join(workspace, "reasonix.toml"))
+	workspaceCfg := config.LoadForEdit(filepath.Join(workspace, "novel-agent.toml"))
 	if !hasPermissionRule(workspaceCfg.Permissions.Allow, rule) {
 		t.Fatalf("remembered rule missing from workspace config: %v", workspaceCfg.Permissions.Allow)
 	}
@@ -396,7 +396,7 @@ allow = ["bash(user*)"]
 	if !hasPermissionRule(userCfg.Permissions.Allow, rule) {
 		t.Fatalf("empty root should remember into SourcePath config: %v", userCfg.Permissions.Allow)
 	}
-	if _, err := os.Stat(filepath.Join(cwd, "reasonix.toml")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(cwd, "novel-agent.toml")); !os.IsNotExist(err) {
 		t.Fatalf("empty root should not create cwd config when SourcePath exists, err=%v", err)
 	}
 }
@@ -425,7 +425,7 @@ func TestBuildMigratesLegacyConfigEndToEnd(t *testing.T) {
 	t.Chdir(proj)
 	// codegraph off keeps Build offline; it merges over the migrated user config
 	// without dropping the migrated plugins.
-	writeFile(t, proj, "reasonix.toml", "[codegraph]\nenabled = false\n")
+	writeFile(t, proj, "novel-agent.toml", "[codegraph]\nenabled = false\n")
 	writeFile(t, filepath.Join(home, ".novel-agent"), "config.json",
 		`{"apiKey":"sk-e2e","lang":"zh","mcpServers":{"fs":{"command":"npx","args":["-y","server-fs"]}}}`)
 	writeFile(t, filepath.Join(home, ".novel-agent", "sessions"), "chat-1.events.jsonl",
@@ -544,7 +544,7 @@ func TestBuildEagerStartsAtBoot(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
 
-	writeFile(t, dir, "reasonix.toml", fmt.Sprintf(`
+	writeFile(t, dir, "novel-agent.toml", fmt.Sprintf(`
 default_model = "test-model"
 
 [codegraph]
@@ -606,7 +606,7 @@ func TestBuildLazyDoesNotConnectAtBoot(t *testing.T) {
 	dir := t.TempDir()
 	t.Chdir(dir)
 
-	writeFile(t, dir, "reasonix.toml", fmt.Sprintf(`
+	writeFile(t, dir, "novel-agent.toml", fmt.Sprintf(`
 default_model = "test-model"
 
 [codegraph]
@@ -670,7 +670,7 @@ func TestBuildColdCodegraphStartsInBackground(t *testing.T) {
 	launcher := writeCodegraphHelper(t, dir)
 	t.Setenv("GO_WANT_HELPER_PROCESS", "1")
 
-	writeFile(t, dir, "reasonix.toml", fmt.Sprintf(`
+	writeFile(t, dir, "novel-agent.toml", fmt.Sprintf(`
 default_model = "test-model"
 
 [codegraph]
@@ -752,7 +752,7 @@ func TestBuildAutoDemoteFromStats(t *testing.T) {
 		}
 	}
 
-	writeFile(t, dir, "reasonix.toml", `
+	writeFile(t, dir, "novel-agent.toml", `
 default_model = "test-model"
 
 [codegraph]

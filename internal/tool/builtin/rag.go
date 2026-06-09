@@ -84,7 +84,7 @@ func (ragSearch) Execute(ctx context.Context, args json.RawMessage) (string, err
 
 func remoteSearch(ctx context.Context, query string, topK int) (string, error) {
 	if ragCfg.Endpoint == "" {
-		return "", fmt.Errorf("RAG remote endpoint is not configured. Set [rag].endpoint in reasonix.toml.")
+		return "", fmt.Errorf("RAG remote endpoint is not configured. Set [rag].endpoint in novel-agent.toml.")
 	}
 	apiKey := os.Getenv(ragCfg.APIKeyEnv)
 	if apiKey == "" {

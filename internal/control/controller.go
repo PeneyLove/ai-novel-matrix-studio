@@ -1459,7 +1459,7 @@ func (c *Controller) AddMCPServer(e config.PluginEntry) (int, error) {
 
 // ConnectMCPServer connects an MCP server entry for this session without writing
 // it to config. Desktop owns config placement so it can keep user-level settings
-// out of project reasonix.toml while preserving the CLI AddMCPServer semantics.
+// out of project novel-agent.toml while preserving the CLI AddMCPServer semantics.
 func (c *Controller) ConnectMCPServer(e config.PluginEntry) (int, error) {
 	return c.connectMCPServer(e)
 }

@@ -273,7 +273,7 @@ type Messages struct {
 	SelectProvidersLabel  string // multi-select label
 	EnterAPIKeysHeader    string // header before the per-env-var prompts
 	MissingKeyIntro       string // shown when re-running the key step on a configured setup
-	WroteFileFmt          string // "Wrote %s" — used for reasonix.toml and .env both
+	WroteFileFmt          string // "Wrote %s" — used for novel-agent.toml and .env both
 	SetupComplete         string // success line at end of init
 	SetupCancelled        string // shown when the user aborts the wizard
 	TryHintFmt            string // "Try: %s" — %s = command to try (styled)
@@ -292,7 +292,7 @@ type Messages struct {
 	NoModelsAvailableFmt       string // "%s: no models available, skipping"
 	CustomFetchEmpty           string // "/models returned an empty list — falling back to manual entry"
 	AnthropicFetchEmpty        string // "/models returned an empty list — Anthropic-compatible providers usually don't expose one, falling back to manual entry"
-	SkipStaleCustomEntryFmt    string // "skipping stale %q entry from reasonix.toml (pointing at %s) — please remove it"
+	SkipStaleCustomEntryFmt    string // "skipping stale %q entry from novel-agent.toml (pointing at %s) — please remove it"
 	APIKeyAlreadySetFmt        string // "reusing existing value for %s"
 
 	// custom provider

@@ -119,7 +119,7 @@ func pluginEntryFromMCPSpec(name string, s mcpServerSpec) PluginEntry {
 }
 
 // mergeMCPJSON appends servers from .mcp.json that the TOML config did not
-// already declare. reasonix.toml's [[plugins]] win on a name collision: it is the
+// already declare. novel-agent.toml's [[plugins]] win on a name collision: it is the
 // Reasonix-specific, more explicit of the two, so it overrides the shared,
 // checked-in .mcp.json rather than the other way round.
 func (c *Config) mergeMCPJSON(entries []PluginEntry) {

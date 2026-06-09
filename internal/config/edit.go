@@ -441,7 +441,7 @@ func (c *Config) ClearPluginAuthentication(name string) (PluginEntry, bool, erro
 // ClearPluginAuthenticationInSource clears auth material in the file that actually
 // owns the MCP server. Load() merges user/project TOML and project .mcp.json into
 // one Config, so callers must not mutate that merged view and Save() it back: a
-// .mcp.json-only server would otherwise be serialized into reasonix.toml or the
+// .mcp.json-only server would otherwise be serialized into novel-agent.toml or the
 // user config. Source priority mirrors Load(): project TOML, user TOML, then the
 // project .mcp.json entry if TOML did not define that server.
 func ClearPluginAuthenticationInSource(name string) (PluginEntry, bool, string, error) {
@@ -466,7 +466,7 @@ func ClearPluginAuthenticationInSource(name string) (PluginEntry, bool, string, 
 }
 
 func pluginTOMLSourcePath(name string) string {
-	for _, path := range []string{"reasonix.toml", userConfigPath()} {
+	for _, path := range []string{"novel-agent.toml", userConfigPath()} {
 		if strings.TrimSpace(path) == "" {
 			continue
 		}
@@ -502,7 +502,7 @@ func validatePlugin(e PluginEntry) error {
 
 // SaveTo writes the configuration to path as annotated TOML, atomically: it
 // writes a sibling temp file then renames, so a crash mid-write can't leave a
-// half-written reasonix.toml that fails to parse on next load. Parent directories
+// half-written novel-agent.toml that fails to parse on next load. Parent directories
 // are created as needed.
 func (c *Config) SaveTo(path string) error {
 	return c.SaveToScope(path, renderScopeForPath(path))
@@ -643,23 +643,23 @@ func (c *Config) SetRAGLocalPath(path string) error {
 }
 
 // Save writes the configuration back to the file it was loaded from
-// (SourcePath), or to ./reasonix.toml when none exists yet — the conventional
+// (SourcePath), or to ./novel-agent.toml when none exists yet — the conventional
 // project-local target a fresh GUI session would create.
 func (c *Config) Save() error {
 	path := SourcePath()
 	if path == "" {
-		path = "reasonix.toml"
+		path = "novel-agent.toml"
 	}
 	return c.SaveTo(path)
 }
 
-// SaveForRoot saves the config to root's reasonix.toml, falling back to the
-// user's global config when root has no existing reasonix.toml.
+// SaveForRoot saves the config to root's novel-agent.toml, falling back to the
+// user's global config when root has no existing novel-agent.toml.
 func (c *Config) SaveForRoot(root string) error {
 	root = resolveRoot(root)
-	projectTOML := "reasonix.toml"
+	projectTOML := "novel-agent.toml"
 	if root != "." {
-		projectTOML = filepath.Join(root, "reasonix.toml")
+		projectTOML = filepath.Join(root, "novel-agent.toml")
 	}
 	if _, err := os.Stat(projectTOML); err == nil {
 		return c.SaveTo(projectTOML)

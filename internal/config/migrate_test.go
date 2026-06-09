@@ -119,7 +119,7 @@ func TestMigrateSkipsWhenDestExists(t *testing.T) {
 
 func TestMigrateImportsLegacyV1TOMLBeforeJSON(t *testing.T) {
 	srcJSON, dest, _ := legacyHome(t)
-	legacyTOML := filepath.Join(filepath.Dir(dest), "reasonix.toml")
+	legacyTOML := filepath.Join(filepath.Dir(dest), "novel-agent.toml")
 	if err := os.MkdirAll(filepath.Dir(legacyTOML), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -165,7 +165,7 @@ command = "legacy-bin"
 
 func TestMigrateImportsLegacyV1HomeTOMLBeforeJSON(t *testing.T) {
 	srcJSON, dest, home := legacyHome(t)
-	legacyTOML := filepath.Join(home, ".novel-agent", "reasonix.toml")
+	legacyTOML := filepath.Join(home, ".novel-agent", "novel-agent.toml")
 	if err := os.MkdirAll(filepath.Dir(legacyTOML), 0o755); err != nil {
 		t.Fatal(err)
 	}

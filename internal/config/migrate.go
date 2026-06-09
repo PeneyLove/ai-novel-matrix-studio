@@ -152,9 +152,9 @@ func migrateLegacyTOMLIfNeeded(dest, home string) (*MigrationResult, error) {
 }
 
 func legacyTOMLPaths(dest, home string) []string {
-	paths := []string{filepath.Join(filepath.Dir(dest), "reasonix.toml")}
+	paths := []string{filepath.Join(filepath.Dir(dest), "novel-agent.toml")}
 	if home != "" {
-		paths = append(paths, filepath.Join(home, ".novel-agent", "reasonix.toml"))
+		paths = append(paths, filepath.Join(home, ".novel-agent", "novel-agent.toml"))
 	}
 	return paths
 }

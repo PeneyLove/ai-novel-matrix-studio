@@ -8,7 +8,7 @@ import (
 
 func TestLoadForEdit(t *testing.T) {
 	dir := t.TempDir()
-	path := filepath.Join(dir, "reasonix.toml")
+	path := filepath.Join(dir, "novel-agent.toml")
 	custom := `default_model = "custom"
 [[providers]]
 name = "custom"

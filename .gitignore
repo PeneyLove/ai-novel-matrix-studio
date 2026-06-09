@@ -33,7 +33,9 @@ Thumbs.db
 node_modules/
 npm/*.tgz
 
-# Reasonix IDE
+# Novel Agent config
+novel-agent.toml
+# Legacy config (keep ignored)
 reasonix.toml
 
 # Debug

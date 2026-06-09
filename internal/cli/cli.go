@@ -485,12 +485,12 @@ type setupTargets struct {
 }
 
 // defaultConfigTarget is the user-global config file, falling back to a
-// project-local reasonix.toml only when the user config dir can't be resolved.
+// project-local novel-agent.toml only when the user config dir can't be resolved.
 func defaultConfigTarget() string {
 	if p := config.UserConfigPath(); p != "" {
 		return p
 	}
-	return "reasonix.toml"
+	return "novel-agent.toml"
 }
 
 // defaultEnvTarget is the reasonix-owned global credentials file, falling back to
@@ -503,14 +503,14 @@ func defaultEnvTarget() string {
 }
 
 // resolveSetupTargets picks where `reasonix setup` writes. Keys always go to the
-// global env. The config goes to the user-global dir by default, to ./reasonix.toml
+// global env. The config goes to the user-global dir by default, to ./novel-agent.toml
 // under --local, or to an explicit path argument when given.
 func resolveSetupTargets(args []string) setupTargets {
 	t := setupTargets{config: defaultConfigTarget(), env: defaultEnvTarget()}
 	for _, a := range args {
 		switch a {
 		case "--local", "-l":
-			t.config = "reasonix.toml"
+			t.config = "novel-agent.toml"
 		default:
 			t.config = a
 		}
@@ -527,7 +527,7 @@ func displayPath(p string) string {
 }
 
 // setupConfig runs the configuration wizard (the `reasonix setup` command),
-// writing config.toml to the user-global dir (or ./reasonix.toml under --local)
+// writing config.toml to the user-global dir (or ./novel-agent.toml under --local)
 // and API keys to the reasonix-owned global .env — never a project's own .env.
 // Project memory is a separate concern — the in-session `/init` skill generates
 // AGENTS.md (see initHint).
@@ -932,12 +932,12 @@ func containsString(xs []string, v string) bool {
 
 // filterStaleCustomEntries drops the wizard's own magic-name entries
 // (Name="custom" with Kind="openai" or Name="anthropic" with Kind="anthropic")
-// that older versions of the wizard wrote into reasonix.toml. They collide
+// that older versions of the wizard wrote into novel-agent.toml. They collide
 // with the wizard's "custom" / "anthropic" menu items on re-run, showing up
 // as duplicate broken entries. The new wizard writes host-derived slugs
 // (e.g. "custom-token-sensenova-cn") so a hit on the magic name is
 // unambiguously stale. The returned slice is the dropped set so the caller
-// can warn the user to clean up reasonix.toml by hand.
+// can warn the user to clean up novel-agent.toml by hand.
 func filterStaleCustomEntries(providers []config.ProviderEntry) (kept, dropped []config.ProviderEntry) {
 	for _, p := range providers {
 		if p.Name == "custom" && p.Kind == "openai" {
@@ -960,7 +960,7 @@ func filterStaleCustomEntries(providers []config.ProviderEntry) (kept, dropped [
 // those would collide with the menu item itself and end up rendered as
 // duplicate provider entries on subsequent re-runs of `reasonix setup`.
 // The host-based slug also gives users a meaningful name to grep for in
-// reasonix.toml. Falls back to a short sha1 of the raw URL when the URL
+// novel-agent.toml. Falls back to a short sha1 of the raw URL when the URL
 // doesn't parse, so even malformed input still produces a unique name.
 func providerSlug(kind, baseURL string) string {
 	var host string
@@ -990,7 +990,7 @@ func providerSlug(kind, baseURL string) string {
 }
 
 // providerFamily is a wizard-only grouping of provider SKUs by vendor; it does
-// not exist in config because users editing reasonix.toml deal with SKU names
+// not exist in config because users editing novel-agent.toml deal with SKU names
 // directly. Keys mirror the SKU name prefix (deepseek-*, mimo) so adding a new
 // preset only requires a familyOf case.
 type providerFamily struct {
@@ -1239,7 +1239,7 @@ func groupByFamily(providers []config.ProviderEntry) ([]string, map[string][]int
 
 // withBuiltinFamilies guarantees the wizard always offers the built-in provider
 // families (DeepSeek, MiMo) even when the loaded config replaced them — a
-// reasonix.toml that defines only [[providers]] for deepseek otherwise hides
+// novel-agent.toml that defines only [[providers]] for deepseek otherwise hides
 // MiMo from setup, since [[providers]] replaces the presets wholesale. Families
 // already present are left untouched (the user's customizations win); only the
 // missing built-in families get their default entries appended.
@@ -1548,7 +1548,7 @@ func configCommand(args []string) int {
 
 func configAutoPlanCommand(args []string) int {
 	fs := flag.NewFlagSet("config auto-plan", flag.ContinueOnError)
-	local := fs.Bool("local", false, "write ./reasonix.toml instead of the user config")
+	local := fs.Bool("local", false, "write ./novel-agent.toml instead of the user config")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -1570,7 +1570,7 @@ func configAutoPlanCommand(args []string) int {
 	}
 	path := config.UserConfigPath()
 	if *local {
-		path = "reasonix.toml"
+		path = "novel-agent.toml"
 	}
 	if path == "" {
 		fmt.Fprintln(os.Stderr, i18n.M.ErrorPrefix, "cannot resolve config path")

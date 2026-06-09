@@ -264,7 +264,7 @@ func mcpRemoveCLI(args []string) int {
 }
 
 func mcpUsage() {
-	fmt.Println(`Manage MCP servers (persisted to reasonix.toml).
+	fmt.Println(`Manage MCP servers (persisted to novel-agent.toml).
 
 Usage:
   reasonix mcp list

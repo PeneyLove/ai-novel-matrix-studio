@@ -599,7 +599,7 @@ func TestAutoPlanCommandPersistsAndUpdatesController(t *testing.T) {
 
 func TestAutoPlanCommandWritesUserConfigNotProjectConfig(t *testing.T) {
 	isolateUserConfig(t)
-	projectPath := filepath.Join(mustGetwd(t), "reasonix.toml")
+	projectPath := filepath.Join(mustGetwd(t), "novel-agent.toml")
 	if err := os.WriteFile(projectPath, []byte("[agent]\nauto_plan = \"off\"\n"), 0o644); err != nil {
 		t.Fatalf("write project config: %v", err)
 	}
@@ -677,7 +677,7 @@ func TestLanguageCommandAutoClearsLowerPriorityUserOverride(t *testing.T) {
 		t.Fatalf("save user config: %v", err)
 	}
 	projectCfg := config.Default()
-	if err := projectCfg.SaveTo("reasonix.toml"); err != nil {
+	if err := projectCfg.SaveTo("novel-agent.toml"); err != nil {
 		t.Fatalf("save project config: %v", err)
 	}
 

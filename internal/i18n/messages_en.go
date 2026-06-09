@@ -67,7 +67,7 @@ var English = Messages{
 
 	OutputStyleNone:    "no output styles available",
 	OutputStyleHeader:  "output styles:",
-	OutputStyleHint:    "set agent.output_style in reasonix.toml to apply one (takes effect next session)",
+	OutputStyleHint:    "set agent.output_style in novel-agent.toml to apply one (takes effect next session)",
 	ThemeHeader:        "themes:",
 	ThemeHint:          "switch with /theme <auto|light|dark|style>",
 	ThemeChangedFmt:    "theme switched to %s / %s",
@@ -136,7 +136,7 @@ var English = Messages{
 	SkillPickerStatusNotDir:      "not-directory",
 	SkillPickerStatusUnreadable:  "unreadable",
 	SlashPromptEmpty:             "the MCP prompt returned no content to send",
-	SlashMCPNone:                 "no MCP servers configured — add a [[plugins]] entry in reasonix.toml",
+	SlashMCPNone:                 "no MCP servers configured — add a [[plugins]] entry in novel-agent.toml",
 	CtrlCQuitHint:                "press Ctrl+C again to quit",
 	CompHintSlash:                "↑/↓ move · Tab/Enter select · Esc close",
 	CompHintFile:                 "↑/↓ move · Tab/Enter open folder or pick file · Esc close",
@@ -202,7 +202,7 @@ var English = Messages{
 	ListHooksHeaderFmt:  "hooks (%d active)",
 	ListHooksNone:       "hooks: none active — configure in .novel-agent/settings.json (project, after trust) or ~/.novel-agent/settings.json (global)",
 	ListMcpHeader:       "mcp servers",
-	ListMcpNone:         "mcp: no servers connected — add one in reasonix.toml ([[plugins]]) or a project .mcp.json",
+	ListMcpNone:         "mcp: no servers connected — add one in novel-agent.toml ([[plugins]]) or a project .mcp.json",
 
 	MemoryNone:             "memory: none — add with “/remember <note>” or create REASONIX.md in the project root",
 	MemoryLoaded:           "memory loaded:",
@@ -254,7 +254,7 @@ var English = Messages{
 	NoModelsAvailableFmt:       "%s: no models available, skipping",
 	CustomFetchEmpty:           "/models returned an empty list — falling back to manual entry",
 	AnthropicFetchEmpty:        "/models returned an empty list — Anthropic-compatible providers usually don't expose one, falling back to manual entry",
-	SkipStaleCustomEntryFmt:    "skipping stale %q entry from reasonix.toml (pointing at %s) — please remove it from [[providers]]",
+	SkipStaleCustomEntryFmt:    "skipping stale %q entry from novel-agent.toml (pointing at %s) — please remove it from [[providers]]",
 	APIKeyAlreadySetFmt:        "reusing existing value for %s",
 
 	// custom provider
@@ -324,7 +324,7 @@ Examples:
   echo "add a golden finger to the protagonist" | novel-agent run
 
 Configuration:
-  Resolution: flag > ./reasonix.toml > ~/.config/reasonix/config.toml > built-in defaults
+  Resolution: flag > ./novel-agent.toml > ~/.config/novel-agent/config.toml > built-in defaults
   Secrets are injected via api_key_env from the environment (e.g. DEEPSEEK_API_KEY).
   First run auto-enters setup; see README.md for details.
 `,

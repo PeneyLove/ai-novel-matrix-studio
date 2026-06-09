@@ -30,11 +30,11 @@ type pinResult struct {
 }
 
 // runDiff asks the agent to write tests covering what the PR changed, grades
-// them against the repo's own tests, and â€?because the agent is stochastic â€?// retries up to o.attempts times until a run passes, keeping the best result.
+// them against the repo's own tests, and ï¿½?because the agent is stochastic ï¿½?// retries up to o.attempts times until a run passes, keeping the best result.
 func runDiff(o diffOpts) string {
 	srcFiles := changedGoFiles(o.repo, o.base, false)
 	if len(srcFiles) == 0 {
-		return "## ðŸ¤– Reasonix e2e â€?diff test-gen\n\nNo Go source changes in this PR (excluding `_test.go`); nothing to generate tests for.\n"
+		return "## ðŸ¤– Reasonix e2e ï¿½?diff test-gen\n\nNo Go source changes in this PR (excluding `_test.go`); nothing to generate tests for.\n"
 	}
 	pkgs := packagesOf(srcFiles)
 	prompt := buildDiffPrompt(srcFiles, pkgs, truncate(gitOut(o.repo, "diff", o.base+"...HEAD", "--")))
@@ -145,7 +145,7 @@ func ratio(n, d int) float64 {
 // attempt's generated tests but keeping the provider config the workflow wrote.
 func resetTree(repo string) {
 	_ = exec.Command("git", "-C", repo, "checkout", "--", ".").Run()
-	_ = exec.Command("git", "-C", repo, "clean", "-fd", "-e", "reasonix.toml").Run()
+	_ = exec.Command("git", "-C", repo, "clean", "-fd", "-e", "novel-agent.toml").Run()
 }
 
 func goBuildAll(repo string) (bool, string) {
@@ -168,7 +168,7 @@ func buildDiffPrompt(srcFiles, pkgs []string, diffText string) string {
 	b.WriteString("Write focused Go unit tests that exercise the NEW or CHANGED behavior in those files. ")
 	b.WriteString("Add them to the appropriate *_test.go files in the same packages (")
 	b.WriteString(strings.Join(pkgs, ", "))
-	b.WriteString("). Do NOT modify the non-test source files â€?only add or extend test files. ")
+	b.WriteString("). Do NOT modify the non-test source files ï¿½?only add or extend test files. ")
 	b.WriteString("Prefer small, focused edits and run `gofmt`/`go vet` on the test files as you go to avoid syntax errors. ")
 	b.WriteString("Then run the package tests and iterate until they pass. When finished, list the test functions you added.")
 	return b.String()
@@ -196,11 +196,11 @@ type diffReport struct {
 
 func renderDiff(r diffReport) string {
 	var b strings.Builder
-	result := "â?fail"
+	result := "ï¿½?fail"
 	if r.passed {
-		result = "âœ?pass"
+		result = "ï¿½?pass"
 	}
-	fmt.Fprintf(&b, "## ðŸ¤– Reasonix e2e â€?diff test-gen\n\n")
+	fmt.Fprintf(&b, "## ðŸ¤– Reasonix e2e ï¿½?diff test-gen\n\n")
 	fmt.Fprintf(&b, "**Result:** %s Â· **%d** changed source file(s) across **%d** package(s)\n\n", result, len(r.srcFiles), len(r.pkgs))
 
 	pinned, byAssert := countPins(r.pins), countAssertionPins(r.pins)
@@ -210,7 +210,7 @@ func renderDiff(r diffReport) string {
 	fmt.Fprintf(&b, "| `go test` on affected pkgs | %s |\n", passFail(r.testsPass))
 	fmt.Fprintf(&b, "| Differential (fail on pre-PR code) | %s |\n", differentialCell(r))
 	if pinned > 0 {
-		fmt.Fprintf(&b, "| â†?pin by assertion / by compile only | %d / %d |\n", byAssert, pinned-byAssert)
+		fmt.Fprintf(&b, "| ï¿½?pin by assertion / by compile only | %d / %d |\n", byAssert, pinned-byAssert)
 	}
 	fmt.Fprintf(&b, "| Changed-line coverage | %s |\n", coverageCell(r))
 	fmt.Fprintf(&b, "| Mutation (changed funcs caught) | %s |\n", mutationCell(r))
@@ -233,7 +233,7 @@ func renderDiff(r diffReport) string {
 
 	fmt.Fprintf(&b, "\n**Packages:** %s\n", strings.Join(r.pkgs, ", "))
 	if r.attempts <= 1 {
-		fmt.Fprintf(&b, "\n<sub>Single stochastic run â€?a green result is one sample, not a guarantee. Comment `/e2e diff x3` to retry up to 3Ã—.</sub>\n")
+		fmt.Fprintf(&b, "\n<sub>Single stochastic run ï¿½?a green result is one sample, not a guarantee. Comment `/e2e diff x3` to retry up to 3Ã—.</sub>\n")
 	}
 	if !r.buildOK && strings.TrimSpace(r.buildOut) != "" {
 		fmt.Fprintf(&b, "\n<details><summary>go build ./... output (tail)</summary>\n\n```\n%s\n```\n</details>\n", tail(r.buildOut, 40))
@@ -258,7 +258,7 @@ func renderDiff(r diffReport) string {
 	if r.runErr != nil {
 		fmt.Fprintf(&b, "\n<sub>agent run note: %v</sub>\n", r.runErr)
 	}
-	fmt.Fprintf(&b, "\n<sub>Pass = the agent added â‰? test, the affected packages are green, AND â‰? new test fails when the PR's source is reverted. \"By assertion\" pins are strong (they check changed behavior); \"by compile only\" pins just need a PR-added symbol â€?and since Go compiles per package, one compile-coupled test marks every test in its package that way. Mutation is the behavioral signal for additive PRs: each changed function's return is replaced with zero values and the new tests are re-run; \"caught\" means a test asserts that output, \"survived\" means it doesn't. Read the generated tests above to judge the rest.</sub>\n")
+	fmt.Fprintf(&b, "\n<sub>Pass = the agent added ï¿½? test, the affected packages are green, AND ï¿½? new test fails when the PR's source is reverted. \"By assertion\" pins are strong (they check changed behavior); \"by compile only\" pins just need a PR-added symbol ï¿½?and since Go compiles per package, one compile-coupled test marks every test in its package that way. Mutation is the behavioral signal for additive PRs: each changed function's return is replaced with zero values and the new tests are re-run; \"caught\" means a test asserts that output, \"survived\" means it doesn't. Read the generated tests above to judge the rest.</sub>\n")
 	return b.String()
 }
 
@@ -290,11 +290,11 @@ func mutationCell(r diffReport) string {
 func pinCell(p pinResult) string {
 	switch {
 	case p.pins && p.byAssertion:
-		return "âœ?by assertion"
+		return "ï¿½?by assertion"
 	case p.pins:
 		return "âš ï¸ by compile only"
 	default:
-		return "â?no (passes on old code)"
+		return "ï¿½?no (passes on old code)"
 	}
 }
 
@@ -428,7 +428,7 @@ func changedLineSet(repo, base string, srcFiles []string) map[string]map[int]boo
 			file = strings.TrimPrefix(ln, "+++ b/")
 			out[file] = map[int]bool{}
 		case strings.HasPrefix(ln, "@@"):
-			// @@ -a,b +c,d @@ â€?start collecting at new-side line c.
+			// @@ -a,b +c,d @@ ï¿½?start collecting at new-side line c.
 			// Digit-only cut: malformed headers (e.g. `@@ +abc @@`) fail closed.
 			if plus := strings.Index(ln, "+"); plus >= 0 {
 				num := ln[plus+1:]
@@ -526,7 +526,7 @@ func countAdded(diff string) int {
 	return n
 }
 
-// failingTestNames pulls the names out of `--- FAIL: TestX (â€?` lines.
+// failingTestNames pulls the names out of `--- FAIL: TestX (ï¿½?` lines.
 func failingTestNames(out string) []string {
 	var names []string
 	seen := map[string]bool{}
@@ -649,7 +649,7 @@ func truncateFor(s string, max int) string {
 	for cut > 0 && !utf8.RuneStart(s[cut]) {
 		cut--
 	}
-	return s[:cut] + "\nâ€?truncated)â€?
+	return s[:cut] + "\nï¿½?truncated)ï¿½?
 }
 
 func tail(s string, n int) string {

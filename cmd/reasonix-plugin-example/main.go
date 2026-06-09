@@ -3,7 +3,7 @@
 // document the contract end-to-end (the protocol the internal/plugin client
 // drives) and to give users a working example to copy.
 //
-// Wire it up in reasonix.toml:
+// Wire it up in novel-agent.toml:
 //
 //	[[plugins]]
 //	name    = "example"
@@ -14,14 +14,14 @@
 // the "@example:doc://style-guide" reference.
 //
 // Protocol, one JSON object per line:
-//   - initialize                 â†?{protocolVersion, capabilities, serverInfo}
-//   - notifications/initialized  (notification, no id) â†?ignored
-//   - tools/list                 â†?{tools: [{name, description, inputSchema, annotations}]}
-//   - tools/call {name, arguments} â†?{content: [{type:"text", text}], isError}
-//   - prompts/list               â†?{prompts: [{name, description, arguments}]}
-//   - prompts/get {name, arguments} â†?{messages: [{role, content:{type,text}}]}
-//   - resources/list             â†?{resources: [{uri, name, description, mimeType}]}
-//   - resources/read {uri}       â†?{contents: [{uri, mimeType, text}]}
+//   - initialize                 ï¿½?{protocolVersion, capabilities, serverInfo}
+//   - notifications/initialized  (notification, no id) ï¿½?ignored
+//   - tools/list                 ï¿½?{tools: [{name, description, inputSchema, annotations}]}
+//   - tools/call {name, arguments} ï¿½?{content: [{type:"text", text}], isError}
+//   - prompts/list               ï¿½?{prompts: [{name, description, arguments}]}
+//   - prompts/get {name, arguments} ï¿½?{messages: [{role, content:{type,text}}]}
+//   - resources/list             ï¿½?{resources: [{uri, name, description, mimeType}]}
+//   - resources/read {uri}       ï¿½?{contents: [{uri, mimeType, text}]}
 //
 // Logs go to stderr (reasonix forwards plugin stderr to the terminal); stdout is
 // reserved for JSON-RPC so it must never carry stray prose.
@@ -53,7 +53,7 @@ func main() {
 
 type request struct {
 	JSONRPC string           `json:"jsonrpc"`
-	ID      *json.RawMessage `json:"id"` // nil â‡?notification (no reply); echoed back verbatim otherwise
+	ID      *json.RawMessage `json:"id"` // nil ï¿½?notification (no reply); echoed back verbatim otherwise
 	Method  string           `json:"method"`
 	Params  json.RawMessage  `json:"params"`
 }
