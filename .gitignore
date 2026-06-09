@@ -32,6 +32,7 @@ Thumbs.db
 # npm
 node_modules/
 npm/*.tgz
+npm/dist/
 
 # Novel Agent config
 novel-agent.toml
