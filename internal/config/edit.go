@@ -15,12 +15,12 @@ import (
 
 // edit.go is the programmatic mutation surface a settings UI drives: change the
 // default model, add/remove a provider, set the planner, edit permission rules,
-// add/remove an MCP server â€?each validated, then persisted with SaveTo. It is
+// add/remove an MCP server â€” each validated, then persisted with SaveTo. It is
 // separate from the `reasonix setup` wizard (cli) so a GUI can apply one setting at a
 // time without replaying the whole interactive flow. Every mutator works on the
 // in-memory *Config; nothing writes to disk until SaveTo/Save is called, so a UI
 // can stage several changes and commit once. Mutations round-trip through
-// RenderTOML â†?Load (the wizard relies on the same guarantee).
+// RenderTOML â†’ Load (the wizard relies on the same guarantee).
 
 // permission rule list names accepted by the rule mutators.
 const (
@@ -215,7 +215,7 @@ func (c *Config) RemoveProvider(name string) error {
 		return fmt.Errorf("remove provider: no provider %q", name)
 	}
 	if c.DefaultModel == name {
-		return fmt.Errorf("remove provider: %q is the default model â€?set a different default_model first", name)
+		return fmt.Errorf("remove provider: %q is the default model â€” set a different default_model first", name)
 	}
 	c.Providers = append(c.Providers[:idx], c.Providers[idx+1:]...)
 	if c.Agent.PlannerModel == name {
@@ -643,7 +643,7 @@ func (c *Config) SetRAGLocalPath(path string) error {
 }
 
 // Save writes the configuration back to the file it was loaded from
-// (SourcePath), or to ./reasonix.toml when none exists yet â€?the conventional
+// (SourcePath), or to ./reasonix.toml when none exists yet â€” the conventional
 // project-local target a fresh GUI session would create.
 func (c *Config) Save() error {
 	path := SourcePath()

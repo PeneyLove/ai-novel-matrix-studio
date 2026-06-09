@@ -24,7 +24,7 @@ const (
 )
 
 // compItem is one menu row: label shown, insert applied on accept, hint dimmed.
-// descend marks a directory entry â€?accepting it fills the input and re-opens
+// descend marks a directory entry â€” accepting it fills the input and re-opens
 // the menu one level deeper instead of closing.
 type compItem struct {
 	label   string
@@ -49,7 +49,7 @@ const (
 	// the selection when longer.
 	maxCompRows = 8
 	// maxCompItems caps how many entries a single directory contributes, so a
-	// pathologically large directory can't blow up the menu â€?we read only one
+	// pathologically large directory can't blow up the menu â€” we read only one
 	// level (os.ReadDir), never the whole tree.
 	maxCompItems = 200
 	// maxFileSearchItems caps basename search results for bare @tokens.
@@ -103,11 +103,11 @@ func (m *chatTUI) slashItems() []compItem {
 
 // updateCompletion recomputes the menu from the current input: a slash menu
 // while the line is a single "/word" token, or an @-reference menu while the
-// token under the cursor is "@â€?.
+// token under the cursor is "@â€¦".
 func (m *chatTUI) updateCompletion() {
 	val := m.input.Value()
 
-	// An @-reference token under the cursor wins â€?it can appear mid-line, even
+	// An @-reference token under the cursor wins â€” it can appear mid-line, even
 	// inside a slash command's arguments (e.g. "/review @file").
 	if at, token, ok := activeAtToken(val); ok {
 		if items := m.atItems(token); len(items) > 0 {
@@ -131,7 +131,7 @@ func (m *chatTUI) updateCompletion() {
 			m.completion = completion{}
 			return
 		} else if items, from, ok := m.slashArgItems(val); ok && len(items) > 0 {
-			// Past the command word â€?complete its structured arguments.
+			// Past the command word â€” complete its structured arguments.
 			m.setCompletion(compSlashArg, items, from)
 			return
 		}
@@ -143,7 +143,8 @@ func (m *chatTUI) updateCompletion() {
 // slashArgItems completes the arguments of a slash command (everything after the
 // command word). It returns the menu items, the byte offset where the current
 // token begins (replaceFrom, so accept replaces just that token), and whether
-// anything applied. Only commands with structured arguments participate â€?// currently /mcp; custom commands and MCP prompts take free-form template args,
+// anything applied. Only commands with structured arguments participate â€”
+// currently /mcp; custom commands and MCP prompts take free-form template args,
 // so they yield nothing.
 func (m *chatTUI) slashArgItems(val string) ([]compItem, int, bool) {
 	if items, from, ok := m.branchArgItems(val); ok {
@@ -291,7 +292,7 @@ func activeAtToken(val string) (int, string, bool) {
 	for i := len(val) - 1; i >= 0; i-- {
 		switch val[i] {
 		case ' ', '\t', '\n':
-			return 0, "", false // hit whitespace before an '@' â†?no active token
+			return 0, "", false // hit whitespace before an '@' â†’ no active token
 		case '@':
 			if i == 0 || val[i-1] == ' ' || val[i-1] == '\t' || val[i-1] == '\n' {
 				return i, val[i+1:], true
@@ -304,8 +305,8 @@ func activeAtToken(val string) (int, string, bool) {
 
 // atItems builds the @-reference menu for a token. A "server:uri" token whose
 // server is connected lists that server's MCP resources; otherwise the token is
-// a path and we list one directory level (never a recursive walk), plus â€?at the
-// top level â€?any matching MCP resources.
+// a path and we list one directory level (never a recursive walk), plus â€” at the
+// top level â€” any matching MCP resources.
 func (m *chatTUI) atItems(token string) []compItem {
 	if i := strings.Index(token, ":"); i > 0 && m.isMCPServer(token[:i]) {
 		return m.resourceItems(token[:i], token[i+1:])
@@ -494,7 +495,7 @@ func (m *chatTUI) acceptCompletion() {
 		m.updateCompletion()
 		return
 	}
-	m.updateCompletion() // re-filter for arg completion (e.g. /resume â†?numbered sessions)
+	m.updateCompletion() // re-filter for arg completion (e.g. /resume â†’ numbered sessions)
 	// If the completion re-opened with the same single item the user just
 	// selected (i.e. the token was already typed), close it so the next Enter
 	// submits the command rather than being captured again by acceptCompletion.
@@ -534,7 +535,7 @@ func (m chatTUI) renderCompletion() string {
 	for i := start; i < end; i++ {
 		it := items[i]
 		if i == m.completion.sel {
-			b.WriteString(accent("â€?") + compSelStyle.Render(it.label))
+			b.WriteString(accent("â€º ") + compSelStyle.Render(it.label))
 		} else {
 			b.WriteString("  " + it.label)
 		}
@@ -543,7 +544,7 @@ func (m chatTUI) renderCompletion() string {
 		}
 		b.WriteByte('\n')
 	}
-	// A key-hint footer so users discover Tab â€?many won't know it accepts a
+	// A key-hint footer so users discover Tab â€” many won't know it accepts a
 	// completion, let alone descends into a folder.
 	hint := i18n.M.CompHintSlash
 	if m.completion.kind == compAt {
