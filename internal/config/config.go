@@ -1,4 +1,4 @@
-// Package config loads Reasonix's runtime configuration from TOML. Resolution order:
+// Package config loads novel-agent's runtime configuration from TOML. Resolution order:
 // flag > project ./novel-agent.toml > user ~/.config/novel-agent/config.toml > built-in defaults.
 // Secrets come from the environment via api_key_env and are never stored in
 // config files.
@@ -37,11 +37,11 @@ func SkillNameKey(name string) string {
 	return name
 }
 
-// Config is Reasonix's runtime configuration.
+// Config is novel-agent's runtime configuration.
 type Config struct {
 	ConfigVersion int               `toml:"config_version"`
 	DefaultModel  string            `toml:"default_model"`
-	Language      string            `toml:"language"` // ui/model language tag (e.g. "zh"); empty = auto-detect from $LANG / $REASONIX_LANG
+	Language      string            `toml:"language"` // ui/model language tag (e.g. "zh"); empty = auto-detect from $LANG / $NOVEL_AGENT_LANG
 	UI            UIConfig          `toml:"ui"`
 	Desktop       DesktopConfig     `toml:"desktop"`
 	Agent         AgentConfig       `toml:"agent"`
@@ -213,8 +213,8 @@ type RAGConfig struct {
 // search / context / explore / trace / node tools. Enabled defaults to true so
 // upgrades keep it for existing configs; first-run scaffolds write enabled =
 // false so only brand-new users start without it. AutoInstall (default true)
-// lets reasonix fetch the CodeGraph runtime into its cache when CodeGraph is
-// enabled but missing; set false to require an explicit `reasonix codegraph
+// lets novel-agent fetch the CodeGraph runtime into its cache when CodeGraph is
+// enabled but missing; set false to require an explicit `novel-agent codegraph
 // install` (e.g. for air-gapped or headless runs). Path overrides binary
 // resolution; empty resolves the cache, then a `codegraph` on PATH, then a
 // bundle beside the executable. Tier matches ordinary MCP servers (lazy,
@@ -646,8 +646,8 @@ func Default() *Config {
 			CompactRatio:      0.8,
 			CompactForceRatio: 0.9,
 		},
-		// Mode "ask" with no rules keeps `reasonix run` autonomous (no TTY → ask
-		// resolves to allow) while `reasonix chat` prompts before writers. Users add
+		// Mode "ask" with no rules keeps `novel-agent run` autonomous (no TTY → ask
+		// resolves to allow) while `novel-agent chat` prompts before writers. Users add
 		// deny/allow rules to harden or quiet specific tools.
 		Permissions: PermissionsConfig{Mode: "ask"},
 		// Sandbox on by default: bash is jailed (macOS), network allowed so
@@ -826,7 +826,7 @@ func mergeTOMLPlugins(paths []string) ([]PluginEntry, error) {
 	return merged, nil
 }
 
-// LoadForEdit returns a config to seed the `reasonix setup` wizard when reconfiguring:
+// LoadForEdit returns a config to seed the `novel-agent setup` wizard when reconfiguring:
 // the built-in defaults with the file at path (if present) decoded on top, so a
 // reconfigure preserves the user's existing providers and agent settings instead
 // of resetting to defaults. .env is loaded so api_key_env resolution works while
@@ -856,15 +856,15 @@ func userConfigPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix", "config.toml")
+	return filepath.Join(dir, "novel-agent", "config.toml")
 }
 
 // UserConfigPath is the user-global config file (~/.config/novel-agent/config.toml),
 // or "" when the user config dir can't be resolved.
 func UserConfigPath() string { return userConfigPath() }
 
-// UserCredentialsPath is the reasonix-owned global secrets file, beside
-// config.toml in the user config dir (e.g. ~/.config/reasonix/credentials). It
+// UserCredentialsPath is the novel-agent-owned global secrets file, beside
+// config.toml in the user config dir (e.g. ~/.config/novel-agent/credentials). It
 // holds KEY=value lines loaded into the environment by loadDotEnv. The setup
 // wizard writes API keys here, deliberately NOT named .env: keys never land in a
 // project's own .env (which can't be selectively gitignored), never get
@@ -875,7 +875,7 @@ func UserCredentialsPath() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix", "credentials")
+	return filepath.Join(dir, "novel-agent", "credentials")
 }
 
 // ArchiveDir is where compacted conversation history is archived for
@@ -886,23 +886,23 @@ func ArchiveDir() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix", "archive")
+	return filepath.Join(dir, "novel-agent", "archive")
 }
 
 // SessionDir is where chat sessions are persisted (one .jsonl per session).
-// Used by `reasonix chat --continue` / `--resume` to find the recent ones. Empty
+// Used by `novel-agent chat --continue` / `--resume` to find the recent ones. Empty
 // if the user config dir can't be resolved — sessions then aren't saved.
 func SessionDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix", "sessions")
+	return filepath.Join(dir, "novel-agent", "sessions")
 }
 
 // CacheDir is the per-user cache root for derived/regenerable artefacts: MCP
 // handshake snapshots, plugin startup-latency telemetry. Lives beside the
-// existing dirs (UserConfigDir/reasonix/...) so the whole reasonix state tree
+// existing dirs (UserConfigDir/novel-agent/...) so the whole novel-agent state tree
 // shares one root the user can wipe in a single rm. Empty when the OS dir is
 // unavailable — callers must tolerate that (caching is best-effort).
 func CacheDir() string {
@@ -910,18 +910,18 @@ func CacheDir() string {
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix", "cache")
+	return filepath.Join(dir, "novel-agent", "cache")
 }
 
-// MemoryUserDir returns the reasonix user config root (…/reasonix), under which
-// the user-global REASONIX.md and the per-project auto-memory store live. Empty
+// MemoryUserDir returns the novel-agent user config root (…/novel-agent), under which
+// the user-global novel-agent.md and the per-project auto-memory store live. Empty
 // when the user config dir can't be resolved, which disables user-scoped memory.
 func MemoryUserDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "reasonix")
+	return filepath.Join(dir, "novel-agent")
 }
 
 // ConventionDirs are the parent directories scanned for agent assets (skills,
@@ -947,7 +947,7 @@ func conventionSubdirsAsc(base, sub string) []string {
 // CommandDirs returns the directories scanned for custom slash commands, lowest
 // priority first, so a later (more specific) directory overrides an earlier one
 // on a name clash. Order: home-dir convention dirs (~/.claude/commands … ~/.novel-agent/commands),
-// the legacy XDG user dir (~/.config/reasonix/commands), then the project's
+// the legacy XDG user dir (~/.config/novel-agent/commands), then the project's
 // convention dirs (.claude/commands … .novel-agent/commands). Scanning the .claude /
 // .agents / .agent dirs lets commands authored for other agent tools (same .md +
 // frontmatter format) work here unchanged.
@@ -965,7 +965,7 @@ func CommandDirsForRoot(root string) []string {
 		dirs = append(dirs, conventionSubdirsAsc(home, "commands")...)
 	}
 	if dir, err := os.UserConfigDir(); err == nil {
-		dirs = append(dirs, filepath.Join(dir, "reasonix", "commands")) // legacy XDG user dir
+		dirs = append(dirs, filepath.Join(dir, "novel-agent", "commands")) // legacy XDG user dir
 	}
 	dirs = append(dirs, conventionSubdirsAsc(root, "commands")...)
 	return dirs

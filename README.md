@@ -1,6 +1,6 @@
 # AI Novel Agent · v2.x
 
-> Reasonix 底座 × 56 垂直 Skill × 本地 RAG 知识库 — 终端里的 AI 网文创作助手
+> ai-reasonix 底座 × 56 垂直 Skill × 本地 RAG 知识库 — 终端里的 AI 网文创作助手
 >
 > IDE 终端输入 `novel-agent` → 进入对话 → 写大纲、埋伏笔、续正文、查知识库
 

@@ -667,7 +667,7 @@ func (c *Controller) notice(text string) {
 }
 
 // Run executes a turn synchronously, returning the agent's error. Used by the
-// headless `reasonix run` path, where the Sink renders to stdout and the caller
+// headless `novel-agent run` path, where the Sink renders to stdout and the caller
 // just needs the exit status — no TurnDone event, no cancel bookkeeping.
 func (c *Controller) Run(ctx context.Context, input string) error {
 	c.maybeSessionStart(ctx)
@@ -1724,7 +1724,7 @@ func (c *Controller) Bypass() bool {
 // is disabled.
 
 // QuickAdd appends a one-line note to the doc-memory file for scope (project
-// REASONIX.md by default) — the write side of "#<note>". Returns the file written.
+// novel-agent.md by default) — the write side of "#<note>". Returns the file written.
 func (c *Controller) QuickAdd(scope memory.Scope, note string) (string, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

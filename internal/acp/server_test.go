@@ -137,7 +137,7 @@ func startServer(t *testing.T, factory Factory) (*rpcClient, func()) {
 	outR, outW := io.Pipe()
 	done := make(chan struct{})
 	go func() {
-		_ = Serve(context.Background(), inR, outW, factory, AgentInfo{Name: "reasonix-test", Version: "0"})
+		_ = Serve(context.Background(), inR, outW, factory, AgentInfo{Name: "novel-agent-test", Version: "0"})
 		close(done)
 	}()
 	client := newRPCClient(inW, outR)

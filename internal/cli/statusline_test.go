@@ -195,10 +195,10 @@ func TestStatuslinePutsGitIdentityOnModeRow(t *testing.T) {
 	if len(lines) != 2 {
 		t.Fatalf("status block lines = %d, want 2:\n%s", len(lines), strings.Join(lines, "\n"))
 	}
-	if !strings.Contains(lines[0], "effort auto · Reasonix@codex/demo (+3 -1 ?2)") {
+	if !strings.Contains(lines[0], "effort auto · novel-agent@codex/demo (+3 -1 ?2)") {
 		t.Fatalf("mode row should include effort before git identity:\n%s", strings.Join(lines, "\n"))
 	}
-	if strings.Contains(lines[1], "Reasonix@codex/demo") {
+	if strings.Contains(lines[1], "novel-agent@codex/demo") {
 		t.Fatalf("data row should not include git identity:\n%s", strings.Join(lines, "\n"))
 	}
 	if !strings.Contains(lines[1], "deepseek-v4-flash") || strings.Contains(lines[1], "effort auto") {
@@ -260,7 +260,7 @@ func renderStatuslineViewWithGitAndEffort(t *testing.T) string {
 	m.label = "deepseek-v4-flash"
 	m.effortLevel = "auto"
 	m.gitStatus = gitStatus{
-		Repo:      "Reasonix",
+		Repo:      "novel-agent",
 		Branch:    "codex/demo",
 		Added:     3,
 		Removed:   1,

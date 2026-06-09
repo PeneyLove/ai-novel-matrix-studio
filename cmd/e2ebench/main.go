@@ -47,7 +47,7 @@ type result struct {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "e2ebench â€?Reasonix end-to-end benchmark.\n\n")
+		fmt.Fprintf(flag.CommandLine.Output(), "e2ebench ï¿½?novel-agent end-to-end benchmark.\n\n")
 		fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", flag.CommandLine.Name())
 		flag.PrintDefaults()
 		fmt.Fprintf(flag.CommandLine.Output(), "\nExamples:\n")
@@ -59,7 +59,7 @@ func main() {
 
 	mode := flag.String("mode", "suite", "suite | diff (diff = generate tests for the PR diff and grade with the repo's tests)")
 	suite := flag.String("suite", "benchmarks/e2e", "suite root (contains tasks/<id>/)")
-	bin := flag.String("bin", "reasonix", "path to the reasonix binary")
+	bin := flag.String("bin", "novel-agent", "path to the novel-agent binary")
 	model := flag.String("model", "", "provider/model name (default: config default)")
 	outMD := flag.String("out", "", "write the markdown report here (default: stdout)")
 	outJSON := flag.String("json", "", "write the JSON report here (optional)")
@@ -214,7 +214,7 @@ func runTask(bin, model string, t task) result {
 	}
 	if runErr != nil {
 		r.Note = "run: " + runErr.Error()
-		// still grade â€?a non-zero exit may just be a max-steps notice
+		// still grade ï¿½?a non-zero exit may just be a max-steps notice
 	}
 
 	r.Passed = grade(work, t.dir)
@@ -262,7 +262,7 @@ func render(results []result) string {
 		}
 	}
 
-	fmt.Fprintf(&b, "## ğŸ¤– Reasonix e2e benchmark\n\n")
+	fmt.Fprintf(&b, "## ğŸ¤– novel-agent e2e benchmark\n\n")
 	fmt.Fprintf(&b, "**Accuracy:** %d/%d (%s) Â· **Cache hit:** %s Â· **Tokens:** %s (prompt %s / completion %s) Â· **Compactions:** %d Â· **Cost:** %s%.4f\n\n",
 		passed, ran, pct(passed, ran), pct(hit, hit+miss),
 		comma(pTok+cTok), comma(pTok), comma(cTok), compacts, currencySym(currency), cost)
@@ -272,11 +272,11 @@ func render(results []result) string {
 	for _, r := range results {
 		switch {
 		case r.Skipped:
-			fmt.Fprintf(&b, "| `%s` | â­ï¸ skipped | â€?| â€?| â€?| â€?| â€?| â€?|\n", r.ID)
+			fmt.Fprintf(&b, "| `%s` | â­ï¸ skipped | ï¿½?| ï¿½?| ï¿½?| ï¿½?| ï¿½?| ï¿½?|\n", r.ID)
 		default:
-			res := "â?fail"
+			res := "ï¿½?fail"
 			if r.Passed {
-				res = "âœ?pass"
+				res = "ï¿½?pass"
 			}
 			fmt.Fprintf(&b, "| `%s` | %s | %d | %s | %s | %s | %d | %s%.4f |\n",
 				r.ID, res, r.Steps, comma(r.PromptTokens), comma(r.CompletionTokens),

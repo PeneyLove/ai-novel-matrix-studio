@@ -138,7 +138,7 @@ func hitRate(u *provider.Usage) int {
 	return u.CacheHitTokens * 100 / denom
 }
 
-const systemPrompt = "You are reasonix, a coding agent. Be concise and follow project conventions. " +
+const systemPrompt = "you are novel-agent, a coding agent. Be concise and follow project conventions. " +
 	"This system prompt is the cacheable head of every request and must never change between turns."
 
 // longReasoning stands in for a deepseek-reasoner chain-of-thought that the agent
@@ -356,12 +356,12 @@ func TestSessionAggregateCacheRate(t *testing.T) {
 }
 
 func TestReleaseCacheHitGuard(t *testing.T) {
-	if os.Getenv("REASONIX_RELEASE_CACHE_GUARD") == "" {
-		t.Skip("set REASONIX_RELEASE_CACHE_GUARD=1 to run the release cache guard")
+	if os.Getenv("novel-agent_RELEASE_CACHE_GUARD") == "" {
+		t.Skip("set novel-agent_RELEASE_CACHE_GUARD=1 to run the release cache guard")
 	}
 
-	threshold := envInt("REASONIX_CACHE_GUARD_THRESHOLD", 90)
-	maxLowCases := envInt("REASONIX_CACHE_GUARD_MAX_LOW_CASES", 1)
+	threshold := envInt("novel-agent_CACHE_GUARD_THRESHOLD", 90)
+	maxLowCases := envInt("novel-agent_CACHE_GUARD_MAX_LOW_CASES", 1)
 
 	cases := []struct {
 		name string
@@ -450,7 +450,7 @@ func TestReleaseCacheHitGuard(t *testing.T) {
 		}
 		msg := fmt.Sprintf("%d cache guard cases are below %d%%: %s", len(lows), threshold, strings.Join(parts, ", "))
 		t.Logf("CACHE_GUARD_WARNING: %s", msg)
-		if os.Getenv("REASONIX_CACHE_GUARD_STRICT") != "" {
+		if os.Getenv("novel-agent_CACHE_GUARD_STRICT") != "" {
 			t.Fatal(msg)
 		}
 	}

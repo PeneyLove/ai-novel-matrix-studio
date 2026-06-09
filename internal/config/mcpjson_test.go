@@ -252,7 +252,7 @@ func TestClearPluginAuthenticationInSourcePrefersTOML(t *testing.T) {
 	if err := os.WriteFile("novel-agent.toml", []byte(`[[plugins]]
 name = "dida"
 type = "http"
-url = "https://reasonix.example/mcp?access_token=toml"
+url = "https://novel-agent.example/mcp?access_token=toml"
 [plugins.headers]
 Authorization = "Bearer ${TOML_TOKEN}"
 `), 0o644); err != nil {
@@ -279,7 +279,7 @@ Authorization = "Bearer ${TOML_TOKEN}"
 	if source != "novel-agent.toml" {
 		t.Fatalf("source = %q, want novel-agent.toml", source)
 	}
-	if updated.URL != "https://reasonix.example/mcp" {
+	if updated.URL != "https://novel-agent.example/mcp" {
 		t.Fatalf("updated URL = %q", updated.URL)
 	}
 

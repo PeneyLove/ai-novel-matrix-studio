@@ -1,6 +1,6 @@
 package skill
 
-// Built-in skills ship with Reasonix and back the dedicated subagent tools
+// Built-in skills ship with novel-agent and back the dedicated subagent tools
 // (explore / research / review / security_review) plus the inline `test`
 // playbook. A user/project file with the same name overrides the built-in (see
 // Store.List / Store.Read). Tool names in the bodies match internal/tool/builtin.

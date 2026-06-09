@@ -37,15 +37,15 @@ type Messages struct {
 	NoKey           string // status dot — no API key set
 	Ready           string // status dot — provider ready
 	GetStarted      string // section title above numbered steps
-	StepScaffold    string // step 1 desc — reasonix setup
+	StepScaffold    string // step 1 desc — novel-agent setup
 	StepSetKey      string // step 2 command label
 
-	// `reasonix init` — points to the in-session /init skill + setup
+	// `novel-agent init` — points to the in-session /init skill + setup
 	InitHint       string
 	StepSetKeyHint string // step 2 desc — env var hint
-	StepChatDesc   string // reasonix chat step desc
-	StepRunDesc    string // reasonix run step desc
-	HelpFooter     string // dim footer linking to reasonix help
+	StepChatDesc   string // novel-agent chat step desc
+	StepRunDesc    string // novel-agent run step desc
+	HelpFooter     string // dim footer linking to novel-agent help
 
 	// chat REPL
 	ChatTip           string // tip line under the chat banner
@@ -325,7 +325,7 @@ type Messages struct {
 
 	// top-level / runAgent
 	UnknownCommandFmt         string // "unknown command %q"
-	UsageRunHint              string // "usage: reasonix run [--model NAME] <task>"
+	UsageRunHint              string // "usage: novel-agent run [--model NAME] <task>"
 	ErrorPrefix               string // "error:" — prefix for fatal-error output
 	ReconfigureOnUnknownModel string // shown when the configured model no longer resolves and setup is re-run
 	WriteConfigErr            string // "write config:" — prefix for write failure
@@ -378,7 +378,7 @@ var M = English
 // environment and installs it as M. Returns the resolved tag ("en", "zh") so
 // callers can log or expose it.
 //
-// Priority: override > REASONIX_LANG > LC_ALL > LC_MESSAGES > LANG > "en".
+// Priority: override > NOVEL_AGENT_LANG > LC_ALL > LC_MESSAGES > LANG > "en".
 func DetectLanguage(override string) string {
 	for _, c := range append([]string{override}, envCandidates()...) {
 		if tag := normalize(c); tag != "" {
@@ -389,7 +389,7 @@ func DetectLanguage(override string) string {
 }
 
 func envCandidates() []string {
-	keys := []string{"REASONIX_LANG", "LC_ALL", "LC_MESSAGES", "LANG"}
+	keys := []string{"NOVEL_AGENT_LANG", "LC_ALL", "LC_MESSAGES", "LANG"}
 	out := make([]string, len(keys))
 	for i, k := range keys {
 		out[i] = os.Getenv(k)

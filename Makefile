@@ -1,4 +1,4 @@
-# AI Novel Agent — Makefile (built on Reasonix harness)
+# AI Novel Agent — Makefile (built on novel-agent harness)
 VERSION := $(shell git describe --tags --always 2>/dev/null || echo dev)
 LDFLAGS := -s -w -X main.version=$(VERSION)
 GOEXE := $(shell go env GOEXE)
@@ -10,7 +10,7 @@ CODEGRAPH_VERSION := v0.9.7
 
 build:
 	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/novel-agent$(GOEXE) ./cmd/novel-agent
-	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/novel-agent-plugin-example$(GOEXE) ./cmd/reasonix-plugin-example
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/novel-agent-plugin-example$(GOEXE) ./cmd/novel-agent-plugin-example
 
 vet:
 	go vet ./...
@@ -44,5 +44,5 @@ e2e-codegraph:
 	rm -rf $$dest && mkdir -p $$dest; \
 	gh release download $(CODEGRAPH_VERSION) -R colbymchenry/codegraph -p $$asset -O /tmp/$$asset; \
 	tar -xzf /tmp/$$asset -C $$dest --strip-components=1; \
-	REASONIX_CODEGRAPH_E2E=1 REASONIX_CODEGRAPH_BIN=$$PWD/$$dest/bin/codegraph \
+	novel-agent_CODEGRAPH_E2E=1 novel-agent_CODEGRAPH_BIN=$$PWD/$$dest/bin/codegraph \
 		go test ./internal/codegraph/ -run E2E -v -count=1

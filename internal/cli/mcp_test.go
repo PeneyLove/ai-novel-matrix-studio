@@ -313,7 +313,7 @@ func TestMCPEditConfigLaunchUsesVisualBeforeEditor(t *testing.T) {
 	t.Setenv("VISUAL", "vim")
 	t.Setenv("EDITOR", "nano")
 
-	path := "/tmp/reasonix config.toml"
+	path := "/tmp/novel-agent config.toml"
 	launch, err := mcpEditConfigLaunchCommand(path, func(string) (string, error) {
 		t.Fatal("lookPath should not be called when VISUAL is set")
 		return "", errors.New("unexpected lookup")
@@ -413,7 +413,7 @@ func TestApplyMCPModeRecordsPluginConnectFailure(t *testing.T) {
 	isolateUserConfig(t)
 	t.Setenv("PATH", "")
 	cfg := config.Default()
-	cfg.Plugins = []config.PluginEntry{{Name: "broken", Command: "definitely-missing-reasonix-mcp", Tier: "lazy"}}
+	cfg.Plugins = []config.PluginEntry{{Name: "broken", Command: "definitely-missing-novel-agent-mcp", Tier: "lazy"}}
 	if err := cfg.SaveTo("novel-agent.toml"); err != nil {
 		t.Fatalf("save config: %v", err)
 	}
@@ -448,7 +448,7 @@ func TestApplyMCPModeRecordsPluginConnectFailure(t *testing.T) {
 func TestApplyMCPModeRecordsCodegraphConnectFailure(t *testing.T) {
 	isolateUserConfig(t)
 	t.Setenv("PATH", "")
-	t.Setenv("REASONIX_CACHE_DIR", t.TempDir())
+	t.Setenv("novel-agent_CACHE_DIR", t.TempDir())
 	cfg := config.Default()
 	cfg.Codegraph.Enabled = false
 	cfg.Codegraph.Tier = "lazy"

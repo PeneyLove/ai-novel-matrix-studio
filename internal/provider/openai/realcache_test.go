@@ -20,7 +20,7 @@ type probeResult struct {
 
 // TestRealDeepSeekCacheProbe is an env-gated end-to-end probe against the live
 // DeepSeek API. It answers, with real numbers:
-//  1. does DeepSeek's auto cache actually serve reasonix's request shape, and how
+//  1. does DeepSeek's auto cache actually serve novel-agent's request shape, and how
 //     much does a repeated prefix hit;
 //  2. does deepseek-v4-flash even return reasoning_content (i.e. is the round-trip
 //     amplifier real for this model);

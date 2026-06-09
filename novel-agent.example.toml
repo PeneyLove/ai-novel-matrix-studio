@@ -1,17 +1,17 @@
-# Reasonix configuration.
+# novel-agent configuration.
 # Resolution order: flag > ./novel-agent.toml > ~/.config/novel-agent/config.toml > built-in defaults.
 # Secrets come from the environment via api_key_env; never put keys here.
 
 default_model = "deepseek"   # a provider name (→ its default model) or "provider/model"
-# language      = "zh"   # ui language; empty = auto-detect from $LANG / $REASONIX_LANG
+# language      = "zh"   # ui language; empty = auto-detect from $LANG / $novel-agent_LANG
 
 [ui]
-theme = "auto"   # auto|dark|light; controls CLI colors only; REASONIX_THEME can override per run
+theme = "auto"   # auto|dark|light; controls CLI colors only; novel-agent_THEME can override per run
 # theme_style = "graphite"   # graphite|ember|aurora|midnight|sandstone|porcelain|linen|glacier
 
 [agent]
 system_prompt = """
-You are Reasonix, a coding agent focused on executing code tasks.
+You are novel-agent, a coding agent focused on executing code tasks.
 Use the provided tools to read and write files and run shell commands.
 Principles: understand the request before acting; verify with tools instead of
 guessing; keep changes minimal and correct; briefly summarize what you did."""
@@ -27,7 +27,7 @@ compact_force_ratio = 0.9   # force compacting at this high-water mark
 # subagent_model = "deepseek-pro"   # optional default for runAs=subagent skills
 # subagent_models = { review = "deepseek-pro", security_review = "deepseek-pro" }   # per-skill overrides
 # output_style = "explanatory"   # persona/tone folded into the prompt: explanatory | learning | concise,
-#                                  or a custom .reasonix/output-styles/<name>.md ; empty = default
+#                                  or a custom .novel-agent/output-styles/<name>.md ; empty = default
 
 # A provider is a vendor endpoint (one base_url + key) that offers one or more
 # models. Use `models = [...]` to expose several under a single entry — switching
@@ -93,11 +93,11 @@ enabled = []   # empty = all built-in tools
 # [codegraph]
 # enabled      = false
 # auto_install = true
-# path         = ""   # empty = cache, then PATH, then a bundle beside reasonix
+# path         = ""   # empty = cache, then PATH, then a bundle beside novel-agent
 # tier         = "lazy"   # lazy | background | eager
 
 # Skills are invokable playbooks (SKILL.md / <name>.md with frontmatter), found
-# under .reasonix/skills, .agents/skills, .agent/skills, .claude/skills (project)
+# under .novel-agent/skills, .agents/skills, .agent/skills, .claude/skills (project)
 # and the same dirs under ~ (global). Built-ins (explore/research/review/security-review/test)
 # ship out of the box. The model invokes them via run_skill / explore / …; you
 # invoke them via /<name>. Manage with /skill (list, show, enable, disable, new, paths).
@@ -107,10 +107,10 @@ enabled = []   # empty = all built-in tools
 
 # Hooks run shell commands around the loop (PreToolUse / PostToolUse /
 # UserPromptSubmit / Stop). They are NOT configured here — put them in
-# settings.json: ~/.reasonix/settings.json (global, always on) and
-# <project>/.reasonix/settings.json (project, runs only after `/hooks trust`).
+# settings.json: ~/.novel-agent/settings.json (global, always on) and
+# <project>/.novel-agent/settings.json (project, runs only after `/hooks trust`).
 # Exit 0 = pass, exit 2 = block (PreToolUse / UserPromptSubmit only). Example
-# ~/.reasonix/settings.json:
+# ~/.novel-agent/settings.json:
 #   { "hooks": {
 #       "PreToolUse":  [ { "match": "bash", "command": "my-guard.sh" } ],
 #       "PostToolUse": [ { "match": ".*file", "command": "gofmt -w ." } ],
@@ -124,7 +124,7 @@ enabled = []   # empty = all built-in tools
 # External stdio plugins (MCP-compatible); each is a standalone executable.
 # [[plugins]]
 # name    = "example"
-# command = "reasonix-plugin-example"
+# command = "novel-agent-plugin-example"
 # tier    = "lazy"  # eager | lazy (default) | background
 # # tier guidance:
 # #   eager      — handshake at boot; the agent waits. Use when the plugin's

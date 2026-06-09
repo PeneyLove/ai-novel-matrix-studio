@@ -29,7 +29,7 @@ name = "deepseek-flash"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "deepseek-v4-flash"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
 
 	_, err := Build(context.Background(), Options{Sink: event.Discard})
@@ -48,7 +48,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 // builds fine (RequireKey is false so the UI stays reachable) but must emit a
 // notice naming the env var, instead of silently showing a dead/empty model.
 func TestBuildNoticesMissingAPIKey(t *testing.T) {
-	const keyEnv = "REASONIX_MISSING_KEY_FOR_TEST"
+	const keyEnv = "novel-agent_MISSING_KEY_FOR_TEST"
 	dir := t.TempDir()
 	t.Chdir(dir)
 	writeFile(t, dir, "novel-agent.toml", `

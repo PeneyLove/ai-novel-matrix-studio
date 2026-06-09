@@ -15,16 +15,16 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tool"
 )
 
-// buildExamplePlugin compiles cmd/reasonix-plugin-example into a temp binary and
+// buildExamplePlugin compiles cmd/novel-agent-plugin-example into a temp binary and
 // returns its path. Building from inside the module lets `go build` resolve the
 // import path regardless of the test's working directory.
 func buildExamplePlugin(t *testing.T) string {
 	t.Helper()
-	bin := filepath.Join(t.TempDir(), "reasonix-plugin-example")
+	bin := filepath.Join(t.TempDir(), "novel-agent-plugin-example")
 	if runtime.GOOS == "windows" {
 		bin += ".exe"
 	}
-	out, err := exec.Command("go", "build", "-o", bin, "github.com/PeneyLove/ai-novel-matrix-studio/cmd/reasonix-plugin-example").CombinedOutput()
+	out, err := exec.Command("go", "build", "-o", bin, "github.com/PeneyLove/ai-novel-matrix-studio/cmd/novel-agent-plugin-example").CombinedOutput()
 	if err != nil {
 		t.Fatalf("build example plugin: %v\n%s", err, out)
 	}

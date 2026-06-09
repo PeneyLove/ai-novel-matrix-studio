@@ -1,4 +1,4 @@
-// Package builtin provides Reasonix's compile-time built-in tools. Each tool
+// Package builtin provides novel-agent's compile-time built-in tools. Each tool
 // self-registers via init(); main blank-imports this package to wire them in.
 package builtin
 

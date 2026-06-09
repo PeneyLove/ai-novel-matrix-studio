@@ -50,7 +50,7 @@ func (r *MigrationResult) Notice() string {
 		fmt.Fprintf(&b, " (%d MCP server(s))", r.Plugins)
 	}
 	if r.KeyToEnv {
-		b.WriteString("; API key saved to reasonix's credentials store")
+		b.WriteString("; API key saved to novel-agent's credentials store")
 	}
 	b.WriteString(". The old files were left untouched.")
 	for _, w := range r.Warnings {
@@ -241,8 +241,8 @@ func mergeEnv(base, overlay map[string]string) map[string]string {
 	return out
 }
 
-// writeCredentialsEnv merges lines into the reasonix-owned global credentials
-// file (UserCredentialsPath, e.g. %AppData%\reasonix\credentials), replacing any
+// writeCredentialsEnv merges lines into the novel-agent-owned global credentials
+// file (UserCredentialsPath, e.g. %AppData%\novel-agent\credentials), replacing any
 // existing assignment of the same key, and pins them into the current process env
 // so the just-built session resolves the key without a restart. Falls back to
 // ~/.env only when the user config dir can't be resolved — never a project .env,

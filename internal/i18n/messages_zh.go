@@ -190,7 +190,7 @@ var Chinese = Messages{
 	ArgEffortXHigh:  "超高推理",
 	ArgEffortMax:    "最高推理",
 	ArgThemeCurrent: "当前",
-	ArgLanguageAuto: "从 REASONIX_LANG / 系统 locale 自动检测",
+	ArgLanguageAuto: "从 NOVEL_AGENT_LANG / 系统 locale 自动检测",
 	ArgLanguageEn:   "English",
 	ArgLanguageZh:   "中文",
 
@@ -205,7 +205,7 @@ var Chinese = Messages{
 	ListMcpHeader:       "MCP 服务器",
 	ListMcpNone:         "未连接 MCP 服务器 — 在 novel-agent.toml（[[plugins]]）或项目 .mcp.json 中添加",
 
-	MemoryNone:             "还没有加载任何记忆 — 输入 “/remember 内容” 可快速记录，也可以在项目根目录创建 REASONIX.md",
+	MemoryNone:             "还没有加载任何记忆 — 输入 “/remember 内容” 可快速记录，也可以在项目根目录创建 novel-agent.md",
 	MemoryLoaded:           "当前已加载的记忆：",
 	MemorySavedHeader:      "  已记录的条目（用 “/forget <name>” 删除）：",
 	MemoryStoredUnderFmt:   "  存放于 %s",

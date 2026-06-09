@@ -20,14 +20,14 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/provider"
 
 	// Blank imports register the provider kind and built-in tools the same way
-	// cmd/reasonix's main does; without them Build sees an empty provider
+	// cmd/novel-agent's main does; without them Build sees an empty provider
 	// registry and a bare tool set.
 	_ "github.com/PeneyLove/ai-novel-matrix-studio/internal/provider/openai"
 	_ "github.com/PeneyLove/ai-novel-matrix-studio/internal/tool/builtin"
 )
 
 // TestBuildFoldsProjectMemoryIntoSystemPrompt is the end-to-end proof of the
-// cache-first wiring: a project REASONIX.md is discovered at boot and folded
+// cache-first wiring: a project novel-agent.md is discovered at boot and folded
 // into the session's system message (the cached prefix), and the `remember`
 // tool is registered. It builds a real Controller from a throwaway project dir.
 func TestBuildFoldsProjectMemoryIntoSystemPrompt(t *testing.T) {
@@ -48,9 +48,9 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
-	writeFile(t, dir, "REASONIX.md", "Project rule: always run go vet before committing.")
+	writeFile(t, dir, "novel-agent.md", "Project rule: always run go vet before committing.")
 
 	ctrl, err := Build(context.Background(), Options{}) // RequireKey false: no network/key needed
 	if err != nil {
@@ -65,7 +65,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 		t.Fatalf("base prompt missing from system message:\n%s", sys)
 	}
 	if !strings.Contains(sys, "always run go vet before committing") {
-		t.Fatalf("project REASONIX.md not folded into system message:\n%s", sys)
+		t.Fatalf("project novel-agent.md not folded into system message:\n%s", sys)
 	}
 	// Base must come first so it stays a valid cache prefix when memory changes.
 	if strings.Index(sys, "BASE SYSTEM PROMPT") > strings.Index(sys, "always run go vet") {
@@ -73,7 +73,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	}
 
 	if mem := ctrl.Memory(); mem == nil || len(mem.Docs) == 0 {
-		t.Fatal("controller memory set is empty after discovering REASONIX.md")
+		t.Fatal("controller memory set is empty after discovering novel-agent.md")
 	}
 }
 
@@ -100,7 +100,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
 	writeFile(t, dir, ".novel-agent/skills/projskill.md", "---\ndescription: a project skill\n---\nplaybook")
 
@@ -155,7 +155,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
 	writeFile(t, dir, ".novel-agent/skills/projskill.md", "---\ndescription: a project skill\n---\nplaybook")
 
@@ -202,11 +202,11 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 
 [[plugins]]
 name = "missing"
-command = "reasonix-missing-mcp-binary"
+command = "novel-agent-missing-mcp-binary"
 tier = "eager"
 `)
 	var notices []event.Event
@@ -257,7 +257,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
 
 	ctrl, err := Build(context.Background(), Options{})
@@ -270,7 +270,7 @@ api_key_env = "REASONIX_TEST_KEY_UNSET"
 	// The built-in skills always append a "# Skills" index to the prefix; this
 	// test is about memory, so strip that and assert the remaining base is exactly
 	// the configured prompt — i.e. no *project/ancestor* memory leaked in. (A
-	// user-global REASONIX.md in the real config dir could append; the test
+	// user-global novel-agent.md in the real config dir could append; the test
 	// environment has none, so the base stands alone.)
 	base := sys
 	if i := strings.Index(sys, "\n\n# Skills"); i >= 0 {
@@ -301,7 +301,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `)
 
 	ctrl, err := Build(context.Background(), Options{})
@@ -558,7 +558,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 
 [[plugins]]
 name = "eagermock"
@@ -620,7 +620,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 
 [[plugins]]
 name = "lazymock"
@@ -686,7 +686,7 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 `, launcher))
 
 	var notices []event.Event
@@ -766,11 +766,11 @@ name = "test-model"
 kind = "openai"
 base_url = "https://example.invalid"
 model = "x"
-api_key_env = "REASONIX_TEST_KEY_UNSET"
+api_key_env = "novel-agent_TEST_KEY_UNSET"
 
 [[plugins]]
 name = "slowserver"
-command = "reasonix-missing-slow-mcp-binary"
+command = "novel-agent-missing-slow-mcp-binary"
 tier = "eager"
 `)
 

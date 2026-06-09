@@ -54,13 +54,13 @@ func TestHideWindowDetachedSetsDetachedProcess(t *testing.T) {
 }
 
 func TestHideWindowPreservesStdoutCapture(t *testing.T) {
-	cmd := exec.Command("cmd", "/c", "echo", "reasonix-ok")
+	cmd := exec.Command("cmd", "/c", "echo", "novel-agent-ok")
 	HideWindow(cmd)
 	out, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("command failed: %v", err)
 	}
-	if !strings.Contains(string(out), "reasonix-ok") {
-		t.Fatalf("output = %q, want it to contain reasonix-ok", out)
+	if !strings.Contains(string(out), "novel-agent-ok") {
+		t.Fatalf("output = %q, want it to contain novel-agent-ok", out)
 	}
 }

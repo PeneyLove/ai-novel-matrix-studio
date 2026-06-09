@@ -120,7 +120,7 @@ func (webFetch) Execute(ctx context.Context, args json.RawMessage) (string, erro
 	}
 	// A plain UA + Accept tip the server toward returning text/HTML rather
 	// than minified asset bundles or binary content.
-	req.Header.Set("User-Agent", "reasonix-web-fetch/1.0")
+	req.Header.Set("User-Agent", "novel-agent-web-fetch/1.0")
 	req.Header.Set("Accept", "text/html,text/plain,text/markdown,application/json,*/*;q=0.5")
 
 	resp, err := ssrfGuardedClient().Do(req)

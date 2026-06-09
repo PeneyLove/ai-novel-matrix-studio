@@ -55,7 +55,7 @@ type Memory struct {
 }
 
 // StoreFor resolves the auto-memory directory for a project working dir under
-// the user config root, e.g. ~/.config/reasonix/projects/-Users-me-proj/memory.
+// the user config root, e.g. ~/.config/novel-agent/projects/-Users-me-proj/memory.
 // A "" userDir (config dir unresolvable) yields a zero Store, which all methods
 // treat as a disabled no-op.
 func StoreFor(userDir, cwd string) Store {

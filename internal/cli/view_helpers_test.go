@@ -60,11 +60,11 @@ func TestRenderMemoryGroupsDocsAndStore(t *testing.T) {
 		t.Fatalf("save memory: %v", err)
 	}
 	got := renderMemory(width, &memory.Set{
-		Docs:  []memory.Source{{Path: "/Users/me/project/REASONIX.md", Scope: memory.ScopeProject}},
+		Docs:  []memory.Source{{Path: "/Users/me/project/novel-agent.md", Scope: memory.ScopeProject}},
 		Store: store,
 		Index: store.Index(),
 	})
-	for _, want := range []string{"memory", "docs", "(project)", "REASONIX.md", "saved memories", "saved-fact", "Saved Fact", "doc edits apply next session"} {
+	for _, want := range []string{"memory", "docs", "(project)", "novel-agent.md", "saved memories", "saved-fact", "Saved Fact", "doc edits apply next session"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("memory view missing %q:\n%s", want, got)
 		}

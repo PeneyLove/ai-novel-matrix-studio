@@ -16,7 +16,7 @@ import (
 // edit.go is the programmatic mutation surface a settings UI drives: change the
 // default model, add/remove a provider, set the planner, edit permission rules,
 // add/remove an MCP server — each validated, then persisted with SaveTo. It is
-// separate from the `reasonix setup` wizard (cli) so a GUI can apply one setting at a
+// separate from the `novel-agent setup` wizard (cli) so a GUI can apply one setting at a
 // time without replaying the whole interactive flow. Every mutator works on the
 // in-memory *Config; nothing writes to disk until SaveTo/Save is called, so a UI
 // can stage several changes and commit once. Mutations round-trip through
@@ -98,7 +98,7 @@ func (c *Config) SetProviderEffort(name, effort string) error {
 	return fmt.Errorf("set provider effort: no provider %q", name)
 }
 
-// SetLanguage pins the CLI UI/model language; empty/auto clears the override so runtime detection falls back to REASONIX_LANG / locale.
+// SetLanguage pins the CLI UI/model language; empty/auto clears the override so runtime detection falls back to NOVEL_AGENT_LANG / locale.
 func (c *Config) SetLanguage(lang string) error {
 	switch strings.ToLower(strings.TrimSpace(lang)) {
 	case "", "auto":
@@ -524,7 +524,7 @@ func SaveMinimalProjectAutoPlan(path, mode string) (string, error) {
 	if err := cfg.SetAutoPlan(mode); err != nil {
 		return "", err
 	}
-	body := fmt.Sprintf(`# Reasonix project configuration.
+	body := fmt.Sprintf(`# novel-agent project configuration.
 # Project-local overrides are merged over the user config.
 
 [agent]

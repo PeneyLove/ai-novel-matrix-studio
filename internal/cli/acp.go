@@ -22,7 +22,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/tool/builtin"
 )
 
-// acpCommand runs Reasonix as an Agent Client Protocol agent: a stdio JSON-RPC
+// acpCommand runs novel-agent as an Agent Client Protocol agent: a stdio JSON-RPC
 // server that editors and other host clients drive (initialize, session/new,
 // session/prompt, session/cancel). It keeps v2 wire-compatible with the many
 // tools that integrated with v1 over ACP.
@@ -60,7 +60,7 @@ func acpCommand(args []string, version string) int {
 	defer stop()
 
 	factory := &acpFactory{cfg: cfg, model: modelName}
-	info := acp.AgentInfo{Name: "reasonix", Version: version}
+	info := acp.AgentInfo{Name: "novel-agent", Version: version}
 	if err := acp.Serve(ctx, os.Stdin, os.Stdout, factory, info); err != nil {
 		fmt.Fprintln(os.Stderr, i18n.M.ErrorPrefix, err)
 		return 1

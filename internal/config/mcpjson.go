@@ -11,7 +11,7 @@ import (
 	"github.com/PeneyLove/ai-novel-matrix-studio/internal/mcpdiag"
 )
 
-// mcpJSONFile is the project-root file Claude Code calls .mcp.json. Reasonix reads
+// mcpJSONFile is the project-root file Claude Code calls .mcp.json. novel-agent reads
 // it so an MCP server already configured for Claude works here unchanged — the
 // server specs map field-for-field onto PluginEntry.
 const mcpJSONFile = ".mcp.json"
@@ -120,7 +120,7 @@ func pluginEntryFromMCPSpec(name string, s mcpServerSpec) PluginEntry {
 
 // mergeMCPJSON appends servers from .mcp.json that the TOML config did not
 // already declare. novel-agent.toml's [[plugins]] win on a name collision: it is the
-// Reasonix-specific, more explicit of the two, so it overrides the shared,
+// novel-agent-specific, more explicit of the two, so it overrides the shared,
 // checked-in .mcp.json rather than the other way round.
 func (c *Config) mergeMCPJSON(entries []PluginEntry) {
 	have := make(map[string]bool, len(c.Plugins))

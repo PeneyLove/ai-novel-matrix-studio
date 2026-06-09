@@ -189,7 +189,7 @@ var English = Messages{
 	ArgEffortXHigh:  "extra deep reasoning",
 	ArgEffortMax:    "maximum reasoning",
 	ArgThemeCurrent: "current",
-	ArgLanguageAuto: "auto-detect from REASONIX_LANG / locale",
+	ArgLanguageAuto: "auto-detect from NOVEL_AGENT_LANG / locale",
 	ArgLanguageEn:   "English",
 	ArgLanguageZh:   "中文",
 
@@ -204,7 +204,7 @@ var English = Messages{
 	ListMcpHeader:       "mcp servers",
 	ListMcpNone:         "mcp: no servers connected — add one in novel-agent.toml ([[plugins]]) or a project .mcp.json",
 
-	MemoryNone:             "memory: none — add with “/remember <note>” or create REASONIX.md in the project root",
+	MemoryNone:             "memory: none — add with “/remember <note>” or create novel-agent.md in the project root",
 	MemoryLoaded:           "memory loaded:",
 	MemorySavedHeader:      "  saved memories (delete with “/forget <name>”):",
 	MemoryStoredUnderFmt:   "  stored under %s",
@@ -303,7 +303,7 @@ var English = Messages{
 	SelectOneHint:  "(↑/↓ · Enter · q to cancel)",
 	SelectManyHint: "(↑/↓ · Space · Enter · q)",
 
-	UsageBody: `novel-agent — an AI novel-writing assistant for your terminal (Reasonix harness, multi-model)
+	UsageBody: `novel-agent — an AI novel-writing assistant for your terminal (novel-agent harness, multi-model)
 
 Usage:
   novel-agent chat [--model NAME] [-c|--continue] [--resume]   interactive session (multi-turn; -c resumes latest, --resume picks one)
