@@ -164,10 +164,10 @@ func (c *Config) UICloseBehavior() string {
 
 // LSPConfig governs the optional Language Server Protocol tools (lsp_definition,
 // lsp_references, lsp_hover, lsp_diagnostics). Enabled defaults to true; the
-// servers themselves are never bundled â€?each resolves on PATH and the tool
+// servers themselves are never bundled â€” each resolves on PATH and the tool
 // returns an install hint when it is missing, so the capability is dormant until
 // the user installs a server. Servers overrides or extends the built-in language
-// â†?server map, keyed by language id (e.g. "go", "rust", "python").
+// â†’ server map, keyed by language id (e.g. "go", "rust", "python").
 type LSPConfig struct {
 	Enabled bool                 `toml:"enabled"`
 	Servers map[string]LSPServer `toml:"servers"`
@@ -186,8 +186,15 @@ type LSPServer struct {
 	InstallHint string            `toml:"install_hint"`
 }
 
+// StatuslineConfig configures a custom status line. Command, when set, is run at
+// startup and after each turn; its first line of stdout replaces the built-in
+// status data row. A JSON payload (model, context tokens, cwd) is fed on stdin.
+type StatuslineConfig struct {
+	Command string `toml:"command"`
+}
+
 // RAGConfig configures the Retrieval-Augmented Generation knowledge base for
-// novel writing ¡ª a vector store of popular novels the agent can query.
+// novel writing â€” a vector store of popular novels the agent can query.
 // Supports two modes:
 //   - "remote": queries an external vector-store API at endpoint
 //   - "local":  reads .txt chapter files from local_path (ragCore directory tree)
@@ -201,14 +208,7 @@ type RAGConfig struct {
 	LocalPath string `toml:"local_path"`  // path to local ragCore/ directory (local mode)
 }
 
-// StatuslineConfig configures a custom status line. Command, when set, is run at
-// startup and after each turn; its first line of stdout replaces the built-in
-// status data row. A JSON payload (model, context tokens, cwd) is fed on stdin.
-type StatuslineConfig struct {
-	Command string `toml:"command"`
-}
-
-// CodegraphConfig governs the built-in CodeGraph MCP server â€?symbol/call-graph
+// CodegraphConfig governs the built-in CodeGraph MCP server â€” symbol/call-graph
 // code intelligence (tree-sitter + SQLite) that gives the agent codegraph_*
 // search / context / explore / trace / node tools. Enabled defaults to true so
 // upgrades keep it for existing configs; first-run scaffolds write enabled =
@@ -304,7 +304,7 @@ func (c *Config) NetworkProxyMode() string {
 }
 
 // SkillsConfig configures skill discovery. Paths adds extra "custom"-scope skill
-// roots â€?each a directory of SKILL.md / <name>.md playbooks â€?scanned between
+// roots â€” each a directory of SKILL.md / <name>.md playbooks â€” scanned between
 // the project roots (.reasonix/.agents/.claude under the workspace) and the
 // global roots (the same three under the home dir). ~ and relative paths and
 // ${VAR} expansion are supported. DisabledSkills hides named skills from the
@@ -520,7 +520,7 @@ type ToolsConfig struct {
 	Search  SearchConfig `toml:"search"`
 }
 
-// SearchConfig tunes the grep tool's engine. Engine is "auto" (default â€?use
+// SearchConfig tunes the grep tool's engine. Engine is "auto" (default â€” use
 // ripgrep when it's on PATH, else the native Go scanner), "native" (always Go),
 // or "rg" (require ripgrep; warn at startup and fall back to native if absent).
 // RgPath optionally points at a specific ripgrep binary instead of a PATH lookup.
@@ -560,12 +560,12 @@ type PluginEntry struct {
 	// Nil preserves historical behavior: configured servers start automatically.
 	AutoStart *bool `toml:"auto_start"`
 	// Tier selects how aggressively the server is connected at boot:
-	//   "eager"      â€?blocks startup until the handshake completes; required for
+	//   "eager"      â€” blocks startup until the handshake completes; required for
 	//                  servers whose tools the system prompt depends on.
-	//   "lazy"       â€?registers placeholder tools immediately (from on-disk
+	//   "lazy"       â€” registers placeholder tools immediately (from on-disk
 	//                  schema cache when available) and only spawns the real
 	//                  subprocess on first model use. Default for user plugins.
-	//   "background" â€?placeholder + spawn fired at boot but not waited on;
+	//   "background" â€” placeholder + spawn fired at boot but not waited on;
 	//                  swap happens once the spawn finishes.
 	// Empty defaults to "lazy" so adding a plugin never slows the next launch.
 	Tier string `toml:"tier"`
@@ -608,12 +608,12 @@ const DefaultSystemPrompt = `You are Reasonix, a coding agent focused on executi
 Use the provided tools to read and write files and run shell commands.
 Principles: understand the request before acting; verify with tools instead of
 guessing; keep changes minimal and correct; briefly summarize what you did.
-When the request leaves a real choice to the user â€?which approach or library,
-the scope, or a consequential or ambiguous decision â€?call the ask tool to offer
+When the request leaves a real choice to the user â€” which approach or library,
+the scope, or a consequential or ambiguous decision â€” call the ask tool to offer
 2-4 concrete options rather than guessing or burying the question in prose. Skip
 it when there's an obvious default; don't ask just to confirm.
 For multi-step work, track progress with the todo_write tool: lay out the steps,
-keep exactly one in_progress, and flip each to completed as you finish it â€?update
+keep exactly one in_progress, and flip each to completed as you finish it â€” update
 the list as you go, not just at the end.
 In plan mode the harness blocks writer tools: do read-only research, then write a
 concise plan as your reply and stop. The user is asked to approve before anything
@@ -625,7 +625,7 @@ is changed; once approved, work through the steps, updating the task list as you
 const LanguagePolicy = `Reply in the same language the user is using in their most recent message: ` +
 	`if they write in Chinese answer in Chinese, in English answer in English, and switch ` +
 	`whenever they switch. Let this also guide the language you think in. Always keep code, ` +
-	`identifiers, file paths, shell commands, and technical terms in their original form â€?never translate them.`
+	`identifiers, file paths, shell commands, and technical terms in their original form â€” never translate them.`
 
 // Default returns the built-in default configuration (DeepSeek + MiMo presets).
 func Default() *Config {
@@ -645,7 +645,7 @@ func Default() *Config {
 			CompactRatio:      0.8,
 			CompactForceRatio: 0.9,
 		},
-		// Mode "ask" with no rules keeps `reasonix run` autonomous (no TTY â†?ask
+		// Mode "ask" with no rules keeps `reasonix run` autonomous (no TTY â†’ ask
 		// resolves to allow) while `reasonix chat` prompts before writers. Users add
 		// deny/allow rules to harden or quiet specific tools.
 		Permissions: PermissionsConfig{Mode: "ask"},
@@ -738,7 +738,7 @@ func LoadForRoot(root string) (*Config, error) {
 	normalizeLegacyEffort(cfg)
 	backfillDeepSeekPro(cfg)
 	// First run (no config file anywhere): keep CodeGraph off until the user opts
-	// in. An existing config â€?even one without a [codegraph] section â€?keeps the
+	// in. An existing config â€” even one without a [codegraph] section â€” keeps the
 	// built-in default (on), so an upgrade never silently drops code intelligence.
 	if !sawConfigFile {
 		cfg.Codegraph.Enabled = false
@@ -748,7 +748,7 @@ func LoadForRoot(root string) (*Config, error) {
 
 // backfillDeepSeekPro restores deepseek-pro for configs the pre-fix setup wizard
 // wrote with only deepseek-v4-flash: a keyless /models probe used to drop the Pro
-// SKU, leaving users unable to switch to it. In-memory only â€?the user's file is
+// SKU, leaving users unable to switch to it. In-memory only â€” the user's file is
 // untouched. Narrowly scoped to the official DeepSeek endpoint (which is known to
 // serve pro) so a custom flash-only deployment isn't given an entry that 404s.
 func backfillDeepSeekPro(c *Config) {
@@ -890,7 +890,7 @@ func ArchiveDir() string {
 
 // SessionDir is where chat sessions are persisted (one .jsonl per session).
 // Used by `reasonix chat --continue` / `--resume` to find the recent ones. Empty
-// if the user config dir can't be resolved â€?sessions then aren't saved.
+// if the user config dir can't be resolved â€” sessions then aren't saved.
 func SessionDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
@@ -903,7 +903,7 @@ func SessionDir() string {
 // handshake snapshots, plugin startup-latency telemetry. Lives beside the
 // existing dirs (UserConfigDir/reasonix/...) so the whole reasonix state tree
 // shares one root the user can wipe in a single rm. Empty when the OS dir is
-// unavailable â€?callers must tolerate that (caching is best-effort).
+// unavailable â€” callers must tolerate that (caching is best-effort).
 func CacheDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
@@ -912,7 +912,7 @@ func CacheDir() string {
 	return filepath.Join(dir, "reasonix", "cache")
 }
 
-// MemoryUserDir returns the reasonix user config root (â€?reasonix), under which
+// MemoryUserDir returns the reasonix user config root (â€¦/reasonix), under which
 // the user-global REASONIX.md and the per-project auto-memory store live. Empty
 // when the user config dir can't be resolved, which disables user-scoped memory.
 func MemoryUserDir() string {
@@ -927,14 +927,14 @@ func MemoryUserDir() string {
 // commands), in canonical-first order. .reasonix is ours; .agents / .agent /
 // .claude let users drop in assets authored for other agent tools without moving
 // files. Shared so skills (internal/skill) and commands (CommandDirs) discover
-// the same set. Note: hooks are NOT scanned across these â€?a .claude/settings.json
+// the same set. Note: hooks are NOT scanned across these â€” a .claude/settings.json
 // uses a different hook schema that can't be parsed as ours, so hooks stay in
 // .reasonix/settings.json (see internal/hook).
 var ConventionDirs = []string{".reasonix", ".agents", ".agent", ".claude"}
 
 // conventionSubdirsAsc joins sub under each ConventionDir of base, in ascending
 // priority (reverse of ConventionDirs) so the canonical .reasonix ends up the
-// highest-priority entry â€?command.Load lets a later directory win on a clash.
+// highest-priority entry â€” command.Load lets a later directory win on a clash.
 func conventionSubdirsAsc(base, sub string) []string {
 	out := make([]string, 0, len(ConventionDirs))
 	for i := len(ConventionDirs) - 1; i >= 0; i-- {
@@ -945,9 +945,9 @@ func conventionSubdirsAsc(base, sub string) []string {
 
 // CommandDirs returns the directories scanned for custom slash commands, lowest
 // priority first, so a later (more specific) directory overrides an earlier one
-// on a name clash. Order: home-dir convention dirs (~/.claude/commands â€?~/.reasonix/commands),
+// on a name clash. Order: home-dir convention dirs (~/.claude/commands â€¦ ~/.reasonix/commands),
 // the legacy XDG user dir (~/.config/reasonix/commands), then the project's
-// convention dirs (.claude/commands â€?.reasonix/commands). Scanning the .claude /
+// convention dirs (.claude/commands â€¦ .reasonix/commands). Scanning the .claude /
 // .agents / .agent dirs lets commands authored for other agent tools (same .md +
 // frontmatter format) work here unchanged.
 func CommandDirs() []string {
@@ -956,7 +956,7 @@ func CommandDirs() []string {
 
 // CommandDirsForRoot is like CommandDirs but resolves the project convention
 // dirs under root instead of the current working directory. Global (home/XDG)
-// dirs are unchanged â€?they are always user-scoped.
+// dirs are unchanged â€” they are always user-scoped.
 func CommandDirsForRoot(root string) []string {
 	root = resolveRoot(root)
 	var dirs []string
@@ -1011,9 +1011,9 @@ func (c *Config) Provider(name string) (*ProviderEntry, bool) {
 
 // ResolveModel resolves a model reference to a provider entry whose Model is the
 // selected model string (a copy, so the config's lists stay intact). It accepts:
-//   - "provider/model" â€?that exact model under that provider;
-//   - a provider name   â€?the provider's default model;
-//   - a bare model name â€?the (first) provider that lists it.
+//   - "provider/model" â€” that exact model under that provider;
+//   - a provider name   â€” the provider's default model;
+//   - a bare model name â€” the (first) provider that lists it.
 //
 // The returned entry is ready to build a provider from (NewProvider reads .Model),
 // so a single "vendor with many models" entry yields one instance per model
@@ -1031,13 +1031,13 @@ func (c *Config) ResolveModel(ref string) (*ProviderEntry, bool) {
 			return &cp, true
 		}
 	}
-	// a provider name â†?its default model
+	// a provider name â†’ its default model
 	if e, found := c.Provider(ref); found {
 		cp := *e
 		cp.Model = e.DefaultModel()
 		return &cp, true
 	}
-	// a bare model name â†?the provider that lists it
+	// a bare model name â†’ the provider that lists it
 	for i := range c.Providers {
 		if c.Providers[i].HasModel(ref) {
 			cp := c.Providers[i]
@@ -1056,7 +1056,7 @@ func (e *ProviderEntry) APIKey() string {
 	return os.Getenv(e.APIKeyEnv)
 }
 
-// Configured reports whether the provider's api_key_env is set â€?the same check
+// Configured reports whether the provider's api_key_env is set â€” the same check
 // Validate enforces, so pickers can filter on it.
 func (e *ProviderEntry) Configured() bool {
 	return e.APIKey() != ""
