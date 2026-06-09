@@ -1,52 +1,48 @@
-# AI Novel Agent — Makefile
-# Cross-compiles the Go binary for all target platforms.
+# AI Novel Agent — Makefile (built on Reasonix harness)
+VERSION := $(shell git describe --tags --always 2>/dev/null || echo dev)
+LDFLAGS := -s -w -X main.version=$(VERSION)
+GOEXE := $(shell go env GOEXE)
 
-APP_NAME    = novel-agent
-VERSION    ?= 1.0.0-alpha
-LDFLAGS    := -s -w -X main.version=$(VERSION)
-DIST_DIR   := dist
-CMD_DIR    := ./cmd/novel-agent/
+# CodeGraph release pinned for the bundled MCP server / e2e test.
+CODEGRAPH_VERSION := v0.9.7
 
-# Build targets for each platform
-PLATFORMS := \
-	darwin/amd64 \
-	darwin/arm64 \
-	linux/amd64 \
-	windows/amd64
-
-.PHONY: all build clean test vet lint
-
-all: build
+.PHONY: build vet fmt test hooks cross clean e2e-codegraph
 
 build:
-	@echo "Building $(APP_NAME) v$(VERSION)..."
-	@mkdir -p $(DIST_DIR)
-	@for platform in $(PLATFORMS); do \
-		GOOS=$${platform%/*} \
-		GOARCH=$${platform#*/} \
-		OUT="$(DIST_DIR)/$(APP_NAME)_$${GOOS}_$${GOARCH}"; \
-		if [ "$$GOOS" = "windows" ]; then OUT="$$OUT.exe"; fi; \
-		echo "  → $$OUT"; \
-		GOOS=$$GOOS GOARCH=$$GOARCH go build -ldflags "$(LDFLAGS)" -o "$$OUT" $(CMD_DIR) || exit 1; \
-	done
-	@echo "✓ Build complete — binaries in $(DIST_DIR)/"
-
-test:
-	go test ./internal/... -v -cover
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/novel-agent$(GOEXE) ./cmd/novel-agent
+	CGO_ENABLED=0 go build -ldflags "$(LDFLAGS)" -o bin/novel-agent-plugin-example$(GOEXE) ./cmd/reasonix-plugin-example
 
 vet:
 	go vet ./...
 
-lint:
-	golangci-lint run ./...
+fmt:
+	gofmt -w .
+
+test:
+	go test ./...
+
+hooks:
+	@git config core.hooksPath .githooks
+	@echo "installed: core.hooksPath -> .githooks (pre-push runs go vet)"
+
+cross:
+	@mkdir -p dist
+	@for p in darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64 windows/arm64; do \
+		os=$${p%/*}; arch=$${p#*/}; ext=; [ $$os = windows ] && ext=.exe; \
+		echo "build $$os/$$arch"; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build -ldflags "$(LDFLAGS)" -o dist/novel-agent-$$os-$$arch$$ext ./cmd/novel-agent; \
+	done
 
 clean:
-	rm -rf $(DIST_DIR)
+	rm -rf bin dist
 
-# --- npm packaging helpers ---
-
-npm-pack: build
-	@echo "Packaging for npm..."
-	@mkdir -p npm/dist
-	@cp $(DIST_DIR)/* npm/dist/
-	@echo "✓ npm/dist/ populated"
+e2e-codegraph:
+	@os=$$(uname -s | tr 'A-Z' 'a-z'); arch=$$(uname -m); \
+	case $$arch in arm64|aarch64) arch=arm64;; x86_64|amd64) arch=x64;; *) echo "unsupported arch $$arch"; exit 1;; esac; \
+	asset=codegraph-$$os-$$arch.tar.gz; dest=bin/codegraph; \
+	echo "fetching $$asset ($(CODEGRAPH_VERSION)) -> $$dest"; \
+	rm -rf $$dest && mkdir -p $$dest; \
+	gh release download $(CODEGRAPH_VERSION) -R colbymchenry/codegraph -p $$asset -O /tmp/$$asset; \
+	tar -xzf /tmp/$$asset -C $$dest --strip-components=1; \
+	REASONIX_CODEGRAPH_E2E=1 REASONIX_CODEGRAPH_BIN=$$PWD/$$dest/bin/codegraph \
+		go test ./internal/codegraph/ -run E2E -v -count=1
