@@ -1,5 +1,5 @@
 // Command novel-agent is a config- and plugin-driven novel-writing agent CLI.
-// Built on the Reasonix harness, tuned for Chinese web novel creation.
+// Built on the ai-reasonix harness, tuned for Chinese web novel creation.
 package main
 
 import (
