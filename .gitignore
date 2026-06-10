@@ -36,8 +36,6 @@ npm/dist/
 
 # Novel Agent config
 novel-agent.toml
-# Legacy config (keep ignored)
-reasonix.toml
 
 # Debug
 log.txt

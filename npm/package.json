@@ -1,6 +1,6 @@
 {
   "name": "novel-agent-cli",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "AI Novel Agent — terminal-based Chinese web novel creation assistant with 64 skills, RAG knowledge base, and Reasonix agent harness",
   "main": "install.js",
   "publishConfig": {
