@@ -1,6 +1,6 @@
 {
   "name": "novel-agent-cli",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "AI Novel Agent — terminal-based Chinese web novel creation assistant with 64 skills, RAG knowledge base, and Reasonix agent harness",
   "main": "install.js",
   "publishConfig": {
@@ -11,7 +11,8 @@
   },
   "files": [
     "install.js",
-    "dist/"
+    "dist/",
+    "README.md"
   ],
   "scripts": {
     "postinstall": "node install.js"
@@ -39,6 +40,13 @@
   "bugs": {
     "url": "https://github.com/PeneyLove/ai-novel-matrix-studio/issues"
   },
-  "os": ["darwin", "linux", "win32"],
-  "cpu": ["x64", "arm64"]
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
 }
