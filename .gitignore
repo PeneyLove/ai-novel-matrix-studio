@@ -33,6 +33,9 @@ Thumbs.db
 node_modules/
 npm/*.tgz
 npm/dist/
+npm/package-lock.json
+npm/.codegraph/
+package-lock.json
 
 # Novel Agent config
 novel-agent.toml
@@ -45,8 +48,6 @@ go.sum
 
 # User data (never commit novel projects)
 .novelAgent/
-
-reasonix.toml
 
 reasonix.toml
 

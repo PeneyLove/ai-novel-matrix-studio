@@ -848,12 +848,13 @@ func (c *Controller) maybeSessionStart(ctx context.Context) {
 	c.mu.Unlock()
 	c.hooks.SessionStart(ctx)
 
-	// Warm the provider cache asynchronously before the first real turn, so
-	// the model's async auto-cache has started populating. This is best-effort
-	// and non-blocking: the warmup runs with its own short timeout in a
-	// goroutine, and the first turn proceeds immediately regardless.
+	// Warm the provider cache synchronously before the first real turn so the
+	// cache-stable prefix is populated; the first turn then gets cache hits.
+	// Capped at 2 seconds to avoid blocking startup for too long.
 	if c.executor != nil && !c.executor.IsWarmed() {
-		go c.executor.WarmPrefix(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		c.executor.WarmPrefix(ctx)
+		cancel()
 	}
 }
 

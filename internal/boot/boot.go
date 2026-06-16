@@ -10,6 +10,7 @@ package boot
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -462,6 +463,21 @@ func Build(ctx context.Context, opts Options) (*control.Controller, error) {
 	reg.Add(skill.NewInstallSkillTool(skillStore, nil))
 	for _, t := range skill.BuiltinSubagentTools(skillStore, skillRunner) {
 		reg.Add(t)
+	}
+
+	// Align the system prompt to the provider's cache block boundary so every
+	// turn after the first gets a cache hit instead of wasting a partial block.
+	// DeepSeek uses 64-token blocks; misalignment wastes one block per turn.
+	if schemas := reg.Schemas(); len(schemas) > 0 {
+		var toolTokens int
+		for _, s := range schemas {
+			if b, err := json.Marshal(s); err == nil {
+				toolTokens += len(b) / 4 // ~4 chars/token heuristic
+			}
+		}
+		if aligned := agent.AlignSystemPrompt(sysPrompt, toolTokens, "# "); aligned != sysPrompt {
+			sysPrompt = aligned
+		}
 	}
 
 	execSess := agent.NewSession(sysPrompt)

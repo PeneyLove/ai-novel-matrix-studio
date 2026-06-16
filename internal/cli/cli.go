@@ -367,7 +367,15 @@ func chatREPL(args []string) int {
 	// True first run with a resolvable default model but no API key yet — guide
 	// setup so the user provides one before entering chat, rather than launching
 	// a TUI session that will immediately fail with HTTP 401 on the first message.
-	if config.SourcePath() == "" && isInteractive() {
+	// Also trigger when only a project-level novel-agent.toml exists (no user
+	// config), matching the welcome() behaviour.
+	hasUserConfig := false
+	if p := config.UserConfigPath(); p != "" {
+		if _, stErr := os.Stat(p); stErr == nil {
+			hasUserConfig = true
+		}
+	}
+	if (config.SourcePath() == "" || !hasUserConfig) && isInteractive() {
 		if cfg, loadErr := config.Load(); loadErr == nil {
 			modelName := *model
 			if modelName == "" {
@@ -1463,11 +1471,30 @@ func welcome(version string) int {
 		cfg = config.Default()
 	}
 
+	// Determine whether the user has configured anything themselves. A
+	// project-level novel-agent.toml (e.g. shipped in a repo) is NOT a user
+	// config — the user needs to set their own API keys. Only the user-global
+	// config file counts as "already configured".
+	hasUserConfig := false
+	if p := config.UserConfigPath(); p != "" {
+		if _, err := os.Stat(p); err == nil {
+			hasUserConfig = true
+		}
+	}
+	// The default model's key is the canonical "are we ready?" signal.
+	defaultKeyMissing := func() bool {
+		e, ok := cfg.ResolveModel(cfg.DefaultModel)
+		return ok && e.APIKeyEnv != "" && e.APIKey() == ""
+	}
+
 	// First run on an interactive terminal: actively guide setup rather than
 	// printing a static screen and exiting. interactiveSetup owns the language
 	// prompt and welcome banner so every prompt the user sees is already
 	// localized to their choice.
-	if src == "" && isInteractive() {
+	// Also enter setup when only a project-level novel-agent.toml exists (e.g.
+	// fresh clone of this repo) and no user config has been created yet — the
+	// user hasn't really configured anything, so walk them through the wizard.
+	if (src == "" || (!hasUserConfig && defaultKeyMissing())) && isInteractive() {
 		if rc := interactiveSetup(defaultConfigTarget(), defaultEnvTarget()); rc != 0 {
 			return rc
 		}
