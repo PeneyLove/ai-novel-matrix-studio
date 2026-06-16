@@ -53,6 +53,7 @@ type Config struct {
 	Network       NetworkConfig     `toml:"network"`
 	Plugins       []PluginEntry     `toml:"plugins"`
 	Skills        SkillsConfig      `toml:"skills"`
+	MultiAgent    MultiAgentConfig  `toml:"multi_agent"`
 	Codegraph     CodegraphConfig   `toml:"codegraph"`
 	Statusline    StatuslineConfig  `toml:"statusline"`
 	LSP           LSPConfig         `toml:"lsp"`
@@ -490,6 +491,36 @@ func DefaultCacheConfig() CacheConfig {
 	}
 }
 
+// MultiAgentConfig controls the multi-agent isolation mode. When enabled,
+// auxiliary writing tasks (worldbuilding, character design, outline generation,
+// quality review) are dispatched to isolated sandbox agents that share data
+// only through the asset cache — never through conversation history.
+type MultiAgentConfig struct {
+	// Enabled turns on multi-agent mode. When false, all auxiliary tasks
+	// run inline on the main writer agent (existing behaviour).
+	Enabled bool `toml:"enabled"`
+
+	// AutoResetSandbox resets an auxiliary sandbox's conversation history
+	// after each task completes, keeping only the system prompt. This
+	// prevents context bloat in agents that don't need persistent history
+	// (e.g. the quality reviewer). Default true.
+	AutoResetSandbox bool `toml:"auto_reset_sandbox"`
+
+	// CacheInjectEnabled controls whether the writing asset cache is
+	// automatically injected into the main writer agent's system prompt
+	// before each turn. Default true.
+	CacheInjectEnabled bool `toml:"cache_inject_enabled"`
+}
+
+// DefaultMultiAgentConfig returns the default multi-agent configuration.
+func DefaultMultiAgentConfig() MultiAgentConfig {
+	return MultiAgentConfig{
+		Enabled:            true,
+		AutoResetSandbox:   true,
+		CacheInjectEnabled: true,
+	}
+}
+
 // ProviderEntry declares a model provider instance. ContextWindow is the model's
 // token budget; the harness compacts older history as a turn's prompt approaches
 // it (see agent compaction). 0 disables compaction for the instance.
@@ -684,7 +715,8 @@ func Default() *Config {
 			CompactRatio:      0.85,
 			CompactForceRatio: 0.92,
 		},
-		Cache: DefaultCacheConfig(),
+		Cache:      DefaultCacheConfig(),
+		MultiAgent: DefaultMultiAgentConfig(),
 		// Mode "ask" with no rules keeps `novel-agent run` autonomous (no TTY → ask
 		// resolves to allow) while `novel-agent chat` prompts before writers. Users add
 		// deny/allow rules to harden or quiet specific tools.

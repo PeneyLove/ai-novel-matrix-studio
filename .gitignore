@@ -49,3 +49,5 @@ go.sum
 reasonix.toml
 
 reasonix.toml
+
+.codegraph/daemon.pid

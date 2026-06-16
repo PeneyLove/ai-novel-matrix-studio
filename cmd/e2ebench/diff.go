@@ -649,7 +649,7 @@ func truncateFor(s string, max int) string {
 	for cut > 0 && !utf8.RuneStart(s[cut]) {
 		cut--
 	}
-	return s[:cut] + "\n�?truncated)�?
+	return s[:cut] + "\n...(truncated)"
 }
 
 func tail(s string, n int) string {
