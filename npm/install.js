@@ -25,6 +25,7 @@ const BINARY_MAP = {
   "darwin-x64":   "novel-agent_darwin_amd64",
   "darwin-arm64": "novel-agent_darwin_arm64",
   "linux-x64":    "novel-agent_linux_amd64",
+  "linux-arm64":  "novel-agent_linux_arm64",
   "win32-x64":    "novel-agent_windows_amd64.exe",
 };
 

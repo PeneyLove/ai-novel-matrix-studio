@@ -364,6 +364,30 @@ func chatREPL(args []string) int {
 		return 1
 	}
 
+	// True first run with a resolvable default model but no API key yet — guide
+	// setup so the user provides one before entering chat, rather than launching
+	// a TUI session that will immediately fail with HTTP 401 on the first message.
+	if config.SourcePath() == "" && isInteractive() {
+		if cfg, loadErr := config.Load(); loadErr == nil {
+			modelName := *model
+			if modelName == "" {
+				modelName = cfg.DefaultModel
+			}
+			if entry, ok := cfg.ResolveModel(modelName); ok && entry.APIKeyEnv != "" && entry.APIKey() == "" {
+				ctrl.Close()
+				if rc := interactiveSetup(defaultConfigTarget(), defaultEnvTarget()); rc != 0 {
+					return rc
+				}
+				// Rebuild after setup; a fresh resolve picks up the now-populated env var.
+				ctrl, err = setup(ctx, *model, *maxSteps, false, sink)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, i18n.M.ErrorPrefix, err)
+					return 1
+				}
+			}
+		}
+	}
+
 	// Decide where this conversation's auto-save lands. A resume reuses the
 	// file so closing/reopening keeps appending to the same history; a fresh
 	// session lands in a new file stamped with the model name.
