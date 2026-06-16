@@ -1,6 +1,6 @@
 {
   "name": "novel-agent-cli",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "AI Novel Agent v2.0 — multi-agent session isolation × 3-level writing cache × SOP workflow skills × built-in consult engine. Terminal-based Chinese web novel creation assistant.",
   "main": "install.js",
   "publishConfig": {
