@@ -1,8 +1,8 @@
-# AI Novel Agent · v1.1.1
+# AI Novel Agent · v2.0
 
-> ai-reasonix 底座 × 56 垂直 Skill × 本地 RAG 知识库 — 终端里的 AI 网文创作助手
+> 多 Agent 会话隔离 × 三级写作缓存 × SOP 全流程 Skill 体系 — 终端里的 AI 网文创作助手
 >
-> IDE 终端输入 `novel-agent` → 进入对话 → 写大纲、埋伏笔、续正文、查知识库
+> IDE 终端输入 `novel-agent` → 进入对话 → 立项筹备 / 设定生成 / 正文创作 / 质量审核
 
 ---
 
@@ -12,10 +12,12 @@
 - [安装](#安装)
 - [快速开始](#快速开始)
 - [架构](#架构)
-- [Skill 系统](#skill-系统)
-- [创作流程](#创作流程)
+- [多 Agent 系统](#多-agent-系统)
+- [缓存引擎](#缓存引擎)
+- [Skill 体系](#skill-体系)
+- [创作流程（SOP）](#创作流程sop)
+- [内置咨询引擎](#内置咨询引擎)
 - [RAG 知识库](#rag-知识库)
-- [/rag 命令](#rag-命令)
 - [小说项目结构](#小说项目结构)
 - [配置参考](#配置参考)
 - [开发指南](#开发指南)
@@ -25,20 +27,21 @@
 
 ## 是什么
 
-**AI Novel Agent** =  编程 Agent 底座 + 网文创作专用 Skill 系统 + 本地 RAG 参考知识库。
+**AI Novel Agent** = 多 Agent 协作底座 + 三级写作缓存 + 内置咨询引擎 + SOP 全流程 Skill 体系。
 
-一个 Go 编译的单一二进制文件，不依赖外部数据库、不绑定特定平台、不需要 Docker。所有数据存储在你本地的 `.txt`/`.md` 文件中。
+一个 Go 编译的单一二进制文件，不依赖外部数据库、不绑定特定平台、不需要 Docker。所有数据存本地文件。
 
-| 对比维度 | 传统 AI 写作工具 | AI Novel Agent |
-|---------|----------------|---------------|
+| 对比维度 | 传统 AI 写作工具 | AI Novel Agent v2.0 |
+|---------|----------------|---------------------|
 | 架构 | Web 服务 + 云端存储 | 本地单二进制 + 文件系统 |
-| Skill | 单一通用提示词 | **56 个垂直 Skill**（6 类型 × 9 子技能 + 项目 + 续写） |
-| 流程 | 自由对话 | **4 阶段流水线**（定型→大纲+钩子→正文→优化） |
-| 状态 | 无记忆 | **伏笔台账 + 大纲版本 + 人物谱系** 持久化 |
+| Agent | 单一对话窗口 | **多 Agent 会话隔离**（策划/设定/大纲/质检独立沙箱，零交叉污染） |
+| 缓存 | 无 | **三级写作缓存**（全局资产 + 语义片段 + 剧情摘要）自动注入 |
+| 质量 | 依赖模型直觉 | **内置确定性咨询引擎**（大纲校验/人设一致性/伏笔回收/AI-slop 检测） |
+| Skill | 单一通用提示词 | **SOP 全流程 Skill**（6 阶段 × 核心 + 6 体裁 × v1 兼容） |
+| 预热 | 首轮冷启动 | **自动缓存预热**（首轮前最小请求填充 provider 缓存） |
 | RAG | 无 | **本地 ragCore 目录检索** — 热门小说章节即查即用 |
 | 模型 | 绑定单一模型 | **多提供者自由配置**（DeepSeek/MiMo/Anthropic/任意 OpenAI 兼容） |
 | 分发 | 网页访问 | `npm install -g novel-agent-cli` |
-| 工具 | 纯文本对话 | **完整 Agent 工具链**：文件读写、shell、搜索、ask 决策 |
 
 ---
 
@@ -48,9 +51,6 @@
 
 ```bash
 npm install -g novel-agent-cli
-```
-
-```bash
 novel-agent version
 ```
 
@@ -84,108 +84,222 @@ novel-agent
 进入 TUI 后：
 
 ```
-> /novel-init                           # 初始化小说项目结构（创建目录 + 模板）
+> /novel-init                           # 初始化小说项目结构
 > /xuanhuan-genre_init                  # 定型：确认玄幻修仙赛道
 > /xuanhuan-outline                     # 生成完整大纲
+> /novel-consult outline                # 内置引擎审核大纲完整性
 > /xuanhuan-hooks                       # 预埋伏笔台账
-> /novel-continue                       # 续写下一章（自动读进度/大纲/伏笔→写入 chapters/）
-> /xuanhuan-optimize-shuangdian         # 专项优化：强化爽点
+> /novel-continue                       # 续写下一章
+> /novel-consult full                   # 全维度质量检测
 ```
 
-所有 Skill 都可通过 Tab 补全，输入 `/xuanhuan` 然后按 Tab 即可看到该类型下的 9 个子技能。
+所有 Skill 都可通过 Tab 补全。输入 `/xuanhuan` 然后按 Tab 即可看到该类型下的 9 个子技能。
 
 ---
 
 ## 架构
 
 ```
-┌─────────────────────────────────────┐
-│           novel-agent.exe            │  ← 单二进制
-├─────────────────────────────────────┤
-│           Agent 底座                │  ← agent 循环 / TUI / provider / tools
-│  ├─ Bubble Tea TUI                  │     (ai-reasonix 同款终端 UI)
-│  ├─ config-driven (novel-agent.toml)   │     提供者/工具/技能全部配置化
-│  ├─ 20+ 内置工具                    │     write_file / read_file / bash / grep / glob / ask ...
-│  └─ Skill 系统                      │     .novel-agent/skills/novel/*.md
-├─────────────────────────────────────┤
-│  Novel 专用                         │
-│  ├─ 56 个网文 Skill (Markdown)     │     6 类型 × 9 子技能 + init + continue
-│  ├─ rag_search 工具                 │     远程 API / 本地 ragCore 目录双模式
-│  └─ /rag 命令                       │     终端配置 RAG 知识库
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│                  novel-agent.exe                  │
+├──────────────────────────────────────────────────┤
+│  Agent 底座（ai-reasonix 同款）                    │
+│  ├─ Bubble Tea TUI                                │
+│  ├─ config-driven (novel-agent.toml)              │
+│  ├─ Provider 层 (OpenAI/Anthropic 兼容)           │
+│  └─ Tool Registry + MCP Plugin Host               │
+├──────────────────────────────────────────────────┤
+│  多 Agent 会话隔离层                               │
+│  ├─ SandboxManager (单例，生命周期管理)           │
+│  ├─ AgentSandbox × N (独立会话 history)           │
+│  └─ Orchestrator (任务分发 → 缓存写入 → 零侵入)   │
+├──────────────────────────────────────────────────┤
+│  三级写作缓存引擎                                   │
+│  ├─ L1 AssetCache (全局资产：世界/人设/大纲)       │
+│  ├─ L2 FragmentCache (语义片段：trope/genre 索引) │
+│  └─ L3 SummaryCache (剧情摘要：滚动窗口 20 章)    │
+├──────────────────────────────────────────────────┤
+│  内置咨询引擎 (internal/consult/)                  │
+│  ├─ OutlineValidator / CharacterAnalyzer          │
+│  ├─ PlotStructureAnalyzer / PacingAnalyzer        │
+│  ├─ ConsistencyStrategy / LogicStrategy           │
+│  ├─ HookStrategy / StyleStrategy                  │
+│  └─ MultiSourceEngine (多文件联合分析)             │
+├──────────────────────────────────────────────────┤
+│  Novel 专用                                        │
+│  ├─ SOP Skill 体系 (novel-sop/)                   │
+│  ├─ Genre v1 Skills (6 体裁 × 9)                  │
+│  ├─ Cross-genre Skills (8 个分析/参考技能)        │
+│  └─ novel_consult 工具 (确定性分析)                │
+└──────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Skill 系统
+## 多 Agent 系统
 
-### 56 个 Skill（6 类型 × 9 子技能 + 2）
+每个 Agent 角色运行在独立沙箱中，对话历史完全隔离，零交叉污染。数据共享仅通过缓存引擎。
 
-Skills 定义在 `.novel-agent/skills/novel/` 下，使用标准的 Markdown + frontmatter 格式。
+| 角色 | 职责 | 沙箱策略 | 系统 Prompt 首行 |
+|------|------|---------|-----------------|
+| `writer` | 正文创作主 Agent | 常驻，保留全量对话 | `【角色锁定】你是网文写作主Agent` |
+| `planner` | 赛道分析 / 对标拆解 | 按需创建，完成后可重置 | `【角色锁定】你是专业的网文赛道分析策划师` |
+| `world_builder` | 世界观设定（6 维度）| 按需创建 | `【角色锁定】你是专业的网文世界观设定师` |
+| `character_designer` | 人设卡设计（7 维度）| 按需创建 | `【角色锁定】你是专业的网文人设设计师` |
+| `outliner` | 大纲架构（5 模块）| 按需创建 | `【角色锁定】你是专业的网文大纲架构师` |
+| `reviewer` | 质量审核（5 维度）| 每次重置，不积累 | `【角色锁定】你是专业的网文质量审核员` |
+
+**隔离保障三重机制**：
+1. **内存隔离** — 每个沙箱独立 `[]provider.Message` 切片，深拷贝返回
+2. **角色锁死** — 系统 Prompt 首行强制 `【角色锁定】` 指令
+3. **单一数据通道** — 跨 Agent 数据仅通过 `AssetCache` 传递，不通过对话历史
+
+**配置开关**：
+```toml
+[multi_agent]
+enabled              = true   # 关闭后退化为单 Agent 模式
+auto_reset_sandbox   = true   # 辅助任务后自动重置沙箱
+cache_inject_enabled = true   # 缓存资产自动注入主 Agent
+```
+
+---
+
+## 缓存引擎
+
+### 三级缓存体系
+
+| 级别 | 缓存 | 内容 | Token 节省机制 |
+|------|------|------|---------------|
+| L1 | `AssetCache` | 世界观 / 人设 / 金手指 / 大纲 / 伏笔 | 启动时注入系统 Prompt（cache-stable prefix），每轮 0 额外成本 |
+| L2 | `FragmentCache` | 标准化桥段（打脸/升级/退婚等）| 按 `{genre}:{trope_type}` 召回，避免每次从零生成 |
+| L3 | `SummaryCache` | 最近 20 章剧情摘要 | 滚动窗口，替代全文塞入上下文 |
+
+### 缓存预热
+
+首轮请求前自动发送 1-token 最小请求到 Provider，让异步缓存提前填充。首个真实请求即可享受部分 cache hit。
+
+```toml
+[cache]
+warmup = true   # 默认开启
+```
+
+### Provider 端缓存优化
+
+- **PrefixShape 诊断** — 每次请求对 system/tools/rewrite 三级哈希比对，精确定位缓存未命中原因
+- **CacheAlignment** — 计算前缀与 DeepSeek 64-token 缓存块的对齐度，输出浪费百分比
+- **Compact 参数调优** — `softCompactRatio=0.6` / `compactRatio=0.85` / `tailTokens=32K`
+- **ReasoningContent 剥离** — 不向 API 回传 reasoning，避免被按 prompt 计费
+
+---
+
+## Skill 体系
+
+### SOP 全流程 Skill（novel-sop/）
+
+```
+.novel-agent/skills/novel-sop/
+├── sop-workflow.md                 # 七阶段全流程导航
+├── sop-preparation/
+│   └── benchmark_analysis.md       # 对标作品拆解
+├── sop-setting/                    # （复用 genre v1 skills）
+├── sop-outline/                    # （复用 genre v1 skills）
+├── sop-writing/
+│   └── plot_divergence.md          # 卡文推演（3 路径 × 5 维度评分）
+├── sop-quality/
+│   ├── consistency_check.md        # 人设一致性校验
+│   ├── hook_recovery.md            # 伏笔回收校验
+│   └── logic_debug.md              # 逻辑 bug 排查
+└── sop-operations/                 # 规划中
+```
+
+### Genre v1 Skills（novel/）
+
+6 个体裁 × 9 子技能 = 54 个 v1 兼容 Skill，全部保留不动。
 
 ```
 .novel-agent/skills/novel/
-├── init.md                  # 初始化小说项目结构
-├── continue.md              # 续写下一章（自动读取进度/大纲/伏笔）
-├── xuanhuan/                # 玄幻修仙
-│   ├── genre_init.md        #   类型定型 & 初始化
-│   ├── outline.md           #   大纲全链路搭建 & 迭代
-│   ├── hooks.md             #   伏笔/爽点/钩子全维度埋置
-│   ├── writing.md           #   正文定向续写（大纲绑定版）
-│   ├── optimize-shuangdian.md  # 爽点强化
-│   ├── optimize-fubi.md        # 伏笔回收
-│   ├── optimize-jiezou.md      # 节奏优化
-│   ├── optimize-renshe.md      # 人设优化
-│   └── optimize-chongtu.md     # 冲突升级
-├── dushi/  (都市) ...
-├── guyan/  (古言) ...
-├── xuanyi/ (悬疑) ...
-├── kehuan/ (科幻) ...
-└── tianchong/ (甜宠) ...
+├── init.md / continue.md           # 项目初始化 / 续写
+├── xuanhuan/  dushi/  guyan/       # 玄幻 / 都市 / 古言
+│   xuanyi/  kehuan/  tianchong/    # 悬疑 / 科幻 / 甜宠
+│   ├── genre_init.md               # 类型定型
+│   ├── outline.md                  # 大纲搭建
+│   ├── hooks.md                    # 伏笔埋设
+│   ├── writing.md                  # 正文创作
+│   └── optimize-*.md               # 5 个优化子技能
 ```
 
-### 6 大网文类型
+### 跨类型 Skill
 
-| 类型 | 代码 | 细分赛道 |
-|------|------|---------|
-| 玄幻修仙 | `xuanhuan` | 凡人流/逆袭流/宗门流/仙魔大战/重生修仙/系统修仙 |
-| 都市网文 | `dushi` | 战神/神医/系统/赘婿/异能/职场逆袭/校园爽文 |
-| 古言权谋 | `guyan` | 宫斗/宅斗/权谋朝堂/重生古言/穿越古言/王爷王妃 |
-| 悬疑灵异 | `xuanyi` | 灵异探险/规则怪谈/刑侦悬疑/校园诡异/民间怪谈/无限悬疑 |
-| 科幻无限 | `kehuan` | 无限流/末世生存/星际科幻/系统副本/赛博朋克 |
-| 现言甜宠 | `tianchong` | 校园甜宠/都市言情/破镜重圆/先婚后爱/霸总甜宠/暗恋逆袭 |
-
-### Skill 格式
-
-```markdown
----
-name: xuanhuan-genre_init
-description: 玄幻修仙 — 类型定型&初始化（凡人流、逆袭流、宗门流…）
-runAs: inline
----
-
-你是专业垂直网文写作智能Agent，当前调用Skill：玄幻修仙-类型定型&初始化Skill。
-你已锁定【玄幻修仙】赛道...确认用户写作细分赛道/核心套路/受众偏好...
-```
-
-直接编辑 `.md` 文件即可修改提示词，下次调用立即生效。
+| Skill | 功能 |
+|-------|------|
+| `novel-consult` | 内置咨询引擎（7 维度 × 多源分析） |
+| `novel-worldbuilding` | 世界观五维构建法 |
+| `novel-characters` | 人物谱系管理 |
+| `novel-plot-analyze` | 剧情健康度诊断（40 分制） |
+| `novel-volume-plan` | 分卷规划 |
+| `novel-style-analysis` | 写作风格分析 |
+| `novel-trope-reference` | 网文套路/桥段速查 |
+| `novel-rag-search` | RAG 知识库查询引导 |
 
 ---
 
-## 创作流程
+## 创作流程（SOP）
 
 ```
-Phase 1: genre_init       ← /{type}-genre_init
-    ↓                       锁定赛道、初始化创作档案
-Phase 2: outline + hooks  ← /{type}-outline  →  /{type}-hooks
-    ↓                       大纲搭建 + 伏笔台账预埋（用户定稿前不启动正文）
-Phase 3: writing          ← /novel-continue
-    ↓                       每次自动读取：进度 → 大纲 → 伏笔台账 → 上一章 → 写入新章节
-Phase 4: optimize_*       ← /{type}-optimize-{爽点/伏笔/节奏/人设/冲突}
-                            随时触发专项优化
+Phase 1: 前期筹备          ← /sop-benchmark-analysis
+    ↓                        赛道分析 / 对标拆解
+Phase 2: 核心设定          ← /{type}-genre_init + /novel-worldbuilding + /novel-characters
+    ↓                        世界观 / 人设 / 金手指 → 写入 L1 AssetCache
+Phase 3: 大纲搭建          ← /{type}-outline + /novel-consult outline
+    ↓                        粗纲 → 分卷细纲 → 内置引擎审核 → 写入缓存
+Phase 4: 开篇打磨 + 正文   ← /novel-continue（每次自动读取缓存 + 进度）
+    ↓                        缓存注入：全局设定 + 前文摘要 + 章细纲
+Phase 5: 质量校验          ← /novel-consult full（7 维度联合分析）
+    ↓                        人设 / 逻辑 / 伏笔 / 节奏 / 风格一次性诊断
+Phase 6: 卡文急救          ← /sop-plot-divergence
+    ↓                        3 条推进路径 × 5 维度评分 → 最优方案
+Phase 7: 运营复盘          ← （规划中）
 ```
 
-**每章自动植入**：1 个微爽点 + 1 个收尾钩子 + 1 处伏笔铺垫。伏笔台账自动更新。
+---
+
+## 内置咨询引擎
+
+`internal/consult/` 包提供了 8 个确定性分析策略，输出结构化评分报告。所有分析在 Go 端完成，不占用 LLM 推理 token。
+
+### 可用策略
+
+| 策略 | 命令 | 检查项 |
+|------|------|--------|
+| `outline-completeness` | `/novel-consult outline` | 模块完整性 / 关键词覆盖 / 篇幅密度 |
+| `character-consistency` | `/novel-consult characters` | 角色名提取 / 章节出现 / OOC 风险 |
+| `plot-structure` | `/novel-consult plot` | 核心冲突 / 分卷 / 结局 |
+| `pacing-health` | `/novel-consult plot` | 爽点密度 / 高潮分布 |
+| `logic-debug` | `/novel-consult plot` | 突破次数异常 / 时间线 / 战力 |
+| `hook-recovery` | `/novel-consult hooks` | 回收率 / 逾期 / 缺计划 |
+| `style-analysis` | `/novel-consult style` | AI-slop 检测 / 段落长度 |
+| `all` | `/novel-consult full` | 全维度联合分析（多源） |
+
+### 输出示例
+
+```
+═══ 创作咨询报告 ═══
+分析对象：大纲审核
+健康评分：75/100
+总体评估：总体良好，个别细节可优化
+
+共发现 3 个问题：
+
+### 🔴 必须修复（阻塞项）
+**缺少「核心设定」模块**
+> 大纲中没有找到「核心设定」模块。
+💡 建议：添加核心设定：境界体系、力量体系、世界观地图
+可信度：████░ 95%
+
+### 🟡 建议修复（警告）
+...
+═══ 报告结束 ═══
+```
 
 ---
 
@@ -205,54 +319,16 @@ Agent 通过 `rag_search` 工具查询参考知识库，获取热门小说的写
 ```
 ragCore/
   xuanhuan/                   ← 类别：玄幻修仙
-    1_斗破苍穹/                ← 排名_书名
-      第一卷/                   ← 卷（可选）
-        chapter1.txt           ← 第1章
-        chapter2.txt           ← 第2章
+    1_斗破苍穹/               ← 排名_书名
+      第一卷/
+        chapter1.txt          ← 第1章
         ...
-      第二卷/
-        chapter1.txt
-        ...
-    2_完美世界/
-      chapter1.txt             ← 无卷时章节目录直接在书名下
-      chapter2.txt
-      ...
   dushi/                      ← 类别：都市网文
     1_都市之最强狂兵/
       ...
 ```
 
-章节文件格式：纯文本 `.txt`，UTF-8 编码。支持 `chapter{N}.txt`、`第N章.txt`、`chapter N.txt` 等多种命名。
-
-U 盘/外部硬盘上的 ragCore 目录同样支持，直接 `/rag init E:\ragCore\` 即可。
-
----
-
-## /rag 命令
-
-在 TUI 中用 `/rag` 管理知识库，无需编辑配置文件：
-
-```
-> /rag                        # 查看当前 RAG 状态和统计
-RAG knowledge base
-  status:  enabled
-  mode:    local
-  path:    D:\novels\ragCore
-  3 genres · 12 novels · 48 volumes · 523 chapters
-
-> /rag init D:\novels\ragCore  # 扫描并激活本地 ragCore
-> /rag init E:\                # 也支持 U 盘路径
-
-> /rag remote https://api.example.com --key-env RAG_KEY --index novels
-                                # 配置远程 RAG 服务
-
-> /rag enable                   # 启用
-> /rag disable                  # 禁用
-> /rag topk 10                  # 每次返回 10 条结果
-> /rag config                   # 查看原始配置
-```
-
-Tab 补全支持 `/rag` 的所有子命令（`init`/`remote`/`enable`/`disable`/`topk`/`config`）。
+章节文件格式：纯文本 `.txt`，UTF-8 编码。支持 `chapter{N}.txt`、`第N章.txt` 等多种命名。
 
 ---
 
@@ -263,7 +339,7 @@ Tab 补全支持 `/rag` 的所有子命令（`init`/`remote`/`enable`/`disable`/
 ```
 我的小说/
 ├── .novelAgent/              # AI 元数据（状态/大纲/人设/伏笔台账）
-│   ├── state.json            # 创作进度（当前类型/阶段/章节号）
+│   ├── state.json            # 创作进度
 │   ├── config.yaml           # 项目级配置
 │   ├── outline/              # 大纲版本
 │   ├── characters/           # 人物谱系
@@ -274,15 +350,11 @@ Tab 补全支持 `/rag` 的所有子命令（`init`/`remote`/`enable`/`disable`/
 │   ├── protagonist.txt
 │   └── supporting_cast.txt
 ├── chapters/                 # 正文章节
-│   ├── 第1章/
-│   │   └── chapter.txt       # Markdown 格式正文
-│   ├── 第2章/
-│   │   └── chapter.txt
+│   ├── 第1章/chapter.txt
+│   ├── 第2章/chapter.txt
 │   └── ...
 └── README.md                 # 小说简介
 ```
-
-章节文件使用 UTF-8 + Markdown，方便排版。Agent 通过 `write_file` 直接写入、`read_file` 读取上下文。
 
 ---
 
@@ -297,6 +369,12 @@ default_model = "deepseek-flash"
 max_steps   = 25
 temperature = 0.0
 
+[cache]
+warmup = true
+
+[multi_agent]
+enabled = true
+
 [[providers]]
 name        = "deepseek-flash"
 kind        = "openai"
@@ -305,20 +383,14 @@ model       = "deepseek-v4-flash"
 api_key_env = "DEEPSEEK_API_KEY"
 context_window = 1000000
 
-# RAG 知识库配置
 [rag]
 enabled     = true
-mode        = "local"                  # "local" 或 "remote"
-local_path  = "D:\\novels\\ragCore"    # local 模式下的 ragCore 根目录
+mode        = "local"
+local_path  = "D:\\novels\\ragCore"
 top_k       = 5
-
-# 远程模式（mode = "remote" 时生效）
-# endpoint    = "https://your-rag-api.com/api"
-# api_key_env = "RAG_API_KEY"
-# index_name  = "novels"
 ```
 
-**密钥安全**：API Key 全部通过环境变量注入（`${VAR_NAME}` 或 `api_key_env`），不写入 TOML 文件。
+**密钥安全**：API Key 全部通过环境变量注入，不写入 TOML 文件。
 
 ---
 
@@ -327,23 +399,35 @@ top_k       = 5
 ### 项目结构
 
 ```
-cmd/novel-agent/main.go          # 入口：调用 cli.Run() (Agent 底座)
+cmd/novel-agent/main.go              # 入口
 internal/
-  cli/                            # TUI 聊天界面 (Bubble Tea)
-  agent/                          # Agent 循环 (reasoning / compaction / tool dispatch)
-  boot/                           # 启动装配 (config → tool registry → controller)
-  config/                         # 配置加载 + 编辑方法 (含 RAGConfig)
-  tool/builtin/                   # 内置工具 (bash/write_file/read_file/grep/glob/rag_search/...)
-  skill/                          # Skill 发现 + 索引 (Markdown 格式)
-  provider/                       # 模型提供者 (openai / anthropic)
-  plugin/                         # MCP 插件系统
-  permission/                     # 权限门控
-  sandbox/                        # 沙箱约束
-  ... (40 个模块)
-.nocel-agent/
-  skills/novel/                   # 56 个网文 Skill (Markdown)
-  commands/                       # 自定义斜杠命令模板
-npm/                              # npm 发布脚本
+  agent/
+    agent.go                          # Agent 循环
+    sandbox/                          # 多 Agent 会话沙箱 (v2.0)
+      sandbox.go / manager.go / prompts.go
+    orchestrator/                     # 任务调度器 (v2.0)
+    cache_optimizer.go                # 缓存对齐诊断 (v2.0)
+    cache_warming.go                  # 缓存预热 (v2.0)
+    cache_shape.go                    # PrefixShape 诊断
+    compact.go                        # 上下文压缩
+  cache/novel/                        # 三级写作缓存 (v2.0)
+  consult/                            # 内置咨询引擎 (v2.0)
+    consult.go / outline.go / analysis.go
+    analysis_multi.go / report.go
+  boot/                               # 启动装配
+  config/                             # 配置（含 MultiAgentConfig / CacheConfig）
+  tool/builtin/                       # 内置工具（含 novel_consult）
+  skill/                              # Skill 系统
+  provider/                           # 模型提供者
+  plugin/                             # MCP 插件
+  ...
+.novel-agent/
+  skills/
+    novel/                            # 6 体裁 v1 Skills (54 个)
+    novel-sop/                        # SOP 全流程 Skills (8 个, v2.0)
+    novel-*.md                        # 跨类型 Skills (8 个)
+  commands/
+npm/                                  # npm 发布脚本
 ```
 
 ### 编译
@@ -359,36 +443,15 @@ make cross                      # → dist/ (6 平台全量)
 go test ./...
 ```
 
-### 添加新 Skill
-
-在 `.novel-agent/skills/novel/<genre>/` 下新建 `.md` 文件：
-
-```markdown
----
-name: my-custom-skill
-description: 我的自定义创作技能
-runAs: inline
----
-
-你是一个专业网文写作助手，当前调用：我的自定义技能。
-...
-```
-
-文件保存后立即可用：`/my-custom-skill` 或 Agent 自动发现并调用。
-
 ---
 
 ## 版本分支
 
-| 分支 | 版本 | 基底 | 状态 |
+| 分支 | 版本 | 内容 | 状态 |
 |------|------|------|------|
-| **v1.x** (当前) | 2.0.0-alpha | Novel-agent harness | 活跃开发 |
-| [v0.x](https://gitee.com/penney-101/ai-novel-matrix-studio/tree/v0.x/) | 0.9.0 | 自研 Go 引擎 | 冻结 — 仅修 bug |
-
----
-
-### v1.1.1 (2026-06-10)
-- npm 包补充 README 文件
+| **master** | 2.0 | 多 Agent 隔离 + 三级缓存 + 咨询引擎 + SOP Skill | 稳定 |
+| v1.2 | 1.2 | 缓存优化 + 咨询引擎 + SOP Skill (无多 Agent) | 冻结 |
+| v1.x | 1.1 | 56 Skill + RAG | 冻结 |
 
 ---
 
