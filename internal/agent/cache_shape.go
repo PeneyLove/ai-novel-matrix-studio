@@ -19,6 +19,13 @@ type PrefixShape struct {
 	PrefixHash        string
 	LogRewriteVersion int
 	ToolSchemaTokens  int
+
+	// sysTokenEstimate and toolTokenEstimate are stored alongside hashes so
+	// CompareShape can compute cache-block alignment diagnostics without
+	// re-marshalling the full schemas. Set by CaptureShape. Zero before the
+	// first turn.
+	sysTokenEstimate  int
+	toolTokenEstimate int
 }
 
 // CacheDiagnostics is a type alias for event.CacheDiagnostics so the agent
@@ -36,6 +43,8 @@ func shortHash(v interface{}) string {
 func CaptureShape(systemPrompt string, schemas []provider.ToolSchema, rewriteVersion int) PrefixShape {
 	normalizedSchemas := normalizeToolSchemas(schemas)
 	toolsJSON, _ := json.Marshal(normalizedSchemas)
+	sysTokens := estimateTokens(systemPrompt)
+	toolTokens := estimateTokens(string(toolsJSON))
 	return PrefixShape{
 		SystemHash: shortHash(systemPrompt),
 		ToolsHash:  shortHash(string(toolsJSON)),
@@ -44,7 +53,11 @@ func CaptureShape(systemPrompt string, schemas []provider.ToolSchema, rewriteVer
 			"tools":  string(toolsJSON),
 		}),
 		LogRewriteVersion: rewriteVersion,
-		ToolSchemaTokens:  estimateTokens(string(toolsJSON)),
+		ToolSchemaTokens:  toolTokens,
+		// Stash raw estimates so CompareShape can build alignment info without
+		// re-marshalling the schemas or re-scanning the system prompt.
+		sysTokenEstimate:  sysTokens,
+		toolTokenEstimate: toolTokens,
 	}
 }
 
@@ -80,6 +93,35 @@ func CompareShape(prev, cur PrefixShape, usage *provider.Usage) CacheDiagnostics
 		miss = usage.CacheMissTokens
 		hit = usage.CacheHitTokens
 	}
+
+	// Build alignment info from the current shape's token estimates.
+	var alignInfo *event.CacheAlignmentInfo
+	totalTokens := cur.sysTokenEstimate + cur.toolTokenEstimate
+	if totalTokens > 0 {
+		block := totalTokens / cacheBlockGranularity
+		remainder := totalTokens % cacheBlockGranularity
+		wastePct := 0.0
+		if remainder > 0 && totalTokens > cacheBlockGranularity {
+			wastePct = float64(remainder) / float64(totalTokens) * 100
+		}
+		// Round to one decimal.
+		wastePct = float64(int(wastePct*10)) / 10
+		alignInfo = &event.CacheAlignmentInfo{
+			TotalTokens:     totalTokens,
+			BlocksConsumed:  block,
+			LastBlockFill:   remainder,
+			ShortfallToFill: cacheBlockGranularity - remainder,
+			Aligned:         remainder == 0,
+			WastePercent:    wastePct,
+		}
+		// Even when the prefix hash is stable, a partial last block means the
+		// provider spends a partial block on every turn — note alignment as a
+		// secondary efficiency signal so the user sees it in the UI.
+		if len(reasons) == 0 && !alignInfo.Aligned && alignInfo.BlocksConsumed > 1 {
+			reasons = append(reasons, "alignment")
+		}
+	}
+
 	return CacheDiagnostics{
 		PrefixHash:          cur.PrefixHash,
 		PrefixChanged:       len(reasons) > 0,
@@ -90,6 +132,7 @@ func CompareShape(prev, cur PrefixShape, usage *provider.Usage) CacheDiagnostics
 		ToolSchemaTokens:    cur.ToolSchemaTokens,
 		CacheMissTokens:     miss,
 		CacheHitTokens:      hit,
+		CacheAlignment:      alignInfo,
 	}
 }
 

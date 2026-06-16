@@ -45,6 +45,7 @@ type Config struct {
 	UI            UIConfig          `toml:"ui"`
 	Desktop       DesktopConfig     `toml:"desktop"`
 	Agent         AgentConfig       `toml:"agent"`
+	Cache         CacheConfig       `toml:"cache"`
 	Providers     []ProviderEntry   `toml:"providers"`
 	Tools         ToolsConfig       `toml:"tools"`
 	Permissions   PermissionsConfig `toml:"permissions"`
@@ -452,6 +453,43 @@ type AgentConfig struct {
 	CompactForceRatio float64 `toml:"compact_force_ratio"`
 }
 
+// CacheConfig controls novel-agent's multi-level cache behaviour.
+type CacheConfig struct {
+	// Warmup enables sending a minimal request to the provider before the first
+	// real turn, so the asynchronous auto-cache starts populating earlier.
+	// Default true. Only relevant for providers with prompt caching (DeepSeek, etc.).
+	Warmup bool `toml:"warmup"`
+
+	// AlignmentPadding, when true, appends cache-friendly comment padding to the
+	// system prompt so the total prefix aligns to the provider's cache block
+	// boundary (e.g. 64 tokens for DeepSeek). Default false because the exact
+	// padding depends on the tool schema size at runtime.
+	AlignmentPadding bool `toml:"alignment_padding"`
+
+	// SemanticCacheSize is the maximum number of semantic fragments retained in
+	// the Level-2 fragment cache. 0 disables the fragment cache.
+	SemanticCacheSize int `toml:"semantic_cache_size"`
+
+	// PlotSummaryWindow is how many recent chapter summaries to keep in the
+	// Level-3 rolling summary cache. Default 20.
+	PlotSummaryWindow int `toml:"plot_summary_window"`
+
+	// ConsultCacheTTLSeconds controls how long consultation analysis results are
+	// cached before re-analysis is allowed. 0 disables consult caching.
+	ConsultCacheTTLSeconds int `toml:"consult_cache_ttl_seconds"`
+}
+
+// DefaultCacheConfig returns the default cache configuration.
+func DefaultCacheConfig() CacheConfig {
+	return CacheConfig{
+		Warmup:                 true,
+		AlignmentPadding:       false,
+		SemanticCacheSize:      1000,
+		PlotSummaryWindow:      20,
+		ConsultCacheTTLSeconds: 300, // 5 minutes
+	}
+}
+
 // ProviderEntry declares a model provider instance. ContextWindow is the model's
 // token budget; the harness compacts older history as a turn's prompt approaches
 // it (see agent compaction). 0 disables compaction for the instance.
@@ -642,10 +680,11 @@ func Default() *Config {
 			// if you want a hard guard against runaway.
 			MaxSteps:          0,
 			AutoPlan:          "off",
-			SoftCompactRatio:  0.5,
-			CompactRatio:      0.8,
-			CompactForceRatio: 0.9,
+			SoftCompactRatio:  0.6,
+			CompactRatio:      0.85,
+			CompactForceRatio: 0.92,
 		},
+		Cache: DefaultCacheConfig(),
 		// Mode "ask" with no rules keeps `novel-agent run` autonomous (no TTY → ask
 		// resolves to allow) while `novel-agent chat` prompts before writers. Users add
 		// deny/allow rules to harden or quiet specific tools.

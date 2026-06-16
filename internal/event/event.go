@@ -183,6 +183,24 @@ type CacheDiagnostics struct {
 	ToolSchemaTokens    int
 	CacheMissTokens     int
 	CacheHitTokens      int
+	// CacheAlignment describes how the prefix aligns with the provider's cache
+	// block boundary (e.g. DeepSeek's 64-token blocks). Non-nil when the shape
+	// was captured; nil before the first turn.
+	CacheAlignment *CacheAlignmentInfo `json:",omitempty"`
+}
+
+// CacheAlignmentInfo reports how the cacheable prefix aligns with the provider's
+// cache block boundary. A misaligned prefix wastes a partial block on every
+// turn — users may see a <1% hit-rate penalty at scale when alignment is poor.
+// The system prompt length can be adjusted (via padding comments or trimming)
+// to fill the last block and eliminate this overhead.
+type CacheAlignmentInfo struct {
+	TotalTokens     int     // system + tool schema tokens combined
+	BlocksConsumed  int     // how many cache blocks the prefix occupies
+	LastBlockFill   int     // tokens in the last (partial) block
+	ShortfallToFill int     // padding tokens needed to fill the last block
+	Aligned         bool    // true when last block is exactly full
+	WastePercent    float64 // percentage of total wasted as partial-block overhead
 }
 
 // Event is one increment in a turn's event stream. Read the field(s) documented

@@ -152,6 +152,11 @@ type Agent struct {
 	// the outside via SetPlanMode.
 	planMode atomic.Bool
 
+	// warmed tracks whether a cache-warmup request has been sent to the
+	// provider. Only the first call to WarmPrefix sends a real request;
+	// subsequent calls are no-ops. Resets on session replace.
+	warmed atomic.Bool
+
 	// gate, when non-nil, is the per-call permission gate consulted after the
 	// plan-mode check. nil disables gating entirely.
 	gate Gate

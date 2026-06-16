@@ -31,6 +31,15 @@ compact_force_ratio = 0.9   # force compacting at this high-water mark
 # output_style = "explanatory"   # persona/tone folded into the prompt: explanatory | learning | concise,
 #                                  or a custom .novel-agent/output-styles/<name>.md ; empty = default
 
+# [cache] controls the multi-level cache system (writing asset cache, fragment
+# cache, plot summary cache, consult result cache). All sections are optional.
+# [cache]
+# warmup = true                   # send a minimal request before the first turn to populate async cache
+# alignment_padding = false       # pad system prompt to 64-token block boundary (experimental)
+# semantic_cache_size = 1000      # max fragments in the Level-2 semantic cache; 0 = disabled
+# plot_summary_window = 20        # recent chapter summaries to keep in the Level-3 rolling cache
+# consult_cache_ttl_seconds = 300 # how long consult analysis results are cached (0 = disabled)
+
 # A provider is a vendor endpoint (one base_url + key) that offers one or more
 # models. Use `models = [...]` to expose several under a single entry — switching
 # models reuses the same connection; no need to re-declare base_url/api_key.

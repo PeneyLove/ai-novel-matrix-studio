@@ -847,6 +847,14 @@ func (c *Controller) maybeSessionStart(ctx context.Context) {
 	c.startedOnce = true
 	c.mu.Unlock()
 	c.hooks.SessionStart(ctx)
+
+	// Warm the provider cache asynchronously before the first real turn, so
+	// the model's async auto-cache has started populating. This is best-effort
+	// and non-blocking: the warmup runs with its own short timeout in a
+	// goroutine, and the first turn proceeds immediately regardless.
+	if c.executor != nil && !c.executor.IsWarmed() {
+		go c.executor.WarmPrefix(context.Background())
+	}
 }
 
 // NewSession snapshots the current conversation, rotates to a fresh file, and

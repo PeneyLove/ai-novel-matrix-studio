@@ -112,7 +112,7 @@ func TestCompactReplacesHistory(t *testing.T) {
 		{Role: provider.RoleAssistant, Content: "ok"},
 	}}
 	dir := t.TempDir()
-	a := New(prov, tool.NewRegistry(), sess, Options{RecentKeep: 2, ArchiveDir: dir}, event.Discard)
+	a := New(prov, tool.NewRegistry(), sess, Options{RecentKeep: 3, ArchiveDir: dir}, event.Discard)
 
 	if err := a.compact(context.Background(), "manual", "", true); err != nil {
 		t.Fatalf("compact: %v", err)
@@ -121,9 +121,9 @@ func TestCompactReplacesHistory(t *testing.T) {
 		t.Fatalf("rewrite version = %d, want 1", got)
 	}
 
-	// system + summary + last 2 verbatim.
-	if got := len(sess.Messages); got != 4 {
-		t.Fatalf("len = %d, want 4: %+v", got, sess.Messages)
+	// system + summary + last 3 verbatim (with RecentKeep=3).
+	if got := len(sess.Messages); got != 5 {
+		t.Fatalf("len = %d, want 5: %+v", got, sess.Messages)
 	}
 	if sess.Messages[0].Role != provider.RoleSystem {
 		t.Errorf("message 0 = %s, want system", sess.Messages[0].Role)
@@ -132,11 +132,11 @@ func TestCompactReplacesHistory(t *testing.T) {
 	if summary.Role != provider.RoleUser || !strings.Contains(summary.Content, "Summary of earlier") || !strings.Contains(summary.Content, "do X") {
 		t.Errorf("summary message = %+v", summary)
 	}
-	if sess.Messages[2].Content != "next" || sess.Messages[3].Content != "ok" {
+	if sess.Messages[2].Content != "did a step" || sess.Messages[3].Content != "next" || sess.Messages[4].Content != "ok" {
 		t.Errorf("recent tail not preserved: %+v", sess.Messages[2:])
 	}
 
-	// The 4 dropped originals were archived, one JSON object per line.
+	// The 3 dropped originals were archived, one JSON object per line.
 	entries, err := os.ReadDir(dir)
 	if err != nil || len(entries) != 1 {
 		t.Fatalf("archive dir: entries=%d err=%v", len(entries), err)
@@ -145,8 +145,8 @@ func TestCompactReplacesHistory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read archive: %v", err)
 	}
-	if lines := strings.Count(strings.TrimSpace(string(data)), "\n") + 1; lines != 4 {
-		t.Errorf("archived %d lines, want 4:\n%s", lines, data)
+	if lines := strings.Count(strings.TrimSpace(string(data)), "\n") + 1; lines != 3 {
+		t.Errorf("archived %d lines, want 3:\n%s", lines, data)
 	}
 	if !strings.HasSuffix(entries[0].Name(), ".jsonl") {
 		t.Errorf("archive name = %q, want .jsonl", entries[0].Name())
@@ -265,16 +265,17 @@ func TestCompactFoldsSingleLargeMessage(t *testing.T) {
 	sess := &Session{Messages: []provider.Message{
 		{Role: provider.RoleSystem, Content: "sys"},
 		{Role: provider.RoleTool, ToolCallID: "1", Name: "read_file", Content: strings.Repeat("large output line\n", 500)},
+		{Role: provider.RoleAssistant, Content: "previous step"},
 		{Role: provider.RoleUser, Content: "next"},
 		{Role: provider.RoleAssistant, Content: "ok"},
 	}}
-	a := New(prov, tool.NewRegistry(), sess, Options{RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
+	a := New(prov, tool.NewRegistry(), sess, Options{RecentKeep: 3, ArchiveDir: t.TempDir()}, event.Discard)
 
 	if err := a.compact(context.Background(), "auto", "", false); err != nil {
 		t.Fatalf("compact: %v", err)
 	}
-	if got := len(sess.Messages); got != 4 {
-		t.Fatalf("len = %d, want 4: %+v", got, sess.Messages)
+	if got := len(sess.Messages); got != 5 {
+		t.Fatalf("len = %d, want 5: %+v", got, sess.Messages)
 	}
 	if !strings.Contains(sess.Messages[1].Content, "large file contents") {
 		t.Fatalf("single large message was not summarized: %+v", sess.Messages)
@@ -307,7 +308,7 @@ func TestCompactSkipsSingleSmallMessage(t *testing.T) {
 
 func TestMaybeCompactThreshold(t *testing.T) {
 	// A large early user message gives the fold real value; with a 100-token window
-	// the soft (50%), trigger (80%), and force (90%) thresholds are easy to hit.
+	// the soft (60%), trigger (85%), and force (92%) thresholds are easy to hit.
 	newSess := func() *Session {
 		return &Session{Messages: []provider.Message{
 			{Role: provider.RoleSystem, Content: "sys"},
@@ -320,7 +321,7 @@ func TestMaybeCompactThreshold(t *testing.T) {
 		}}
 	}
 
-	// Below 50% of the window: untouched.
+	// Below 60% of the window: untouched.
 	sess := newSess()
 	a := New(&fakeProvider{reply: "s"}, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
 	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 49})
@@ -328,7 +329,7 @@ func TestMaybeCompactThreshold(t *testing.T) {
 		t.Errorf("below threshold should not compact, len = %d", len(sess.Messages))
 	}
 
-	// At/above 50% only emits a soft notice; it does not rewrite the cache prefix.
+	// At/above 60% only emits a soft notice; it does not rewrite the cache prefix.
 	sess = newSess()
 	prov := &fakeProvider{reply: "s"}
 	var notices []event.Event
@@ -337,28 +338,28 @@ func TestMaybeCompactThreshold(t *testing.T) {
 			notices = append(notices, e)
 		}
 	}))
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 50})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 60})
 	if len(sess.Messages) != 7 {
 		t.Errorf("soft threshold should not compact, len = %d", len(sess.Messages))
 	}
 	if len(prov.got) != 0 {
 		t.Fatalf("soft threshold called summarizer: %+v", prov.got)
 	}
-	if len(notices) != 1 || !strings.Contains(notices[0].Text, "context reached 50%") {
+	if len(notices) != 1 || !strings.Contains(notices[0].Text, "context reached 60%") {
 		t.Fatalf("soft threshold notice = %+v", notices)
 	}
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 60})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 70})
 	if len(notices) != 1 {
 		t.Fatalf("soft threshold notice should only emit once, got %d", len(notices))
 	}
 
-	// At/above 80%: compacts when the fold is economically worthwhile. The
+	// At/above 85%: compacts when the fold is economically worthwhile. The
 	// token-budgeted tail keeps the small recent messages, so the large early
 	// message is the only foldable region — folding it installs a summary at
 	// index 1 (the count is unchanged because one message becomes one summary).
 	sess = newSess()
 	a = New(&fakeProvider{reply: "s"}, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 80})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 85})
 	if !strings.Contains(sess.Messages[1].Content, "Summary of earlier") {
 		t.Errorf("compact threshold should fold the large early message, got: %+v", sess.Messages[1])
 	}
@@ -383,7 +384,7 @@ func TestMaybeCompactForceCeilingBypassesEconomics(t *testing.T) {
 	prov := &fakeProvider{reply: "forced summary"}
 	a := New(prov, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
 
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 90})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 92})
 	// The token-budgeted tail keeps "small old answer", next, ok, so only the
 	// single early message folds — force bypasses the economics skip and installs
 	// a summary at index 1, leaving the count at 5.
@@ -409,7 +410,7 @@ func TestMaybeCompactSkipsLowValueRegionBeforeForceCeiling(t *testing.T) {
 	prov := &fakeProvider{reply: "should not summarize"}
 	a := New(prov, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
 
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 80})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 85})
 	if got := len(sess.Messages); got != 5 {
 		t.Fatalf("low-value region should not compact before force ceiling, len = %d", got)
 	}
@@ -427,7 +428,7 @@ func TestMaybeCompactFoldsSingleLargeMessageAtThreshold(t *testing.T) {
 	}}
 	a := New(&fakeProvider{reply: "single large summary"}, tool.NewRegistry(), sess, Options{ContextWindow: 100, RecentKeep: 2, ArchiveDir: t.TempDir()}, event.Discard)
 
-	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 80})
+	a.maybeCompact(context.Background(), &provider.Usage{PromptTokens: 85})
 	if got := len(sess.Messages); got != 4 {
 		t.Fatalf("len = %d, want 4: %+v", got, sess.Messages)
 	}

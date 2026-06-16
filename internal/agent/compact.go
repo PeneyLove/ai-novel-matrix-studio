@@ -19,13 +19,21 @@ import (
 // compacted down to a tail budget. The budget is a fixed token count, not a
 // fraction of the window, so a huge window still compacts rarely while a small
 // one still lands below the trigger (which is what stops the re-compaction loop).
+//
+// The tail budget (defaultTailTokens) is the single most important lever for
+// cache efficiency: a larger tail keeps more history verbatim across compaction,
+// so the provider-side prompt cache (e.g. DeepSeek's auto cache with 64-token
+// block granularity) survives across more turns. On a 1M-token window, raising
+// this from 16K to 32K doubles the verbatim region while still staying well
+// within the 50% safety cap — the trade-off is slightly less aggressive
+// compaction, but far fewer cold-start turns.
 const (
-	defaultSoftCompactRatio  = 0.5   // report growing context here, but keep the cache-stable prefix intact
-	defaultCompactRatio      = 0.8   // trigger: prompt at this fraction of the window compacts
-	defaultCompactForceRatio = 0.9   // force compaction at this high-water mark even for low-value folds
+	defaultSoftCompactRatio  = 0.6   // report growing context here, but keep the cache-stable prefix intact
+	defaultCompactRatio      = 0.85  // trigger: prompt at this fraction of the window compacts
+	defaultCompactForceRatio = 0.92  // force compaction at this high-water mark even for low-value folds
 	defaultCompactTarget     = 0.5   // safety cap: the kept tail never exceeds this fraction of the window
-	defaultTailTokens        = 16384 // verbatim recent-tail budget, in tokens
-	minRecentKeep            = 2     // never keep fewer recent messages than this
+	defaultTailTokens        = 32768 // verbatim recent-tail budget, in tokens (raised from 16384 for better cache retention)
+	minRecentKeep            = 3     // never keep fewer recent messages than this (raised from 2 for tool-call pair stability)
 	minCompactMessages       = 2     // skip compaction below this many compactable messages
 	fallbackTokPerChar       = 0.25  // ~4 chars/token, used before any usage is available to calibrate
 )

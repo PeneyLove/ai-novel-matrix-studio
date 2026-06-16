@@ -45,3 +45,7 @@ go.sum
 
 # User data (never commit novel projects)
 .novelAgent/
+
+reasonix.toml
+
+reasonix.toml
