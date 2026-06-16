@@ -40,6 +40,14 @@ compact_force_ratio = 0.9   # force compacting at this high-water mark
 # plot_summary_window = 20        # recent chapter summaries to keep in the Level-3 rolling cache
 # consult_cache_ttl_seconds = 300 # how long consult analysis results are cached (0 = disabled)
 
+# [multi_agent] controls multi-agent isolation mode. When enabled, auxiliary
+# writing tasks (worldbuilding, character design, outline generation) are
+# dispatched to isolated sandbox agents sharing data only through the cache.
+# [multi_agent]
+# enabled = true              # turn on multi-agent isolation; false = run all tasks inline
+# auto_reset_sandbox = true   # reset auxiliary sandbox history after each task (keeps context lean)
+# cache_inject_enabled = true # auto-inject asset cache into main writer system prompt before each turn
+
 # A provider is a vendor endpoint (one base_url + key) that offers one or more
 # models. Use `models = [...]` to expose several under a single entry — switching
 # models reuses the same connection; no need to re-declare base_url/api_key.
