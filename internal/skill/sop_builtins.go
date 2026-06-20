@@ -424,4 +424,4 @@ func sopBuiltinSkills() []Skill {
 			RunAs:       RunInline,
 		},
 	}
-}`
+}

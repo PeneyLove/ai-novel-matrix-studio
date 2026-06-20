@@ -279,6 +279,64 @@ func fixAISlop(text string) (string, []string) {
 	return fixed, changes
 }
 
+// insertStructMarkers inserts four-segment boundary markers into the text.
+func insertStructMarkers(text string, chapterMeta, prevEnding string) (string, []string) {
+	lines := strings.Split(text, "\n")
+	var out []string
+	var changes []string
+
+	// Prepend chapter metadata if provided.
+	if chapterMeta != "" {
+		out = append(out, chapterMeta, "", "---", "")
+		changes = append(changes, "插入章首元数据")
+	}
+
+	// Count content lines and insert markers at approximate quarters.
+	var contentLines []int
+	for i, l := range lines {
+		trimmed := strings.TrimSpace(l)
+		if trimmed != "" && !strings.HasPrefix(trimmed, "#") &&
+			!strings.HasPrefix(trimmed, "---") && !strings.HasPrefix(trimmed, "===") &&
+			!strings.HasPrefix(trimmed, "【") {
+			contentLines = append(contentLines, i)
+		}
+	}
+
+	n := len(contentLines)
+	if n < 8 {
+		// Too short for 4 segments — just output all lines as-is.
+		out = append(out, lines...)
+		changes = append(changes, "章太短，跳结构标记")
+		return strings.Join(out, "\n"), changes
+	}
+
+	q1 := contentLines[n/4]
+	q2 := contentLines[n/2]
+	q3 := contentLines[3*n/4]
+
+	markers := []struct {
+		pos  int
+		name string
+	}{
+		{0, "【触发段】"},
+		{q1, "【展开段】"},
+		{q2, "【推进段】"},
+		{q3, "【收束段】"},
+	}
+
+	markerIdx := 0
+	for i, l := range lines {
+		if markerIdx < len(markers) && i >= markers[markerIdx].pos {
+			out = append(out, "", markers[markerIdx].name, "")
+			changes = append(changes, fmt.Sprintf("插入%s标记(行%d)", markers[markerIdx].name, i+1))
+			markerIdx++
+		}
+		out = append(out, l)
+	}
+
+	return strings.Join(out, "\n"), changes
+}
+
 // applyReplaceMap replaces forbidden phrases with their configured alternatives.
 func applyReplaceMap(text string, replaceMap map[string]string) (string, []string) {
 	if len(replaceMap) == 0 {
@@ -290,20 +348,6 @@ func applyReplaceMap(text string, replaceMap map[string]string) (string, []strin
 		if strings.Contains(fixed, old) {
 			fixed = strings.ReplaceAll(fixed, old, new)
 			changes = append(changes, fmt.Sprintf("替换「%s」→「%s」", old, new))
-		}
-	}
-	return fixed, changes
-}
-	}
-	var changes []string
-	fixed := text
-	for _, phrase := range slopPhrases {
-		if strings.Contains(fixed, phrase) {
-			before := fixed
-			fixed = strings.ReplaceAll(fixed, phrase, "")
-			if fixed != before {
-				changes = append(changes, fmt.Sprintf("删除AI套话「%s」", phrase))
-			}
 		}
 	}
 	return fixed, changes

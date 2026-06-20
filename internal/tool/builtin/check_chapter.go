@@ -310,10 +310,10 @@ func runCheckAgent(args checkChapterArgs, cfg *novelConfig) string {
 			icon, it.id, it.name, marker, it.score, it.max, it.detail))
 	}
 
-	sb.WriteString(fmt.Sprintf("\n### 本章结尾类型：%s\n", detectEndingType(nodes)))
+	sb.WriteString(fmt.Sprintf("\n### 本章结尾类型：%s\n", detectEndingType(nodes, cycleTypes)))
 	sb.WriteString(fmt.Sprintf("下章需轮换，禁止重复此类型。"))
 	if args.PrevEndingType != "" {
-		sb.WriteString(fmt.Sprintf(" 上章=%s → 本章=%s", args.PrevEndingType, detectEndingType(nodes)))
+		sb.WriteString(fmt.Sprintf(" 上章=%s → 本章=%s", args.PrevEndingType, detectEndingType(nodes, cycleTypes)))
 	}
 	sb.WriteString("\n\n")
 

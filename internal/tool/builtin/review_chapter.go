@@ -434,11 +434,6 @@ func checkDialogueParagraphing(lines []string) []int {
 			continue
 		}
 		right += left + 1
-		}
-		if right < 0 {
-			continue
-		}
-		right += left + 1
 		// Check if there's text after the closing quote on the same line
 		// that isn't just a dialogue tag.
 		after := strings.TrimSpace(trimmed[right+1:])
@@ -606,7 +601,7 @@ func detectPingPongDialogue(nodes []paraNode) []int {
 			return typeQuote
 		}
 		// Also match lines that are entirely a quote with trailing dialogue tag.
-		if len(trimmed) > 2 && (trimmed[0] == '\u201C' || trimmed[0] == '"') {
+		if len(trimmed) > 2 && (strings.HasPrefix(trimmed, "\u201C") || trimmed[0] == '"') {
 			return typeQuote
 		}
 		return typeOther
@@ -614,7 +609,7 @@ func detectPingPongDialogue(nodes []paraNode) []int {
 
 	quoteRun := 0
 	runStart := 0
-	for i, nd := range nodes {
+	for _, nd := range nodes {
 		if classify(nd.text) == typeQuote {
 			if quoteRun == 0 {
 				runStart = nd.line
