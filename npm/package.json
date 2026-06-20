@@ -1,6 +1,6 @@
 {
   "name": "novel-agent-cli",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "AI Novel Agent v2.1 — 46 built-in Skills × config-driven quality engine (check_chapter 100pt scoring + fix_chapter auto-repair) × multi-agent sandbox × 3-level writing cache. Terminal-based Chinese web novel creation assistant.",
   "main": "install.js",
   "publishConfig": {
