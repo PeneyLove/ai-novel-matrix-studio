@@ -1,7 +1,7 @@
 {
   "name": "novel-agent-cli",
-  "version": "2.0.5",
-  "description": "AI Novel Agent v2.0 — multi-agent session isolation × 3-level writing cache × SOP workflow skills × built-in consult engine. Terminal-based Chinese web novel creation assistant.",
+  "version": "2.1.0",
+  "description": "AI Novel Agent v2.1 — 46 built-in Skills × config-driven quality engine (check_chapter 100pt scoring + fix_chapter auto-repair) × multi-agent sandbox × 3-level writing cache. Terminal-based Chinese web novel creation assistant.",
   "main": "install.js",
   "publishConfig": {
     "access": "public"
@@ -32,7 +32,12 @@
     "rag",
     "agent",
     "multi-agent",
-    "sandbox"
+    "sandbox",
+    "quality-check",
+    "check-chapter",
+    "fix-chapter",
+    "config-driven",
+    "context-injection"
   ],
   "author": "",
   "license": "MIT",
