@@ -27,8 +27,8 @@ type storyBibleInitArgs struct {
 }
 
 type storyBibleInitChar struct {
-	Name        string                 `json:"name"`
-	Properties  map[string]interface{} `json:"properties"`
+	Name       string                 `json:"name"`
+	Properties map[string]interface{} `json:"properties"`
 }
 
 type storyBibleInitNode struct {
@@ -198,9 +198,9 @@ func joinParts(parts []string) string {
 type storyBibleSnapshot struct{}
 
 type storyBibleSnapshotArgs struct {
-	GraphJSON   string   `json:"graph_json"`   // story-bible.json 的内容
+	GraphJSON    string   `json:"graph_json"`    // story-bible.json 的内容
 	CharacterIDs []string `json:"character_ids"` // 要包含的角色ID列表
-	Depth       int      `json:"depth"`         // 扩展深度（默认1）
+	Depth        int      `json:"depth"`         // 扩展深度（默认1）
 }
 
 func (s storyBibleSnapshot) Name() string { return "storybible_snapshot" }
@@ -254,9 +254,9 @@ func (s storyBibleSnapshot) Execute(ctx context.Context, args json.RawMessage) (
 type storyBibleApply struct{}
 
 type storyBibleApplyArgs struct {
-	GraphJSON    string                        `json:"graph_json"`    // story-bible.json 的内容
+	GraphJSON    string                         `json:"graph_json"`   // story-bible.json 的内容
 	Instructions []storybible.UpdateInstruction `json:"instructions"` // 更新指令列表
-	Chapter      int                           `json:"chapter"`       // 章节号
+	Chapter      int                            `json:"chapter"`      // 章节号
 }
 
 func (s storyBibleApply) Name() string { return "storybible_apply" }

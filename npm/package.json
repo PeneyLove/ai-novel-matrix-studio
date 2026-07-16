@@ -1,7 +1,7 @@
 {
   "name": "novel-agent-cli",
-  "version": "3.0.0",
-  "description": "AI Novel Agent v3.0 — Story Bible Graph × Character Agent×N × Timeline Synthesis × Review Agent (deAI/expand/rewrite) × 4-stage pipeline. Terminal-based Chinese web novel creation assistant.",
+  "version": "3.0.1",
+  "description": "AI Novel Agent v3.0.1 — Story Bible Graph × Character Agent×N × Timeline Synthesis × Review Agent (deAI/expand/rewrite/repair) × 4-stage pipeline. Terminal-based Chinese web novel creation assistant. New: review_repair tool + novel-rewrite-fix Skill for diagnosing and fixing underperforming chapters.",
   "main": "install.js",
   "publishConfig": {
     "access": "public"
@@ -36,6 +36,8 @@
     "quality-check",
     "check-chapter",
     "fix-chapter",
+    "repair",
+    "rewrite-fix",
     "config-driven",
     "context-injection"
   ],

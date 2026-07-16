@@ -13,6 +13,7 @@ func init() {
 	tool.RegisterBuiltin(reviewExpand{})
 	tool.RegisterBuiltin(reviewRewrite{})
 	tool.RegisterBuiltin(reviewDeAI{})
+	tool.RegisterBuiltin(reviewRepair{})
 }
 
 // ─── review_expand (扩写) ──────────────────────────────────────────────────
@@ -75,12 +76,12 @@ func (r reviewExpand) Execute(ctx context.Context, args json.RawMessage) (string
 type reviewRewrite struct{}
 
 type reviewRewriteArgs struct {
-	Content      string            `json:"content"`       // 待改写章节全文
-	ChapterNum   int               `json:"chapter_num"`   // 章节号
-	Genre        string            `json:"genre"`         // 赛道标签
-	Brief        string            `json:"brief"`         // 用户初步改写需求（可选）
-	Stage        string            `json:"stage"`         // analyze | execute
-	Answers      map[string]string `json:"answers"`       // 用户对改写问题的回答（execute阶段）
+	Content    string            `json:"content"`     // 待改写章节全文
+	ChapterNum int               `json:"chapter_num"` // 章节号
+	Genre      string            `json:"genre"`       // 赛道标签
+	Brief      string            `json:"brief"`       // 用户初步改写需求（可选）
+	Stage      string            `json:"stage"`       // analyze | execute
+	Answers    map[string]string `json:"answers"`     // 用户对改写问题的回答（execute阶段）
 }
 
 func (r reviewRewrite) Name() string { return "review_rewrite" }
@@ -190,4 +191,66 @@ func (r reviewDeAI) Execute(ctx context.Context, args json.RawMessage) (string, 
 	}
 
 	return reviewagent.BuildDeAIPrompt(in), nil
+}
+
+// ─── review_repair (改文修复) ───────────────────────────────────────────────
+
+type reviewRepair struct{}
+
+type reviewRepairArgs struct {
+	Content     string   `json:"content"`      // 待改文章节全文
+	ChapterNum  int      `json:"chapter_num"`  // 章节号
+	Genre       string   `json:"genre"`        // 赛道标签
+	Stage       string   `json:"stage"`        // diagnose | execute
+	RepairFixes []string `json:"repair_fixes"` // 用户确认的修复项列表（execute阶段）
+}
+
+func (r reviewRepair) Name() string { return "review_repair" }
+
+func (r reviewRepair) Description() string {
+	return "改文修复：对数据差的小说章节进行8维度量化诊断（开头钩子/节奏/章末钩子/AI痕迹/对话/描写/信息密度/分段），输出评分+TOP问题列表，然后根据用户确认执行针对性改写。两阶段：stage=diagnose 先诊断，stage=execute 再执行改写。"
+}
+
+func (r reviewRepair) Schema() json.RawMessage {
+	return json.RawMessage(`{
+		"type": "object",
+		"properties": {
+			"content": {"type": "string", "description": "待诊断/改写的章节全文（先用 read_file 读取）"},
+			"chapter_num": {"type": "integer", "description": "章节号"},
+			"genre": {"type": "string", "description": "赛道标签：玄幻/都市/古言/科幻/悬疑/甜宠"},
+			"stage": {"type": "string", "enum": ["diagnose", "execute"], "description": "diagnose=8维度诊断+评分+定位TOP问题；execute=根据用户确认的修复项执行改写"},
+			"repair_fixes": {"type": "array", "items": {"type": "string"}, "description": "用户在诊断阶段确认要修复的问题列表（execute阶段必填）"}
+		},
+		"required": ["content", "stage"]
+	}`)
+}
+
+func (r reviewRepair) ReadOnly() bool { return true }
+
+func (r reviewRepair) Execute(ctx context.Context, args json.RawMessage) (string, error) {
+	var p reviewRepairArgs
+	if err := json.Unmarshal(args, &p); err != nil {
+		return "", fmt.Errorf("review_repair: invalid args: %w", err)
+	}
+	if p.Content == "" {
+		return "", fmt.Errorf("review_repair: content is empty — read the file first")
+	}
+
+	in := reviewagent.Input{
+		Mode:        reviewagent.ModeRepair,
+		Content:     p.Content,
+		ChapterNum:  p.ChapterNum,
+		Genre:       p.Genre,
+		RepairFixes: p.RepairFixes,
+	}
+
+	switch p.Stage {
+	case "execute":
+		if len(p.RepairFixes) == 0 {
+			return "", fmt.Errorf("review_repair: stage=execute requires repair_fixes from the diagnose phase")
+		}
+		return reviewagent.BuildRepairExecutePrompt(in), nil
+	default:
+		return reviewagent.BuildRepairDiagnosePrompt(in), nil
+	}
 }

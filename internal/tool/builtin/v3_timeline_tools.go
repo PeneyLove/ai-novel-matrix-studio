@@ -103,10 +103,10 @@ func (c characterReact) Execute(ctx context.Context, args json.RawMessage) (stri
 		Memories:  memories,
 		GraphSnap: snap,
 		Event: characteragent.TriggerEvent{
-			EventType:    p.EventType,
-			Description:  p.EventDesc,
-			Location:     p.Location,
-			ChapterNum:   p.ChapterNum,
+			EventType:   p.EventType,
+			Description: p.EventDesc,
+			Location:    p.Location,
+			ChapterNum:  p.ChapterNum,
 		},
 	}
 
@@ -149,19 +149,19 @@ func profileMapToSlice(m map[string]*characteragent.CharacterProfile) []*charact
 type timelineSynthesize struct{}
 
 type timelineSynthesizeArgs struct {
-	GraphJSON     string                `json:"graph_json"`      // story-bible.json 内容
-	ChapterNum    int                   `json:"chapter_num"`     // 章节号
-	ProtagonistID string                `json:"protagonist_id"`  // 主角节点ID
-	Reactions     []timelineReactInput  `json:"reactions"`       // 角色反应列表
-	StyleGuide    string                `json:"style_guide"`     // 风格指导（可选）
+	GraphJSON     string               `json:"graph_json"`     // story-bible.json 内容
+	ChapterNum    int                  `json:"chapter_num"`    // 章节号
+	ProtagonistID string               `json:"protagonist_id"` // 主角节点ID
+	Reactions     []timelineReactInput `json:"reactions"`      // 角色反应列表
+	StyleGuide    string               `json:"style_guide"`    // 风格指导（可选）
 }
 
 type timelineReactInput struct {
-	CharacterID   string                               `json:"character_id"`
-	CharacterName string                               `json:"character_name"`
-	InternalThought string                             `json:"internal_thought"`
-	Actions        []timelineActionInput               `json:"actions"`
-	RelChanges     []timelineRelChangeInput             `json:"rel_changes"`
+	CharacterID     string                   `json:"character_id"`
+	CharacterName   string                   `json:"character_name"`
+	InternalThought string                   `json:"internal_thought"`
+	Actions         []timelineActionInput    `json:"actions"`
+	RelChanges      []timelineRelChangeInput `json:"rel_changes"`
 }
 
 type timelineActionInput struct {
@@ -275,10 +275,10 @@ func (t timelineSynthesize) Execute(ctx context.Context, args json.RawMessage) (
 			})
 		}
 		reactions = append(reactions, characteragent.Reaction{
-			CharacterID:        r.CharacterID,
-			CharacterName:      r.CharacterName,
-			InternalThought:    r.InternalThought,
-			Actions:            actions,
+			CharacterID:         r.CharacterID,
+			CharacterName:       r.CharacterName,
+			InternalThought:     r.InternalThought,
+			Actions:             actions,
 			RelationshipChanges: relChanges,
 		})
 	}

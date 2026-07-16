@@ -196,9 +196,9 @@ func TestAllModes(t *testing.T) {
 
 func TestOutputStruct(t *testing.T) {
 	o := Output{
-		Mode:         ModeDeAI,
-		OriginalLen:  1000,
-		ResultLen:    950,
+		Mode:          ModeDeAI,
+		OriginalLen:   1000,
+		ResultLen:     950,
 		ProcessedText: "处理后的文本",
 		Changes: []Change{
 			{Location: "第2段", Before: "原文", After: "修改", Reason: "去AI化", Pattern: "万能过渡句"},

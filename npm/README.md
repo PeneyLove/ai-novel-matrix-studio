@@ -1,6 +1,6 @@
-# AI Novel Agent · v3.0
+# AI Novel Agent · v3.0.1
 
-> 世界知识图谱 × 角色人格Agent × 时间线合成Agent × 三级写作缓存 × 46 个内置 Skill × 配置驱动质检引擎 — 终端里的 AI 网文创作助手
+> 世界知识图谱 × 角色人格Agent × 时间线合成Agent × 三级写作缓存 × 47 个内置 Skill（含改文修复） × 配置驱动质检引擎 — 终端里的 AI 网文创作助手
 >
 > IDE 终端输入 `novel-agent` → 进入对话 → 图谱初始化 / 角色反应 / 时间线合成 / 正文创作 / 质量审核
 
@@ -14,7 +14,7 @@
 - [架构](#架构)
 - [多 Agent 系统](#多-agent-系统)
 - [章节质量管理](#章节质量管理)
-- [Skill 体系（46 个内置）](#skill-体系46-个内置)
+- [Skill 体系（47 个内置，含改文修复）](#skill-体系47-个内置含改文修复)
 - [配置驱动](#配置驱动)
 - [缓存引擎](#缓存引擎)
 - [内置咨询引擎](#内置咨询引擎)
@@ -38,9 +38,9 @@
 | 世界状态 | 全靠模型记忆 | **世界知识图谱** — 5 类节点 + 12 种关系边，子图快照控制上下文 |
 | 角色一致性 | 同质化严重 | **角色人格Agent × N** — 独立性格约束，互不感知，防脑补塌陷 |
 | 节奏控制 | 手动调整 | **时间线合成Agent** — 4 拍节奏自动排序 + 冲突检测解决 |
-| 质量 | 依赖模型直觉 | **check_chapter 10 项量化打分**（满分 100，≥90 通过）+ **fix_chapter 自动修复** |
+| 质量 | 依赖模型直觉 | **check_chapter 10 项量化打分**（满分 100，≥90 通过）+ **fix_chapter 自动修复** + **review_repair 8维改文诊断** |
 | 缓存 | 无 | **三级写作缓存**（全局资产 + 语义片段 + 剧情摘要）自动注入 |
-| Skill | 单一通用提示词 | **46 个内置 Skill + 5 个 V3 工具**（编译进二进制） |
+| Skill | 单一通用提示词 | **47 个内置 Skill + 5 个 V3 工具 + review_repair**（编译进二进制） |
 | 长篇一致性 | 全靠模型记忆 | **图谱反馈循环**（每章图谱更新 → 下次只读快照，无需全文历史） |
 | RAG | 无 | **本地 ragCore 目录检索** — 热门小说章节即查即用 |
 | 分发 | 网页访问 | `npm install -g novel-agent-cli` |
@@ -250,7 +250,7 @@ enabled = true
 
 ---
 
-## Skill 体系（46 个内置）
+## Skill 体系（47 个内置，含改文修复）
 
 所有 Skill 编译进二进制，npm 用户直接可用。项目中的同名 Markdown 文件可覆盖内置版本。
 
@@ -265,9 +265,9 @@ enabled = true
 | 现言甜宠 `tianchong` | init / writing / optimize |
 | 悬疑灵异 `xuanyi` | init / writing / optimize |
 
-### 小说核心（11 个）
+### 小说核心（12 个）
 
-`global-encoding` `novel-init` `novel-worldbuilding` `novel-characters` `novel-consult` `novel-style-analysis` `novel-plot-analyze` `novel-trope-reference` `novel-volume-plan` `novel-continue` `novel-rag-search`
+`global-encoding` `novel-init` `novel-worldbuilding` `novel-characters` `novel-consult` `novel-style-analysis` `novel-plot-analyze` `novel-trope-reference` `novel-volume-plan` `novel-continue` `novel-rag-search` `novel-rewrite-fix`
 
 ### SOP 工作流（11 个）
 

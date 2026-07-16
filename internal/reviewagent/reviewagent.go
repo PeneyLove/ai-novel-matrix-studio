@@ -5,20 +5,26 @@
 //
 // Three review modes:
 //
-//   Expand (扩写) — Enrich existing prose with more detail, description,
-//   sensory input, internal monologue, or scene-setting. The agent identifies
-//   "thin" passages and suggests concrete expansions.
+//	Expand (扩写) — Enrich existing prose with more detail, description,
+//	sensory input, internal monologue, or scene-setting. The agent identifies
+//	"thin" passages and suggests concrete expansions.
 //
-//   Rewrite (改写) — Rewrite a passage according to user-specified
-//   requirements (change POV, adjust tone, compress, restructure, change
-//   style). This mode is interactive: the agent first analyses the text and
-//   asks clarifying questions before rewriting.
+//	Rewrite (改写) — Rewrite a passage according to user-specified
+//	requirements (change POV, adjust tone, compress, restructure, change
+//	style). This mode is interactive: the agent first analyses the text and
+//	asks clarifying questions before rewriting.
 //
-//   DeAI (去AI化) — Detect and remove common AI-writing fingerprints:
-//   formulaic transition phrases, overly balanced paragraph structures,
-//   repetitive sentence openings, excessive hedging, generic emotional
-//   beats, and "both sides" boilerplate. Produces a cleaned version with
-//   an audit trail of what was changed and why.
+//	DeAI (去AI化) — Detect and remove common AI-writing fingerprints:
+//	formulaic transition phrases, overly balanced paragraph structures,
+//	repetitive sentence openings, excessive hedging, generic emotional
+//	beats, and "both sides" boilerplate. Produces a cleaned version with
+//	an audit trail of what was changed and why.
+//
+//	Repair (改文修复) — Comprehensive diagnosis-and-repair for underperforming
+//	chapters. Two-stage: first analyse 8 dimensions (hooks, rhythm, AI traces,
+//	dialogue, description, info density, readability, genre specifics) with
+//	quantified scores; then apply targeted rewrites based on the diagnosis.
+//	Designed for chapters with poor reader data (low CTR, low retention, etc).
 //
 // Design principle: the agent builds prompts; the LLM does the work.
 // This package is call-site agnostic — the tool layer wires it to the
@@ -36,9 +42,10 @@ import (
 type Mode string
 
 const (
-	ModeExpand Mode = "expand" // 扩写
+	ModeExpand  Mode = "expand"  // 扩写
 	ModeRewrite Mode = "rewrite" // 改写
-	ModeDeAI   Mode = "deai"    // 去AI化
+	ModeDeAI    Mode = "deai"    // 去AI化
+	ModeRepair  Mode = "repair"  // 改文修复
 )
 
 // ─── AI Pattern Catalogue ───────────────────────────────────────────────────
@@ -111,23 +118,27 @@ func DefaultAIPatterns() []AIPattern {
 
 // Input is the material the review agent works with.
 type Input struct {
-	Mode       Mode     // which operation
-	Content    string   // full chapter text (or passage) to review
-	ChapterNum int      // chapter number for context
-	Genre      string   // 玄幻/都市/古言/悬疑/科幻/甜宠
+	Mode       Mode   // which operation
+	Content    string // full chapter text (or passage) to review
+	ChapterNum int    // chapter number for context
+	Genre      string // 玄幻/都市/古言/悬疑/科幻/甜宠
 	// For Rewrite mode, the user's specific requirements (optional initially)
 	RewriteBrief string
 	// For Expand mode, target word-count multiplier (e.g. 1.5 = 50% expansion)
 	ExpandRatio float64
+	// For Repair mode, which dimensions to focus on (empty = all 8)
+	RepairDims []string
+	// For Repair execute stage, the fix items confirmed by the user
+	RepairFixes []string
 }
 
 // ─── Review Output ──────────────────────────────────────────────────────────
 
 // Output is the structured result of a review operation.
 type Output struct {
-	Mode        Mode     `json:"mode"`
-	OriginalLen int      `json:"original_len"` // character count of input
-	ResultLen   int      `json:"result_len"`   // character count of output
+	Mode        Mode `json:"mode"`
+	OriginalLen int  `json:"original_len"` // character count of input
+	ResultLen   int  `json:"result_len"`   // character count of output
 
 	// For Expand / DeAI modes: the processed text.
 	ProcessedText string `json:"processed_text,omitempty"`
@@ -156,16 +167,16 @@ type Change struct {
 
 // PatternHit records a detected AI pattern with count and examples.
 type PatternHit struct {
-	Pattern string   `json:"pattern"`
-	Count   int      `json:"count"`
+	Pattern  string   `json:"pattern"`
+	Count    int      `json:"count"`
 	Examples []string `json:"examples"` // up to 3 snippets
-	Severity string  `json:"severity"`
+	Severity string   `json:"severity"`
 }
 
 // RewriteQuestion is one clarifying question for the interactive rewrite flow.
 type RewriteQuestion struct {
-	ID      string   `json:"id"`
-	Question string  `json:"question"`
+	ID       string   `json:"id"`
+	Question string   `json:"question"`
 	Options  []string `json:"options"` // 2-4 concrete options
 	Default  string   `json:"default"`
 }
@@ -307,15 +318,98 @@ func BuildDeAIPrompt(in Input) string {
 	return b.String()
 }
 
+// BuildRepairDiagnosePrompt builds the first-stage prompt for repair mode:
+// analyses the text across 8 dimensions and returns a quantified diagnosis.
+func BuildRepairDiagnosePrompt(in Input) string {
+	var b strings.Builder
+	b.WriteString(reviewSystemPrompt)
+	b.WriteString("\n\n## 任务：改文修复 — 诊断阶段\n\n")
+	b.WriteString("你是专业的网文改文诊断Agent。你的任务是对以下小说章节进行多维度量化诊断，\n")
+	b.WriteString("输出评分和问题定位。诊断目标是找出导致\"数据差\"（低点击、低读完率、追读崩）的文本原因。\n\n")
+	if in.Genre != "" {
+		b.WriteString(fmt.Sprintf("赛道：%s\n\n", in.Genre))
+	}
+	b.WriteString("## 诊断维度（每项 0-10 分，总分 80）\n\n")
+	b.WriteString("### 1. 开头钩子（0-10）\n")
+	b.WriteString("- 前500字是否包含冲突/悬念/反转/金句？开篇能否3秒内抓住读者？\n\n")
+	b.WriteString("### 2. 节奏控制（0-10）\n")
+	b.WriteString("- 爽点/冲突密度是否合理？是否有3段以上连续无冲突的纯叙事？\n\n")
+	b.WriteString("### 3. 章末钩子（0-10）\n")
+	b.WriteString("- 结尾是否有悬念/危机/揭秘/冲突预告？读者是否有冲动点下一章？\n\n")
+	b.WriteString("### 4. AI痕迹（0-10）\n")
+	b.WriteString("- 检测以下模式（每出现1类扣2分）：万能过渡句、对称句式堆砌、空洞情绪描述、段落公式收束、规整动作链、形容词膨胀、对话标签机械重复、解释性旁白\n\n")
+	b.WriteString("### 5. 对话质量（0-10）\n")
+	b.WriteString("- 对话占比是否合理（30-45%为佳）？不同角色能仅凭对话区分吗？对话是否有\"冰山层\"？\n\n")
+	b.WriteString("### 6. 描写密度（0-10）\n")
+	b.WriteString("- 环境/动作/心理描写比例是否平衡？是否运用五感描写？\n\n")
+	b.WriteString("### 7. 信息密度（0-10）\n")
+	b.WriteString("- 有效剧情推进字数占比。是否有灌水段落（无关闲聊/重复打斗/废话心理）？\n\n")
+	b.WriteString("### 8. 分段与可读性（0-10）\n")
+	b.WriteString("- 每段是否 ≤5 行（手机阅读友好）？是否有超过8行的超长段？\n\n")
+
+	b.WriteString("## 输出格式（严格JSON）\n\n")
+	b.WriteString("```json\n{\n")
+	b.WriteString(`  "total_score": 45,`)
+	b.WriteString("\n  \"word_count\": 2500,\n")
+	b.WriteString("  \"dimensions\": [\n")
+	b.WriteString(`    {"name": "开头钩子", "score": 5, "comment": "具体评价+证据段落定位"},`)
+	b.WriteString("\n    ...\n")
+	b.WriteString("  ],\n")
+	b.WriteString(`  "top_issues": [`)
+	b.WriteString("\n    {\"rank\": 1, \"dimension\": \"章末钩子\", \"problem\": \"第4段结尾平淡\", \"fix_suggestion\": \"在结尾加入危机预告\"},\n")
+	b.WriteString("    ...\n")
+	b.WriteString("  ],\n")
+	b.WriteString(`  "fix_priority": ["章末钩子", "AI痕迹", "开头钩子"],`)
+	b.WriteString("\n  \"recommend_rewrite\": false\n")
+	b.WriteString("}\n```\n\n")
+	b.WriteString("## 正文\n\n")
+	b.WriteString(in.Content)
+	return b.String()
+}
+
+// BuildRepairExecutePrompt builds the second-stage prompt for repair mode:
+// applies the user-confirmed fix items to produce the repaired text.
+func BuildRepairExecutePrompt(in Input) string {
+	var b strings.Builder
+	b.WriteString(reviewSystemPrompt)
+	b.WriteString("\n\n## 任务：改文修复 — 执行阶段\n\n")
+	b.WriteString("根据诊断结果和用户确认的修复项，对正文进行针对性改写。\n\n")
+	b.WriteString("## 用户确认的修复项\n")
+	if len(in.RepairFixes) > 0 {
+		for _, fix := range in.RepairFixes {
+			b.WriteString(fmt.Sprintf("- %s\n", fix))
+		}
+	} else {
+		b.WriteString("- 修复所有诊断出的问题\n")
+	}
+	b.WriteString("\n## 改写原则\n")
+	b.WriteString("1. 保留核心剧情、关键对话、人物设定，绝不变动\n")
+	b.WriteString("2. 只修复诊断出的具体问题，不改动无关段落\n")
+	b.WriteString("3. 开头钩子：在前500字加入冲突/悬念/金句\n")
+	b.WriteString("4. 节奏控制：打破流水账，插入突发事件或内心冲突\n")
+	b.WriteString("5. 章末钩子：添加危机预告/悬念/揭秘/情绪爆发点\n")
+	b.WriteString("6. AI痕迹：用具体动作+感官描写替代模板化表达\n")
+	b.WriteString("7. 对话：用动作替代50%以上的'XX道'标签\n")
+	b.WriteString("8. 分段：确保每段≤5行，打破超长段\n")
+	b.WriteString("9. 保持字数在原文±20%范围内\n\n")
+	b.WriteString("## 输出格式\n")
+	b.WriteString("先输出完整的改写后正文。末尾用 `---` 分隔，列出变更摘要：\n\n")
+	b.WriteString("```\n- [位置] 原文片段 → 修改后片段 (修改原因/对应诊断维度)\n```\n\n")
+	b.WriteString("最后输出字数对比：原文N字 → 改写后N字（±N%）\n\n")
+	b.WriteString("## 正文\n\n")
+	b.WriteString(in.Content)
+	return b.String()
+}
+
 // ─── Rewrite Dialogue Helper ────────────────────────────────────────────────
 
 // RewriteDialogue manages the interactive rewrite Q&A flow.
 // It holds the original input and accumulated user answers.
 type RewriteDialogue struct {
-	Input      Input
-	Stage      string            // "analyze" | "confirm" | "execute"
-	Questions  []RewriteQuestion  // questions generated from analysis
-	Answers    map[string]string  // user's answers
+	Input     Input
+	Stage     string            // "analyze" | "confirm" | "execute"
+	Questions []RewriteQuestion // questions generated from analysis
+	Answers   map[string]string // user's answers
 }
 
 // NewRewriteDialogue starts a new rewrite dialogue.

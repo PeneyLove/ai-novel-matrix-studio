@@ -1,6 +1,6 @@
-# AI Novel Agent · v3.0
+# AI Novel Agent · v3.0.1
 
-> 世界知识图谱 × 角色人格Agent × 时间线合成Agent × 三级写作缓存 × 46 个内置 Skill × 配置驱动质检引擎 — 终端里的 AI 网文创作助手
+> 世界知识图谱 × 角色人格Agent × 时间线合成Agent × 三级写作缓存 × 47 个内置 Skill（含改文修复） × 配置驱动质检引擎 — 终端里的 AI 网文创作助手
 >
 > IDE 终端输入 `novel-agent` → 进入对话 → 图谱初始化 / 角色反应 / 时间线合成 / 正文创作 / 质量审核
 
@@ -27,7 +27,7 @@
 
 ## 是什么
 
-**AI Novel Agent** = 多 Agent 协作底座 + 三级写作缓存 + 46 个内置 Skill + 配置驱动 CheckAgent 质检引擎。
+**AI Novel Agent** = 多 Agent 协作底座 + 三级写作缓存 + 47 个内置 Skill（含 review_repair 改文修复） + 配置驱动 CheckAgent 质检引擎。
 
 单个 Go 二进制文件，不依赖外部数据库、不绑定特定平台。所有数据存本地文件。
 
@@ -116,17 +116,18 @@ novel-agent
 │  ├─ L2 FragmentCache (语义片段)                   │
 │  └─ L3 SummaryCache (剧情摘要滚动窗口)             │
 ├──────────────────────────────────────────────────┤
-│  46 个内置 Skill + 5 个 V3 工具（编译进二进制）     │
+│  47 个内置 Skill + 5 个 V3 工具 + review_repair     │
 │  ├─ V3: storybible_init / snapshot / apply       │
 │  ├─ V3: character_react / timeline_synthesize    │
 │  ├─ 6 赛道 × 3 (init/writing/optimize) = 18      │
-│  ├─ 小说核心 11 (worldbuilding/characters/…)      │
+│  ├─ 小说核心 12 (worldbuilding/…/rewrite-fix)      │
 │  ├─ SOP 工作流 11 (char-all/sop-vol1/write-…)     │
 │  └─ 基础工具 6 (explore/research/review/…)        │
 ├──────────────────────────────────────────────────┤
 │  配置驱动质检引擎                                   │
 │  ├─ check_chapter — 10 项量化打分（满分 100）      │
 │  ├─ fix_chapter — 机械性问题自动修复               │
+│  ├─ review_repair — 8 维改文诊断 + 针对性改写      │
 │  ├─ batch_scan — 批量扫描 + 严重度排序             │
 │  └─ novel_consult — 多源创作咨询                   │
 └──────────────────────────────────────────────────┘
@@ -439,7 +440,7 @@ go test ./...
 
 | 分支 | 版本 | 内容 |
 |------|------|------|
-| **master** | 3.0 | 世界知识图谱 + 角色人格Agent + 时间线合成Agent + 46 Skill + 质检引擎 |
+| **master** | 3.0.1 | 世界知识图谱 + 角色人格Agent + 时间线合成Agent + 47 Skill + review_repair + 质检引擎 |
 | v1.x | 1.2 | 56 Skill + RAG + 咨询引擎 |
 
 ---

@@ -18,24 +18,24 @@ const (
 // VerdictResult is the structured output of the chapter review.
 // It includes the verdict, score, issue list, and rewrite guidance.
 type VerdictResult struct {
-	Verdict       Verdict     `json:"verdict"`         // PASS or REJECT
-	Score         int         `json:"score"`           // 0-100, ≥80 = PASS
-	Issues        []VerdictIssue `json:"issues"`        // problems found
-	AutoFixable   bool        `json:"auto_fixable"`    // can the review agent fix this itself?
-	RequireRewrite bool       `json:"require_rewrite"` // must go back to novel writer?
-	Round         int         `json:"round"`           // which review round (1-3)
-	Summary       string      `json:"summary"`         // one-line summary
+	Verdict        Verdict        `json:"verdict"`         // PASS or REJECT
+	Score          int            `json:"score"`           // 0-100, ≥80 = PASS
+	Issues         []VerdictIssue `json:"issues"`          // problems found
+	AutoFixable    bool           `json:"auto_fixable"`    // can the review agent fix this itself?
+	RequireRewrite bool           `json:"require_rewrite"` // must go back to novel writer?
+	Round          int            `json:"round"`           // which review round (1-3)
+	Summary        string         `json:"summary"`         // one-line summary
 }
 
 // VerdictIssue is one problem found during review.
 type VerdictIssue struct {
-	Severity       string `json:"severity"`         // must_fix | suggest
-	Category       string `json:"category"`         // 字数不足 | 流畅度 | 剧情遗漏 | AI痕迹 | 人设冲突 | 逻辑矛盾
-	Location       string `json:"location"`         // paragraph or section reference
-	Description    string `json:"description"`      // what's wrong
-	Suggestion     string `json:"suggestion"`       // how to fix
-	ReferenceScene string `json:"reference_scene"`  // original scene data for context
-	DeductPoints   int    `json:"deduct_points"`    // points deducted from 100
+	Severity       string `json:"severity"`        // must_fix | suggest
+	Category       string `json:"category"`        // 字数不足 | 流畅度 | 剧情遗漏 | AI痕迹 | 人设冲突 | 逻辑矛盾
+	Location       string `json:"location"`        // paragraph or section reference
+	Description    string `json:"description"`     // what's wrong
+	Suggestion     string `json:"suggestion"`      // how to fix
+	ReferenceScene string `json:"reference_scene"` // original scene data for context
+	DeductPoints   int    `json:"deduct_points"`   // points deducted from 100
 }
 
 // GenreWordLimits defines minimum word counts per genre.
@@ -70,11 +70,11 @@ func Evaluate(content string, genre string, round int) *VerdictResult {
 		deduct := 20
 		v.Score -= deduct
 		v.Issues = append(v.Issues, VerdictIssue{
-			Severity:    "must_fix",
-			Category:    "字数不足",
-			Location:    "全文",
-			Description: fmt.Sprintf("当前%d字，赛道最低要求%d字，不足%d字", wordCount, minWords, minWords-wordCount),
-			Suggestion:  fmt.Sprintf("需扩充至少%d字。建议增加场景环境描写或角色内心活动。", minWords-wordCount),
+			Severity:     "must_fix",
+			Category:     "字数不足",
+			Location:     "全文",
+			Description:  fmt.Sprintf("当前%d字，赛道最低要求%d字，不足%d字", wordCount, minWords, minWords-wordCount),
+			Suggestion:   fmt.Sprintf("需扩充至少%d字。建议增加场景环境描写或角色内心活动。", minWords-wordCount),
 			DeductPoints: deduct,
 		})
 	}
@@ -197,11 +197,11 @@ func checkForbidPhrases(content string) (int, []VerdictIssue) {
 		if count > 0 {
 			deduct += count * 3
 			issues = append(issues, VerdictIssue{
-				Severity:    "must_fix",
-				Category:    "AI痕迹",
-				Location:    "全文多处",
-				Description: fmt.Sprintf("检测到AI模板用语\"%s\"出现%d次", phrase, count),
-				Suggestion:  fmt.Sprintf("将\"%s\"替换为具体动作、环境描写或直接删除。", phrase),
+				Severity:     "must_fix",
+				Category:     "AI痕迹",
+				Location:     "全文多处",
+				Description:  fmt.Sprintf("检测到AI模板用语\"%s\"出现%d次", phrase, count),
+				Suggestion:   fmt.Sprintf("将\"%s\"替换为具体动作、环境描写或直接删除。", phrase),
 				DeductPoints: count * 3,
 			})
 		}
@@ -222,12 +222,12 @@ func checkAIPatternsQuick(content string) (int, []VerdictIssue) {
 		desc    string
 		sug     string
 	}{
-		"心中涌起":  {"心中涌起", "空洞情绪模板", "替换为具体生理反应+行为描述"},
-		"难以言喻":  {"难以言喻", "万能情绪形容词", "使用具体比喻替代抽象形容"},
-		"既…又…":  {"既", "对称句式（需结合上下文判断）", "打破对偶，改为长短句交替"},
-		"这一刻":   {"这一刻", "公式化收束句", "用画面或动作结尾替代总结"},
+		"心中涌起":    {"心中涌起", "空洞情绪模板", "替换为具体生理反应+行为描述"},
+		"难以言喻":    {"难以言喻", "万能情绪形容词", "使用具体比喻替代抽象形容"},
+		"既…又…":    {"既", "对称句式（需结合上下文判断）", "打破对偶，改为长短句交替"},
+		"这一刻":     {"这一刻", "公式化收束句", "用画面或动作结尾替代总结"},
 		"先…然后…接着": {"然后", "规整动作链", "打断顺序，插入环境/心理描写"},
-		"淡淡道":   {"淡淡道", "对话标签重复", "用动作描写替代标签"},
+		"淡淡道":     {"淡淡道", "对话标签重复", "用动作描写替代标签"},
 	}
 
 	for name, p := range patterns {
@@ -235,11 +235,11 @@ func checkAIPatternsQuick(content string) (int, []VerdictIssue) {
 		if count > 1 {
 			deduct += count
 			issues = append(issues, VerdictIssue{
-				Severity:    "suggest",
-				Category:    "AI痕迹",
-				Location:    "全文",
-				Description: fmt.Sprintf("疑似\"%s\"(%s)出现%d次", name, p.desc, count),
-				Suggestion:  p.sug,
+				Severity:     "suggest",
+				Category:     "AI痕迹",
+				Location:     "全文",
+				Description:  fmt.Sprintf("疑似\"%s\"(%s)出现%d次", name, p.desc, count),
+				Suggestion:   p.sug,
 				DeductPoints: count,
 			})
 		}

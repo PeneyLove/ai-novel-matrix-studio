@@ -25,10 +25,10 @@ func init() {
 type recorderIntegrate struct{}
 
 type recorderIntegrateArgs struct {
-	ReactionsJSON   string `json:"reactions_json"`    // JSON array of characteragent.Reaction
+	ReactionsJSON    string `json:"reactions_json"`     // JSON array of characteragent.Reaction
 	TriggerEventDesc string `json:"trigger_event_desc"` // trigger event description
-	ChapterNum      int    `json:"chapter_num"`
-	ProtagonistID   string `json:"protagonist_id"`
+	ChapterNum       int    `json:"chapter_num"`
+	ProtagonistID    string `json:"protagonist_id"`
 }
 
 func (r recorderIntegrate) Name() string { return "recorder_integrate" }
@@ -139,7 +139,7 @@ func (r recorderConsult) Execute(ctx context.Context, args json.RawMessage) (str
 type novelwriterGenerate struct{}
 
 type novelwriterGenerateArgs struct {
-	SceneJSON  string `json:"scene_json"`  // recorder_integrate output
+	SceneJSON  string `json:"scene_json"` // recorder_integrate output
 	ChapterNum int    `json:"chapter_num"`
 	Genre      string `json:"genre"`       // 玄幻/都市/古言/科幻/悬疑/甜宠
 	StyleGuide string `json:"style_guide"` // optional user style preferences
@@ -202,7 +202,7 @@ type novelwriterRewriteArgs struct {
 	ConsultCtx   string `json:"consult_ctx"`   // consultant context from recorder_consult (optional)
 	ChapterNum   int    `json:"chapter_num"`
 	Genre        string `json:"genre"`
-	Round        int    `json:"round"`         // 1 or 2
+	Round        int    `json:"round"` // 1 or 2
 }
 
 func (n novelwriterRewrite) Name() string { return "novelwriter_rewrite" }
@@ -267,10 +267,10 @@ func (n novelwriterRewrite) Execute(ctx context.Context, args json.RawMessage) (
 type reviewVerdict struct{}
 
 type reviewVerdictArgs struct {
-	Content    string `json:"content"`     // chapter draft
+	Content    string `json:"content"` // chapter draft
 	ChapterNum int    `json:"chapter_num"`
 	Genre      string `json:"genre"`
-	Round      int    `json:"round"`       // 1-3
+	Round      int    `json:"round"` // 1-3
 }
 
 func (r reviewVerdict) Name() string { return "review_verdict" }
