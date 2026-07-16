@@ -54,6 +54,12 @@ type Config struct {
 	Plugins       []PluginEntry     `toml:"plugins"`
 	Skills        SkillsConfig      `toml:"skills"`
 	MultiAgent    MultiAgentConfig  `toml:"multi_agent"`
+	StoryBible    StoryBibleConfig  `toml:"story_bible"`
+	CharacterAgent CharacterAgentConfig `toml:"character_agent"`
+	Timeline      TimelineConfig    `toml:"timeline"`
+	ReviewAgent   ReviewAgentConfig `toml:"review_agent"`
+	RecorderAgent RecorderAgentConfig `toml:"recorder_agent"`
+	NovelWriter   NovelWriterConfig `toml:"novel_writer_agent"`
 	Codegraph     CodegraphConfig   `toml:"codegraph"`
 	Statusline    StatuslineConfig  `toml:"statusline"`
 	LSP           LSPConfig         `toml:"lsp"`
@@ -521,6 +527,141 @@ func DefaultMultiAgentConfig() MultiAgentConfig {
 	}
 }
 
+// ─── V3.0.0: Story Bible / Character Agent / Timeline ─────────────────────
+
+// StoryBibleConfig controls the Story Bible Graph — the persistent,
+// structured world-knowledge store that tracks characters, factions,
+// locations, items, and events with dynamic relationship edges.
+type StoryBibleConfig struct {
+	// Enabled turns on the Story Bible Graph engine. When false, the system
+	// falls back to markdown-based world-state files (v2 behaviour).
+	Enabled bool `toml:"enabled"`
+
+	// StoragePath is where the graph JSON file is persisted.
+	// Default: .novel-agent/story-bible.json under the project root.
+	StoragePath string `toml:"storage_path"`
+
+	// AutoSnapshot controls whether a subgraph snapshot is automatically
+	// generated before each chapter generation. Default true.
+	AutoSnapshot bool `toml:"auto_snapshot"`
+
+	// SnapshotDepth controls how many hops the subgraph snapshot expands.
+	// Depth 1 (default): seed nodes + direct neighbors + edges among them.
+	SnapshotDepth int `toml:"snapshot_depth"`
+}
+
+// DefaultStoryBibleConfig returns the default Story Bible configuration.
+func DefaultStoryBibleConfig() StoryBibleConfig {
+	return StoryBibleConfig{
+		Enabled:       true,
+		AutoSnapshot:  true,
+		SnapshotDepth: 1,
+	}
+}
+
+// CharacterAgentConfig controls the per-character personality agent system.
+// When enabled, each major character gets an independent reasoning unit
+// that generates personality-consistent reactions to story events.
+type CharacterAgentConfig struct {
+	// Enabled turns on the Character Personality Agent system.
+	Enabled bool `toml:"enabled"`
+
+	// MaxAgentsPerScene limits how many character agents run per scene.
+	// Default: 10. Exceeding characters get pooled reactions.
+	MaxAgentsPerScene int `toml:"max_agents_per_scene"`
+
+	// MemoryWindowChapters is how many recent chapters are summarised
+	// into each character's memory summary. Default: 3.
+	MemoryWindowChapters int `toml:"memory_window_chapters"`
+}
+
+// DefaultCharacterAgentConfig returns default Character Agent configuration.
+func DefaultCharacterAgentConfig() CharacterAgentConfig {
+	return CharacterAgentConfig{
+		Enabled:             true,
+		MaxAgentsPerScene:   10,
+		MemoryWindowChapters: 3,
+	}
+}
+
+// TimelineConfig controls the Timeline Synthesis Agent — the central
+// orchestrator that collects character reactions, sorts them by web-novel
+// rhythm, resolves conflicts, and produces chapter output plus graph updates.
+type TimelineConfig struct {
+	// Enabled turns on the Timeline Synthesis Agent.
+	Enabled bool `toml:"enabled"`
+
+	// AutoApplyGraphUpdates controls whether the graph update batch is
+	// automatically applied after each chapter. Default true.
+	AutoApplyGraphUpdates bool `toml:"auto_apply_graph_updates"`
+}
+
+// DefaultTimelineConfig returns default Timeline configuration.
+func DefaultTimelineConfig() TimelineConfig {
+	return TimelineConfig{
+		Enabled:               true,
+		AutoApplyGraphUpdates: true,
+	}
+}
+
+// ReviewAgentConfig controls the LLM-powered chapter review agent — the
+// replacement for v2.0's Python-based pattern-matching review tools.
+// Supports three modes: expand (扩写), rewrite (改写), deai (去AI化).
+type ReviewAgentConfig struct {
+	// Enabled turns on the review agent tools.
+	Enabled bool `toml:"enabled"`
+
+	// DefaultMode is the review mode used when the user doesn't specify one.
+	// Valid values: expand, rewrite, deai. Default: deai.
+	DefaultMode string `toml:"default_mode"`
+
+	// DefaultExpandRatio is the default word-count multiplier for expand mode.
+	// 1.5 = 50% expansion. Default: 1.5.
+	DefaultExpandRatio float64 `toml:"default_expand_ratio"`
+}
+
+// DefaultReviewAgentConfig returns the default review agent configuration.
+func DefaultReviewAgentConfig() ReviewAgentConfig {
+	return ReviewAgentConfig{
+		Enabled:            true,
+		DefaultMode:        "deai",
+		DefaultExpandRatio: 1.5,
+	}
+}
+
+// RecorderAgentConfig controls the Recorder Agent — the event integration
+// and consultant-mode agent in the v4.0 pipeline.
+type RecorderAgentConfig struct {
+	Enabled bool `toml:"enabled"`
+}
+
+// DefaultRecorderAgentConfig returns defaults.
+func DefaultRecorderAgentConfig() RecorderAgentConfig {
+	return RecorderAgentConfig{Enabled: true}
+}
+
+// NovelWriterConfig controls the Novel Writer Agent — the prose generation
+// and rewrite agent in the v4.0 pipeline.
+type NovelWriterConfig struct {
+	// Enabled turns on the novel writer agent tools.
+	Enabled bool `toml:"enabled"`
+
+	// DefaultGenre is the genre used when not specified.
+	DefaultGenre string `toml:"default_genre"`
+
+	// TargetWords is the default chapter word count target.
+	TargetWords int `toml:"target_words"`
+}
+
+// DefaultNovelWriterConfig returns defaults.
+func DefaultNovelWriterConfig() NovelWriterConfig {
+	return NovelWriterConfig{
+		Enabled:      true,
+		DefaultGenre: "玄幻",
+		TargetWords:  3000,
+	}
+}
+
 // ProviderEntry declares a model provider instance. ContextWindow is the model's
 // token budget; the harness compacts older history as a turn's prompt approaches
 // it (see agent compaction). 0 disables compaction for the instance.
@@ -722,6 +863,12 @@ func Default() *Config {
 		},
 		Cache:      DefaultCacheConfig(),
 		MultiAgent: DefaultMultiAgentConfig(),
+		StoryBible:     DefaultStoryBibleConfig(),
+		CharacterAgent: DefaultCharacterAgentConfig(),
+		Timeline:       DefaultTimelineConfig(),
+		ReviewAgent:    DefaultReviewAgentConfig(),
+		RecorderAgent:  DefaultRecorderAgentConfig(),
+		NovelWriter:    DefaultNovelWriterConfig(),
 		// Mode "ask" with no rules keeps `novel-agent run` autonomous (no TTY → ask
 		// resolves to allow) while `novel-agent chat` prompts before writers. Users add
 		// deny/allow rules to harden or quiet specific tools.

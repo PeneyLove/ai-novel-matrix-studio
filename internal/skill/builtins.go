@@ -148,7 +148,7 @@ Rules:
 func builtinSkills() []Skill {
 	readCodeTools := []string{"read_file", "ls", "glob", "grep"}
 	reviewTools := []string{"read_file", "ls", "glob", "grep", "bash"}
-	all := append([]Skill{
+	return []Skill{
 		{
 			Name:        "init",
 			Description: "Bootstrap or refresh this project's AGENTS.md — analyze the codebase (structure, build/test commands, architecture, conventions) and write a concise memory file loaded into every future session. Inlined — runs in the main loop so you see and approve the write.",
@@ -201,10 +201,7 @@ func builtinSkills() []Skill {
 			Path:        "(builtin)",
 			RunAs:       RunInline,
 		},
-	}, sopBuiltinSkills()...)
-	all = append(all, novelBuiltinSkills()...)
-	all = append(all, genreBuiltinSkills()...)
-	return all
+	}
 }
 
 // BuiltinNames returns the built-in skill names, used by callers that wire

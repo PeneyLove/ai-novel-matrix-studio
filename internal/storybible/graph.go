@@ -325,25 +325,28 @@ func (g *Graph) SnapshotFor(seedIDs []string, depth int) *Snapshot {
 		return s
 	}
 
-	// Expand one hop.
-	for eid, e := range g.Edges {
+	// Expand one hop. Two-pass to avoid cascade: first identify new nodes,
+	// then add them. This ensures depth-1 expansion doesn't leak to depth-2.
+	newIDs := make(map[string]bool)
+	for _, e := range g.Edges {
 		fromIn := included[e.From]
 		toIn := included[e.To]
 		if fromIn || toIn {
-			s.Edges[eid] = e
+			s.Edges[e.ID] = e
 		}
 		if fromIn && !toIn {
-			if n, ok := g.Nodes[e.To]; ok {
-				s.Nodes[e.To] = n
-				included[e.To] = true
+			if _, ok := g.Nodes[e.To]; ok {
+				newIDs[e.To] = true
 			}
 		}
 		if toIn && !fromIn {
-			if n, ok := g.Nodes[e.From]; ok {
-				s.Nodes[e.From] = n
-				included[e.From] = true
+			if _, ok := g.Nodes[e.From]; ok {
+				newIDs[e.From] = true
 			}
 		}
+	}
+	for id := range newIDs {
+		s.Nodes[id] = g.Nodes[id]
 	}
 
 	return s

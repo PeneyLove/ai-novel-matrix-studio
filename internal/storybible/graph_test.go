@@ -3,7 +3,6 @@ package storybible
 import (
 	"encoding/json"
 	"testing"
-	"time"
 )
 
 func TestNewGraph(t *testing.T) {

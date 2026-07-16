@@ -152,3 +152,28 @@ enabled = []   # empty = all built-in tools
 # #                the model uses them, then handshake on-demand. Default.
 # #   background — placeholder + spawn at boot in a goroutine so an idle
 # #                session warms up without blocking the user.
+
+# --- V3.0 时间线生成引擎配置 ---
+
+# [story_bible] controls the Story Bible Graph — the persistent world-knowledge
+# store that tracks characters, factions, locations, items, and events.
+# [story_bible]
+# enabled = true               # turn on Story Bible Graph; false falls back to markdown files
+# storage_path = ".novel-agent/story-bible.json"   # where the graph JSON is persisted
+# auto_snapshot = true         # automatically generate subgraph snapshots before each chapter
+# snapshot_depth = 1           # subgraph expansion depth (0=seed only, 1=+neighbors)
+
+# [character_agent] controls per-character personality agents.
+# Each major character gets an independent reasoning unit with personality
+# constraints, memory summaries, and isolation from other character agents.
+# [character_agent]
+# enabled = true               # turn on per-character personality agents
+# max_agents_per_scene = 10    # cap on concurrent character agents per scene
+# memory_window_chapters = 3   # recent N chapters summarised per character
+
+# [timeline] controls the Timeline Synthesis Agent — the central orchestrator
+# that collects character reactions, sorts by web-novel rhythm, resolves
+# conflicts, and produces chapter output plus graph update instructions.
+# [timeline]
+# enabled = true               # turn on timeline synthesis
+# auto_apply_graph_updates = true  # automatically write graph updates after each chapter
