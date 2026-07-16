@@ -53,3 +53,7 @@ reasonix.toml
 
 .codegraph/daemon.pid
 网文时间线生成Agent-设计文档.md
+  
+# Go build & module cache  
+gocache/  
+gomodcache/ 
