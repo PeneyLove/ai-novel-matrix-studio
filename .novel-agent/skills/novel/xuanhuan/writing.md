@@ -12,19 +12,19 @@ runAs: inline
 ## 前置条件
 - `outlines/main_outline.txt` — 已定稿大纲
 - `.novel-agent/hooks/ledger.yaml` — 钩子台账
-- `.novel-agent/state.json` — 当前进度
+- `.novel-agent/state.json` — 当前进度（含卷号volume和章节号chapter）
 
 ## 操作步骤
 
-1. **读取进度**：`read_file .novel-agent/state.json` → 获取 chapter 和 total_chapters
+1. **读取进度**：`read_file .novel-agent/state.json` → 获取 chapter、volume 和 total_chapters
 2. **读取大纲**：`read_file outlines/main_outline.txt` → 获取当前卷的剧情纲要
 3. **读取台账**：`read_file .novel-agent/hooks/ledger.yaml` → 检查是否需要回收/埋伏笔
 4. **读取上文**：如有上一章，读取最后500字做上下文衔接
 5. **撰写章节**：按规范创作，输出到对话中供用户审核
 6. **用户确认后持久化**：
-   - `bash mkdir -p "chapters/第N章/"`
-   - `write_file chapters/第N章/chapter.txt` → 写入正文章节（UTF-8, Markdown）
-   - `write_file .novel-agent/state.json` → 更新 chapter（chapter号+1）
+   - `bash mkdir -p "chapter/第X卷/"` → 确保卷目录存在
+   - `write_file chapter/第X卷/第N章.txt` → 写入正文章节（UTF-8, Markdown）
+   - `write_file .novel-agent/state.json` → 更新 chapter（chapter号+1；新卷则volume+1）
    - 如有新埋伏笔或回收，`write_file .novel-agent/hooks/ledger.yaml`
 
 ## 玄幻修仙续写规范

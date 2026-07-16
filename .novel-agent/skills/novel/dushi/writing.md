@@ -10,7 +10,8 @@ runAs: inline
 - `outlines/main_outline.txt` / `.novel-agent/hooks/ledger.yaml` / `.novel-agent/state.json`
 
 ## 操作步骤
-同玄幻修仙：读进度→读大纲→读台账→读上文→撰写→持久化
+1. 读进度→读大纲→读台账→读上文→撰写
+2. 持久化：`bash mkdir -p "chapter/第X卷/"` → `write_file chapter/第X卷/第N章.txt`
 
 ## 都市网文续写规范
 

@@ -50,7 +50,7 @@ type Finding struct {
 // Report aggregates all findings from a consultation session.
 type Report struct {
 	SessionID string    // unique id for this consultation
-	Subject   string    // what was analyzed, e.g. "outline", "characters", "chapters/第5章"
+	Subject   string    // what was analyzed, e.g. "outline", "characters", "chapter/第1卷/第5章"
 	Findings  []Finding // all findings, sorted by severity then confidence
 	Summary   string    // one-line overall assessment
 	Score     int       // 0-100 overall health score

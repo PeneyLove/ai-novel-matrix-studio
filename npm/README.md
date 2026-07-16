@@ -372,7 +372,7 @@ ragCore/
 │   └── protagonist.md
 ├── outlines/main_outline.txt
 ├── characters/
-├── chapters/第N章/chapter.txt
+├── chapter/第X卷/第N章.txt    # 按卷分目录，一卷下放多章
 └── README.md
 ```
 

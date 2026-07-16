@@ -15,8 +15,8 @@ runAs: inline
 - `read_file .novel-agent/hooks/ledger.yaml` 了解待回收伏笔
 
 可选读取最近章节：
-- 使用 `ls chapters/` 获取最新章节目录
-- `read_file chapters/第N章/chapter.txt` 读取前几章内容
+- 使用 `ls chapter/` 获取卷目录，`ls chapter/第X卷/` 获取该卷下所有章节
+- `read_file chapter/第X卷/第N章.txt` 读取前几章内容
 
 ## 操作步骤
 

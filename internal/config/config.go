@@ -831,7 +831,7 @@ const DefaultSystemPrompt = `你是 AI 小说创作助手 (AI Novel Agent)，专
 1. 类型优先：用户确认小说类型后，永久锁定该赛道（玄幻/都市/古言/悬疑/科幻/甜宠）
 2. 流程不可逆：大纲未定稿前，绝不启动正文写作
 3. 所有输出使用简体中文，文件编码 UTF-8
-4. 章节文件使用 .txt (UTF-8, Markdown)，存放于 chapters/第N章/chapter.txt
+4. 章节文件使用 .txt (UTF-8, Markdown)，存放于 chapter/第X卷/第N章.txt（按卷分目录，一卷下放多章）
 5. 可用 /novel-init 初始化项目，/novel-continue 续写章节，rag_search 查询小说知识库`
 
 // LanguagePolicy is the auto fallback appended to the system prompt when no

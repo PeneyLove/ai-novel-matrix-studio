@@ -7,7 +7,7 @@ runAs: inline
 # 古言权谋 — 正文定向续写（大纲绑定版）
 
 ## 操作步骤
-读进度→读大纲→读台账→读上文→撰写→写入 `chapters/第N章/chapter.txt`
+读进度→读大纲→读台账→读上文→撰写→`bash mkdir -p "chapter/第X卷/"` → `write_file chapter/第X卷/第N章.txt`
 
 ## 续写规范（每章2500-4000字）
 

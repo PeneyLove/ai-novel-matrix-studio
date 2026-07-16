@@ -130,7 +130,7 @@ const builtinInitBody = `This skill is INLINED — you run in the parent loop. T
 How to operate:
 1. Ask the user for their novel's genre (玄幻修仙/都市网文/古言权谋/悬疑灵异/科幻无限/现言甜宠) and a working title.
 2. Create the standard novel project structure:
-   - chapters/第1章/chapter.txt (first chapter template)
+   - chapter/第1卷/第1章.txt (first chapter template)
    - outlines/main_outline.txt
    - characters/protagonist.txt, characters/supporting_cast.txt
    - .novelAgent/state.json → {"genre":"<genre>","phase":"init","chapter":0,"total_chapters":0}

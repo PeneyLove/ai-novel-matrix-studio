@@ -13,7 +13,7 @@ runAs: inline
 1. `read_file .novel-agent/state.json` 获取总章节数
 2. `read_file outlines/main_outline.txt` 获取大纲基准
 3. `read_file .novel-agent/hooks/ledger.yaml` 获取伏笔台账
-4. 逐章或抽样读取（`read_file chapters/第N章/chapter.txt`）
+4. 逐章或抽样读取（`read_file chapter/第X卷/第N章.txt`）
 5. 输出诊断报告，用户确认后按建议逐一修复
 
 ## 诊断维度
